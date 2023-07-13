@@ -1,7 +1,7 @@
 package uk.gemwire.camelot.commands.utility;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
@@ -16,7 +16,6 @@ public class PingCommand extends SlashCommand {
         help = "Test the functionality of the bot.";
 
         guildOnly = true;
-        guildId = "756881288232828968";
 
         // Setup subcommands.
         OptionData data = new OptionData(OptionType.USER, "user", "User to ping.").setRequired(true);

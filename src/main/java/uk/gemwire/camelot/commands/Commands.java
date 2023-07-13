@@ -1,20 +1,25 @@
 package uk.gemwire.camelot.commands;
 
-import com.jagrosh.jdautilities.command.*;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Emoji;
-import net.dv8tion.jda.api.interactions.components.Button;
-import net.dv8tion.jda.api.interactions.components.Component;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import com.jagrosh.jdautilities.command.CommandClient;
+import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import uk.gemwire.camelot.BotMain;
 import uk.gemwire.camelot.commands.information.HelpCommand;
+import uk.gemwire.camelot.commands.information.InfoChannelCommand;
+import uk.gemwire.camelot.commands.moderation.BanCommand;
+import uk.gemwire.camelot.commands.moderation.KickCommand;
+import uk.gemwire.camelot.commands.moderation.ModLogsCommand;
+import uk.gemwire.camelot.commands.moderation.MuteCommand;
+import uk.gemwire.camelot.commands.moderation.NoteCommand;
+import uk.gemwire.camelot.commands.moderation.PurgeCommand;
+import uk.gemwire.camelot.commands.moderation.UnbanCommand;
+import uk.gemwire.camelot.commands.moderation.UnmuteCommand;
+import uk.gemwire.camelot.commands.moderation.WarnCommand;
+import uk.gemwire.camelot.commands.utility.CustomPingsCommand;
+import uk.gemwire.camelot.commands.utility.EvalCommand;
 import uk.gemwire.camelot.commands.utility.PingCommand;
-import uk.gemwire.camelot.configuration.Common;
+import uk.gemwire.camelot.commands.utility.ManageTrickCommand;
+import uk.gemwire.camelot.commands.utility.TrickCommand;
 import uk.gemwire.camelot.configuration.Config;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The place where all control flow for commands converges.
@@ -40,16 +45,35 @@ public class Commands {
         commands = new CommandClientBuilder()
                 .setOwnerId(String.valueOf(Config.OWNER_SNOWFLAKE))
                 .setPrefix(Config.PREFIX)
-                .setHelpConsumer(HelpCommand::help)
+                .useHelpBuilder(false) // We use the slash command instead
 
                 .addSlashCommand(new PingCommand())
+                .addSlashCommand(new HelpCommand(BotMain.BUTTON_MANAGER))
+
+                // Moderation commands
+                .addSlashCommands(
+                        new ModLogsCommand(BotMain.BUTTON_MANAGER),
+                        new NoteCommand(), new WarnCommand(),
+                        new MuteCommand(), new UnmuteCommand(),
+                        new KickCommand(), new PurgeCommand(),
+                        new BanCommand(), new UnbanCommand()
+                )
+
+                // Information commands
+                .addSlashCommands(new InfoChannelCommand())
+
+                // Message context menus
+                .addContextMenus(new InfoChannelCommand.UploadToDiscohookContextMenu())
+
+                .addSlashCommands(new ManageTrickCommand(), new TrickCommand())
+                .addCommand(new EvalCommand())
+
+                .addSlashCommand(new CustomPingsCommand())
 
                 .build();
 
         // Register the commands to the listener.
         BotMain.get().addEventListener(commands);
-        // Register button listeners here.
-        BotMain.get().addEventListener(new HelpCommand.ButtonListener());
     }
 
 }
