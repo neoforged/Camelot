@@ -141,16 +141,20 @@ public record ScriptOptions(List<String> args, CmdLineParser cmdLineParser, List
     }
 
     @HostAccess.Export
-    public List<Object> parse() throws CmdLineException, RequestedHelpException {
-        final List<Object> arguments = new ArrayList<>();
-        cmdLineParser.parseArgument(args);
-        check();
-        for (final IOpt opt : order) {
-            final List<Object> val = theArguments.computeIfAbsent(opt.name(), k -> new ArrayList<>());
-            val.replaceAll(o -> ScriptContext.transform(context, o));
-            arguments.add(opt.isList() ? val : (val.isEmpty() ? null : val.get(0)));
+    public List<Object> parse() throws CmdLineParseException, RequestedHelpException {
+        try {
+            final List<Object> arguments = new ArrayList<>();
+            cmdLineParser.parseArgument(args);
+            check();
+            for (final IOpt opt : order) {
+                final List<Object> val = theArguments.computeIfAbsent(opt.name(), k -> new ArrayList<>());
+                val.replaceAll(o -> ScriptContext.transform(context, o));
+                arguments.add(opt.isList() ? val : (val.isEmpty() ? null : val.get(0)));
+            }
+            return arguments;
+        } catch (CmdLineException ex) {
+            throw new CmdLineParseException(ex.getMessage());
         }
-        return arguments;
     }
 
     private void check() throws RequestedHelpException {

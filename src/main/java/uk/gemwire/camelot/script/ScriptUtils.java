@@ -230,12 +230,15 @@ public class ScriptUtils {
                     context.reply().accept(MessageCreateData.fromContent(toString.isBlank() ? "*No help provided*" : toString));
                 } else if (!ex.getMessage().equals("Thread was interrupted.")) { // If it is interrupted then the user would be informed about the time out
                     final StringBuilder message = new StringBuilder();
-                    message.append("Script failed execution due to an exception: **").append(ex.getMessage()).append("**");
-                    final String trace = String.join("\n", Stream.of(ex.getStackTrace())
-                            .filter(it -> it.getClassName().equals("<js>"))
-                            .map(el -> " at " + el).toList());
-                    if (!trace.isBlank()) {
-                        message.append('\n').append("Stacktrace: \n").append(trace);
+                    final boolean isCmdLine = ex.getMessage().startsWith(CmdLineParseException.PREFIX);
+                    message.append("Script failed execution due to an exception: **").append(isCmdLine ? ex.getMessage().substring(CmdLineParseException.PREFIX.length()) : ex.getMessage()).append("**");
+                    if (!isCmdLine) {
+                        final String trace = String.join("\n", Stream.of(ex.getStackTrace())
+                                .filter(it -> it.getClassName().equals("<js>"))
+                                .map(el -> " at " + el).toList());
+                        if (!trace.isBlank()) {
+                            message.append('\n').append("Stacktrace: \n").append(trace);
+                        }
                     }
                     context.reply().accept(MessageCreateData.fromContent(message.toString()));
                 }

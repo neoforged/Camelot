@@ -13,6 +13,7 @@ import uk.gemwire.camelot.db.transactionals.TricksDAO;
 import uk.gemwire.camelot.script.ScriptContext;
 import uk.gemwire.camelot.script.ScriptUtils;
 
+import java.util.EnumSet;
 import java.util.function.Consumer;
 
 /**
@@ -20,6 +21,10 @@ import java.util.function.Consumer;
  * will be executed with the arguments.
  */
 public record TrickListener(String prefix) implements EventListener {
+    private static final EnumSet<Message.MentionType> ALLOWED_MENTIONS = EnumSet.of(
+            Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND
+    );
+
     public void onEvent(@NotNull GenericEvent gevent) {
         if (!(gevent instanceof MessageReceivedEvent event)) return;
         if (!event.isFromGuild() || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
@@ -39,7 +44,8 @@ public record TrickListener(String prefix) implements EventListener {
                 @Override
                 public void accept(MessageCreateData create) {
                     if (reply == null) {
-                        reply = event.getMessage().reply(create).complete();
+                        reply = event.getMessage().reply(create)
+                                .setAllowedMentions(ALLOWED_MENTIONS).complete();
                     } else {
                         reply.editMessage(MessageEditData.fromCreateData(create)).complete();
                     }
