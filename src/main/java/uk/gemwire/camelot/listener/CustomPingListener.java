@@ -59,7 +59,7 @@ public class CustomPingListener implements EventListener {
         if (!event.isFromGuild() || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
         synchronized (CACHE) {
             CACHE.getOrDefault(event.getGuild().getIdLong(), List.of()).forEach(ping -> {
-                // if (ping.user() == event.getAuthor().getIdLong()) return;
+                if (ping.user() == event.getAuthor().getIdLong()) return;
 
                 if (ping.regex().matcher(event.getMessage().getContentRaw()).find()) {
                     sendPing(event.getMessage(), ping);
