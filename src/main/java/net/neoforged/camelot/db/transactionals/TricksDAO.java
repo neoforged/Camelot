@@ -60,6 +60,16 @@ public interface TricksDAO extends Transactional<TricksDAO> {
     }
 
     /**
+     * {@return the {@link #getTrickByName(String) trick} with the given {@code name}, or {@code null} if one with that name doesn't exist}
+     */
+    @Nullable
+    default Trick getNamedTrick(String name) {
+        final Integer trickId = getTrickByName(name);
+        if (trickId == null) return null;
+        return getTrick(trickId);
+    }
+
+    /**
      * Update the script of a given trick.
      *
      * @param trickId the ID of the trick to update

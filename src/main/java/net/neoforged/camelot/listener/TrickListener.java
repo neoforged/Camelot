@@ -33,7 +33,7 @@ public record TrickListener(String prefix) implements EventListener {
         if (content.startsWith(prefix)) {
             final int nextSpace = content.indexOf(' ');
             final String trickName = content.substring(1, nextSpace < 0 ? content.length() : nextSpace);
-            final Trick trick = Database.main().withExtension(TricksDAO.class, db -> db.getTrick(trickName));
+            final Trick trick = Database.main().withExtension(TricksDAO.class, db -> db.getNamedTrick(trickName));
 
             if (trick == null) return;
 
