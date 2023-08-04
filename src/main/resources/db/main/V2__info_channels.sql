@@ -1,4 +1,4 @@
--- See uk.gemwire.camelot.db.schemas.InfoChannel --
+-- See net.neoforged.camelot.db.schemas.InfoChannel --
 create table info_channels
 (
     -- the channel ID --

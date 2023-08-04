@@ -5,12 +5,12 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.+'
 }
 
-group 'uk.gemwire'
+group 'net.neoforged'
 version project.bot_version
 
 tasks.register('run', JavaExec).configure {
     classpath(sourceSets.main.runtimeClasspath)
-    mainClass.set('uk.gemwire.camelot.BotMain')
+    mainClass.set('net.neoforged.camelot.BotMain')
     workingDir = project.file('run')
     doFirst {
         if (!workingDir.exists()) {
@@ -93,7 +93,7 @@ jar {
                 'Built-On-Java': "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
                 'Built-On': "${project.jda_version}-${project.jda_chewtils_version}",
                 'Class-Path': configurations.compileClasspath.collect { it.getName() }.join(' '),
-                'Main-Class': 'uk.gemwire.camelot.BotMain'
+                'Main-Class': 'net.neoforged.camelot.BotMain'
         )
     }
 }
