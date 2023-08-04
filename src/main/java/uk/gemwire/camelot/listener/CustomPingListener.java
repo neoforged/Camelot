@@ -78,7 +78,7 @@ public class CustomPingListener implements EventListener {
                     final List<Ping> pings = Database.pings().withExtension(PingsDAO.class, db -> db.getAllPingsOf(ping.user(), message.getGuild().getIdLong()));
                     getPingThread(message.getJDA(), ping.user())
                             .flatMap(thread -> thread.sendMessage(MessageCreateData.fromEmbeds(new EmbedBuilder()
-                                    .setDescription("Custom pings dump")
+                                    .setTitle("Custom pings dump")
                                     .setFooter("User left the guild")
                                     .setDescription(pings.stream()
                                             .map(p -> p.id() + ". `" + p.regex().toString() + "` | " + p.message())

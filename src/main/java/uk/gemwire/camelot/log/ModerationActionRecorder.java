@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.audit.AuditLogKey;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.GuildAuditLogEntryCreateEvent;
+import net.dv8tion.jda.api.events.guild.GuildBanEvent;
+import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +19,7 @@ import uk.gemwire.camelot.Database;
 import uk.gemwire.camelot.configuration.Config;
 import uk.gemwire.camelot.db.schemas.ModLogEntry;
 import uk.gemwire.camelot.db.transactionals.ModLogsDAO;
+import uk.gemwire.camelot.db.transactionals.PendingUnbansDAO;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -30,6 +33,10 @@ import java.time.OffsetDateTime;
 public class ModerationActionRecorder implements EventListener {
     @Override
     public void onEvent(@NotNull GenericEvent gevent) {
+        if (gevent instanceof GuildUnbanEvent event) {
+            Database.main().useExtension(PendingUnbansDAO.class, db -> db.delete(event.getUser().getIdLong(), event.getGuild().getIdLong()));
+        }
+
         if (!(gevent instanceof GuildAuditLogEntryCreateEvent event)) return;
         final AuditLogEntry entry = event.getEntry();
         final ActionType type = entry.getType();

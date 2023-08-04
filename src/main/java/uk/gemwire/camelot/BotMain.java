@@ -134,7 +134,7 @@ public class BotMain {
                     for (final long toUnban : users) {
                         // We do not use allOf because we do not want a deleted user to cause all unbans to fail
                         guild.unban(UserSnowflake.fromId(toUnban)).reason("rec: Ban expired")
-                                .queue(suc -> db.delete(toUnban, guild.getIdLong()), new ErrorHandler()
+                                .queue(suc -> {} /* don't remove the entry here, the ModerationActionRecorder should, and if it doesn't, the unban failed so it should be reattempted next minute */, new ErrorHandler()
                                         .handle(ErrorResponse.UNKNOWN_USER, e -> db.delete(toUnban, guild.getIdLong()))); // User doesn't exist, so don't care about the unban anymore
                     }
                 }

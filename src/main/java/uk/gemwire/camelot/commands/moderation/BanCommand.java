@@ -58,10 +58,14 @@ public class BanCommand extends ModerationCommand<Integer> {
             Preconditions.checkArgument(canModerate(target, event.getMember()), "Cannot moderate user!");
             targetId = target.getIdLong();
         }
+
         final Duration time = event.getOption("duration", it -> DateUtils.getDurationFromInput(it.getAsString()));
-        if (time != null) {
-            Database.main().useExtension(PendingUnbansDAO.class, db -> db.insert(targetId, event.getGuild().getIdLong(), Timestamp.from(Instant.now().plus(time))));
-        }
+        Database.main().useExtension(PendingUnbansDAO.class, db -> {
+            db.delete(targetId, event.getGuild().getIdLong()); // We want to allow re-running the ban command to reset the unban period
+            if (time != null) {
+                db.insert(targetId, event.getGuild().getIdLong(), Timestamp.from(Instant.now().plus(time)));
+            }
+        });
         return new ModerationAction<>(
                 ModLogEntry.ban(targetId, event.getGuild().getIdLong(), event.getUser().getIdLong(), time, event.optString("reason")),
                 event.getOption("deldays", 0, OptionMapping::getAsInt)
@@ -73,7 +77,7 @@ public class BanCommand extends ModerationCommand<Integer> {
     protected RestAction<?> handle(User user, ModerationAction<Integer> action) {
         final ModLogEntry entry = action.entry();
         return user.getJDA().getGuildById(entry.guild())
-                .ban(UserSnowflake.fromId(entry.id()), action.additionalData(), TimeUnit.DAYS)
+                .ban(UserSnowflake.fromId(entry.user()), action.additionalData(), TimeUnit.DAYS)
                 .reason("rec: " + entry.reasonOrDefault());
     }
 

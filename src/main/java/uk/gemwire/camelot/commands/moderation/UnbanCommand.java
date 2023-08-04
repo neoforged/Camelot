@@ -47,7 +47,7 @@ public class UnbanCommand extends ModerationCommand<Void> {
     protected RestAction<?> handle(User user, ModerationAction<Void> action) {
         final ModLogEntry entry = action.entry();
         return user.getJDA().getGuildById(entry.guild())
-                .unban(UserSnowflake.fromId(entry.id()))
+                .unban(UserSnowflake.fromId(entry.user()))
                 .reason("rec: " + entry.reasonOrDefault());
     }
 
