@@ -5,7 +5,10 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
+import net.neoforged.camelot.util.Utils;
 import org.graalvm.polyglot.HostAccess;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
@@ -20,6 +23,8 @@ import net.neoforged.camelot.script.option.MentionableOptionHandler;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,28 +34,41 @@ import java.util.regex.Pattern;
 import static java.util.Objects.requireNonNullElse;
 
 @SuppressWarnings("ALL")
-public record ScriptOptions(List<String> args, CmdLineParser cmdLineParser, List<IOpt> order, Map<String, List<Object>> theArguments, ScriptContext context) {
+public class ScriptOptions implements Iterable<Object> {
     public static final String[] EMPTY_STRING = new String[0];
+    private final List<String> args;
+    protected final CmdLineParser cmdLineParser;
+    protected final List<IOpt> order;
+    protected final Map<String, List<Object>> theArguments;
+    private final @Nullable ScriptContext context;
 
-    public ScriptOptions {
-        final List<Object> helpOpt = new ArrayList<>();
-        theArguments.put("help", helpOpt);
-        cmdLineParser.addOption(new ListSetter(
-                context, helpOpt, Boolean.class, false
-        ), new Option(
-                "--help",
-                EMPTY_STRING,
-                new CommonConfig(
-                    "Provides information about how to use the trick",
-                 "",
-                 false,
-                        true,
-                        new TypeInfo(Boolean.class, BooleanOptionHandler.class, false, "<bool>")
-                ),
-                true,
-                EMPTY_STRING,
-                EMPTY_STRING
-        ));
+    public ScriptOptions(List<String> args, CmdLineParser cmdLineParser, @Nullable ScriptContext context) {
+        this.args = args;
+        this.cmdLineParser = cmdLineParser;
+        this.order = new ArrayList<>();
+        this.theArguments = new HashMap<>();
+        this.context = context;
+
+        if (context != null) { // Null context means we're probably just trying to grab the options the script declares, so the help command is useless
+            final List<Object> helpOpt = new ArrayList<>();
+            theArguments.put("help", helpOpt);
+            cmdLineParser.addOption(new ListSetter(
+                    context, helpOpt, Boolean.class, false
+            ), new Option(
+                    "--help",
+                    EMPTY_STRING,
+                    new CommonConfig(
+                            "Provides information about how to use the trick",
+                            "",
+                            false,
+                            true,
+                            new TypeInfo(Boolean.class, BooleanOptionHandler.class, false, "<bool>")
+                    ),
+                    true,
+                    EMPTY_STRING,
+                    EMPTY_STRING
+            ));
+        }
     }
 
     @HostAccess.Export
@@ -157,6 +175,18 @@ public record ScriptOptions(List<String> args, CmdLineParser cmdLineParser, List
         }
     }
 
+    @NotNull
+    @Override
+    @HostAccess.Export
+    public Iterator<Object> iterator() {
+        try {
+            return parse().iterator();
+        } catch (Throwable e) {
+            Utils.sneakyThrow(e);
+            return null;
+        }
+    }
+
     private void check() throws RequestedHelpException {
         final List<Object> help = theArguments.get("help");
         if (help != null && !help.isEmpty() && help.get(0) == Boolean.TRUE) {
@@ -165,7 +195,7 @@ public record ScriptOptions(List<String> args, CmdLineParser cmdLineParser, List
     }
 
     public static final class ListSetter<T> implements Setter<T>, Getter<T> {
-        public final ScriptContext context;
+        public final @Nullable ScriptContext context;
         private final List<T> list;
         private final Class<T> type;
         private final boolean multiValued;
@@ -325,4 +355,31 @@ public record ScriptOptions(List<String> args, CmdLineParser cmdLineParser, List
 
     record TypeInfo(Class<?> clazz, Class<? extends OptionHandler<?>> handler, boolean multi, String meta) {}
 
+    /**
+     * A version of {@link ScriptOptions} that has no context, passed arguments or help option. <br>
+     * Use this when you simply want to collect the options without parsing any arguments.
+     */
+    public static final class OptionBuilding extends ScriptOptions {
+
+        public OptionBuilding(CmdLineParser cmdLineParser) {
+            super(List.of(), cmdLineParser, null);
+        }
+
+        /**
+         * {@return a list of null "parsed" arguments}
+         */
+        @Override
+        @HostAccess.Export
+        public List<Object> parse() {
+            final List<Object> arguments = new ArrayList<>();
+            for (final IOpt opt : order) {
+                arguments.add(opt.isList() ? List.of() : null);
+            }
+            return arguments;
+        }
+
+        public CmdLineParser getParser() {
+            return cmdLineParser;
+        }
+    }
 }

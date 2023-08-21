@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
  * An {@link org.kohsuke.args4j.spi.OptionHandler} that parses Discord users, roles, guilds or channels.
  */
 public class MentionableOptionHandler extends OneArgumentOptionHandler<IMentionable> {
-    private final Message.MentionType mentionType;
+    public final Message.MentionType mentionType;
     private final boolean isMember;
     private final ScriptContext context;
 

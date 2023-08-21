@@ -29,7 +29,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -147,8 +146,8 @@ public class ScriptUtils {
      * @param script  the script to evaluate
      * @param args    the arguments to evaluate the script with
      */
-    public static void submitExecution(ScriptContext context, String script, String args) {
-        final Future<Void> execution = ScriptUtils.SERVICE.submit(() -> ScriptUtils.execute(context, script, args), null);
+    public static void submitExecution(ScriptContext context, String script, Object args) {
+        final Future<Void> execution = ScriptUtils.SERVICE.submit(() -> ScriptUtils.execute(context, script, args instanceof List<?> ? (List<String>) args : ScriptUtils.toArgs(args.toString())), null);
 
         ScriptUtils.SERVICE.schedule(() -> {
             if (!execution.isDone()) {
@@ -168,30 +167,14 @@ public class ScriptUtils {
     public static void execute(
             ScriptContext context,
             String script,
-            String arguments
+            List<String> arguments
     ) {
-        try (final Context graal = Context.newBuilder("js")
-                .allowNativeAccess(false)
-                .allowIO(true) // Allow IO but install a custom file system with the other tricks
-                .fileSystem(GRAAL_FS)
-                .allowCreateProcess(false)
-                .allowEnvironmentAccess(EnvironmentAccess.NONE)
-                .allowHostClassLoading(false)
-                .allowValueSharing(true)
-                .allowHostAccess(HOST_ACCESS)
-                .engine(ENGINE)
-                .build()) {
+        try (final Context graal = buildContext()) {
             final var bindings = graal.getBindings("js");
-            bindings.removeMember("load");
-            bindings.removeMember("loadWithNewGlobal");
-            bindings.removeMember("eval");
-            bindings.removeMember("exit");
-            bindings.removeMember("quit");
 
             final CmdLineParser parser = new CmdLineParser(ParserProperties.defaults().withAtSyntax(false).withUsageWidth(40));
             final ScriptOptions scriptOptions = new ScriptOptions(
-                    ScriptUtils.toArgs(arguments), parser,
-                    new ArrayList<>(), new HashMap<>(), context
+                    arguments, parser, context
             );
             bindings.putMember("options", scriptOptions);
             bindings.putMember("simpleExports", ScriptObject.of("Exports"));
@@ -246,6 +229,61 @@ public class ScriptUtils {
                 context.reply().accept(MessageCreateData.fromContent("Could not evaluate script due to an exception: " + ex.getMessage()));
             }
         }
+    }
+
+    /**
+     * Retrieve static information (description, arguments and options) about a script without running the {@code execute} function.
+     *
+     * @param script the text of the script
+     * @return information about the script
+     * @throws CannotRetrieveInformationException if script {@link Context#eval(Source) evaluation} threw an exception
+     */
+    public static ScriptInformation getInformation(String script) throws CannotRetrieveInformationException {
+        try (final Context graal = buildContext()) {
+            final var bindings = graal.getBindings("js");
+
+            final CmdLineParser parser = new CmdLineParser(ParserProperties.defaults().withAtSyntax(false));
+            final ScriptOptions scriptOptions = new ScriptOptions.OptionBuilding(parser);
+            bindings.putMember("options", scriptOptions);
+            bindings.putMember("simpleExports", ScriptObject.of("Exports"));
+            final Value exports = bindings.getMember("simpleExports");
+
+            try {
+                final Source source = Source.newBuilder("js", script + EXPORT_MEMBERS, "script.js")
+                        .mimeType("application/javascript+module")
+                        .build();
+                graal.eval(source);
+
+                final Value desc = exports.getMember("description");
+                return new ScriptInformation(
+                        desc == null ? "Trick has no description" : toString(desc),
+                        parser.getOptions(), parser.getArguments()
+                );
+            } catch (Exception ex) {
+                throw new CannotRetrieveInformationException(ex);
+            }
+        }
+    }
+
+    private static Context buildContext() {
+        final Context context = Context.newBuilder("js")
+                .allowNativeAccess(false)
+                .allowIO(true) // Allow IO but install a custom file system with the other tricks
+                .fileSystem(GRAAL_FS)
+                .allowCreateProcess(false)
+                .allowEnvironmentAccess(EnvironmentAccess.NONE)
+                .allowHostClassLoading(false)
+                .allowValueSharing(true)
+                .allowHostAccess(HOST_ACCESS)
+                .engine(ENGINE)
+                .build();
+        final Value bindings = context.getBindings("js");
+        bindings.removeMember("load");
+        bindings.removeMember("loadWithNewGlobal");
+        bindings.removeMember("eval");
+        bindings.removeMember("exit");
+        bindings.removeMember("quit");
+        return context;
     }
 
     private static void printSingleLineUsage(CmdLineParser parser, Writer w) {

@@ -5,6 +5,8 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
+import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
@@ -13,10 +15,13 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
+import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
+import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.CustomPingListener;
 import net.neoforged.camelot.listener.TrickListener;
 import net.neoforged.camelot.log.ModerationActionRecorder;
+import net.neoforged.camelot.script.SlashTrickManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.neoforged.camelot.commands.utility.EvalCommand;
@@ -30,6 +35,8 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -79,6 +86,12 @@ public class BotMain {
     public static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     /**
+     * A map mapping a guild ID to its own {@link SlashTrickManager}. <br>
+     * New managers are added to this map during {@link GuildReadyEvent}.
+     */
+    public static final Map<Long, SlashTrickManager> TRICK_MANAGERS = new ConcurrentHashMap<>();
+
+    /**
      * Static instance of the bot. Can be accessed by any class with {@link #get()}
      */
     private static JDA instance;
@@ -113,6 +126,25 @@ public class BotMain {
                 .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CustomPingListener(), new CountersListener())
 
                 .addEventListeners((EventListener) ManageTrickCommand.Update::onEvent, (EventListener) ManageTrickCommand.Add::onEvent, (EventListener) EvalCommand::onEvent)
+
+                .addEventListeners((EventListener) gevent -> {
+                    if (gevent instanceof GuildReadyEvent event) {
+                        if (TRICK_MANAGERS.containsKey(event.getGuild().getIdLong())) return;
+
+                        final SlashTrickManager manager = new SlashTrickManager(
+                                event.getGuild().getIdLong(), Database.main().onDemand(SlashTricksDAO.class), Database.main().onDemand(TricksDAO.class)
+                        );
+                        manager.updateCommands(event.getGuild());
+                        event.getJDA().addEventListener(manager);
+                        TRICK_MANAGERS.put(event.getGuild().getIdLong(), manager);
+                    } else if (gevent instanceof GuildLeaveEvent event) {
+                        final SlashTrickManager trickManager = TRICK_MANAGERS.get(event.getGuild().getIdLong());
+                        if (trickManager == null) return;
+
+                        event.getJDA().removeEventListener(trickManager);
+                        TRICK_MANAGERS.remove(event.getGuild().getIdLong());
+                    }
+                })
 
                 .build();
         Config.populate(instance);

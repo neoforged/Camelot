@@ -19,10 +19,12 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.dv8tion.jda.internal.utils.Checks;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
-import net.neoforged.camelot.commands.Commands;
+import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.schemas.Trick;
+import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import net.neoforged.camelot.commands.PaginatableCommand;
@@ -37,7 +39,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public class ManageTrickCommand extends SlashCommand {
 
-    public static final SubcommandGroupData ALIAS = new SubcommandGroupData("alias", "Manage command aliases");
+    public static final SubcommandGroupData ALIAS = new SubcommandGroupData("alias", "Manage trick aliases");
+    public static final SubcommandGroupData PROMOTIONS = new SubcommandGroupData("promotions", "Manage trick slash promotions");
 
     public ManageTrickCommand() {
         this.name = "manage-trick";
@@ -50,7 +53,12 @@ public class ManageTrickCommand extends SlashCommand {
 
                 new AliasAdd(),
                 new AliasDelete(),
+
+                new NewPromotion(),
+                new RemovePromotion(),
+                new ListPromoted(BotMain.BUTTON_MANAGER)
         };
+        this.guildOnly = true;
     }
 
     @Override
@@ -340,6 +348,171 @@ public class ManageTrickCommand extends SlashCommand {
     }
 
     /**
+     * The command used to promote tricks to guild-level slash tricks.
+     */
+    public static final class NewPromotion extends SlashCommand {
+        public NewPromotion() {
+            this.name = "new";
+            this.help = "Promote a trick to a slash one";
+            this.subcommandGroup = PROMOTIONS;
+            this.options = List.of(
+                    new OptionData(OptionType.STRING, "trick", "The trick to promote", true).setAutoComplete(true),
+                    new OptionData(OptionType.STRING, "category", "The category to promote the trick to", true),
+                    new OptionData(OptionType.STRING, "name", "The promoted name (the second part in the slash command)", true)
+            );
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            if (!isManager(event.getMember())) {
+                event.reply("You cannot manage trick promotions!").setEphemeral(true).queue();
+                return;
+            }
+
+            final String trickName = event.getOption("trick", "", OptionMapping::getAsString);
+            final Trick trick = Database.main().withExtension(TricksDAO.class, db -> db.getTrick(trickName));
+            if (trick == null) {
+                event.reply("Unknown trick!").setEphemeral(true).queue();
+                return;
+            }
+            SlashTrick existingPromotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
+            if (existingPromotion != null) {
+                event.reply("That trick is already promoted as `/" + existingPromotion.category() + " " + existingPromotion.name() + "`!").setEphemeral(true).queue();
+                return;
+            }
+
+            final String category = event.getOption("category", "", OptionMapping::getAsString);
+            final String name = event.getOption("name", "", OptionMapping::getAsString);
+            if (!Checks.ALPHANUMERIC_WITH_DASH.matcher(category).matches()) {
+                event.reply("Invalid category name!").setEphemeral(true).queue();
+                return;
+            }
+
+            if (!Checks.ALPHANUMERIC_WITH_DASH.matcher(name).matches()) {
+                event.reply("Invalid name!").setEphemeral(true).queue();
+                return;
+            }
+
+            existingPromotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(event.getGuild().getIdLong(), category, name));
+            if (existingPromotion != null) {
+                event.reply("A trick with the same name was already promoted! (trick ID: " + existingPromotion.id() + ")").setEphemeral(true).queue();
+                return;
+            }
+
+            Database.main().useExtension(SlashTricksDAO.class, db -> db.promote(
+                    event.getGuild().getIdLong(),
+                    trick.id(),
+                    category,
+                    name
+            ));
+
+            event.reply("Trick promoted!").queue();
+        }
+
+        @Override
+        public void onAutoComplete(CommandAutoCompleteInteractionEvent event) {
+            suggestTrickAutocomplete(event, "trick");
+
+            if (event.getFocusedOption().getName().equals("category")) {
+                final List<String> categories = Database.main().withExtension(SlashTricksDAO.class, db -> db.findCategoriesMatching(event.getGuild().getIdLong(),
+                        "%" + event.getFocusedOption().getValue() + "%"));
+                event.replyChoices(categories.stream()
+                                .map(tr -> new Command.Choice(tr, tr))
+                                .toList())
+                        .queue(suc -> {}, e -> {});
+            }
+        }
+    }
+
+    /**
+     * The command used to demote a guild-level slash trick.
+     */
+    public static final class RemovePromotion extends SlashCommand {
+        public RemovePromotion() {
+            this.name = "remove";
+            this.help = "Demotes a slash trick";
+            this.subcommandGroup = PROMOTIONS;
+            this.options = List.of(
+                    new OptionData(OptionType.STRING, "trick", "The trick to demote", true).setAutoComplete(true)
+            );
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            if (!isManager(event.getMember())) {
+                event.reply("You cannot manage trick promotions!").setEphemeral(true).queue();
+                return;
+            }
+
+            final Trick trick = Database.main().withExtension(TricksDAO.class, db -> db.getTrick(event.getOption("trick", "", OptionMapping::getAsString)));
+            if (trick == null) {
+                event.reply("Unknown trick!").setEphemeral(true).queue();
+                return;
+            }
+            final SlashTrick existingPromotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
+            if (existingPromotion == null) {
+                event.reply("That trick is not promoted").setEphemeral(true).queue();
+                return;
+            }
+
+            Database.main().useExtension(SlashTricksDAO.class, db -> db.demote(
+                    event.getGuild().getIdLong(), trick.id()
+            ));
+
+            event.reply("Trick demoted!").queue();
+        }
+
+        @Override
+        public void onAutoComplete(CommandAutoCompleteInteractionEvent event) {
+            suggestTrickAutocomplete(event, "trick");
+        }
+    }
+
+    /**
+     * The command used to list all promoted tricks in the guild it was run in.
+     */
+    public static final class ListPromoted extends PaginatableCommand<PaginatableCommand.SimpleData> {
+
+        public ListPromoted(ButtonManager buttonManager) {
+            super(buttonManager);
+            this.name = "list";
+            this.subcommandGroup = PROMOTIONS;
+            this.help = "List all promoted tricks";
+            this.itemsPerPage = 25;
+        }
+
+        @Override
+        public SimpleData collectData(SlashCommandEvent event) {
+            return new SimpleData(Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotedCount(event.getGuild().getIdLong())));
+        }
+
+        @Override
+        public CompletableFuture<MessageEditData> createMessage(int page, SimpleData data, Interaction interaction) {
+            final EmbedBuilder embed = new EmbedBuilder();
+            embed.setTitle("List of promoted tricks")
+                    .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()));
+            Database.main().useExtension(TricksDAO.class, tricksDao -> Database.main().useExtension(SlashTricksDAO.class, db -> embed.appendDescription(String.join("\n",
+                    db.getPromotedTricksIn(interaction.getGuild().getIdLong(), page * itemsPerPage, itemsPerPage)
+                            .stream().map(trick -> {
+                                String msg = "- ";
+                                final List<String> names = tricksDao.getTrickNames(trick.id());
+                                if (names.isEmpty()) {
+                                    msg += "*Trick has no names*";
+                                } else {
+                                    msg += String.join(" / ", names);
+                                }
+                                msg += ": `/" + trick.category() + " " + trick.name() + "`";
+
+                                return msg;
+                            }).toList()))));
+            return CompletableFuture.completedFuture(new MessageEditBuilder()
+                    .setEmbeds(embed.build())
+                    .build());
+        }
+    }
+
+
+    /**
      * The command used to list all tricks.
      */
     public static final class ListCmd extends PaginatableCommand<PaginatableCommand.SimpleData> {
@@ -353,7 +526,7 @@ public class ManageTrickCommand extends SlashCommand {
 
         @Override
         public SimpleData collectData(SlashCommandEvent event) {
-            return new SimpleData(Commands.get().getSlashCommands().size());
+            return new SimpleData(Database.main().withExtension(TricksDAO.class, TricksDAO::getTrickAmount));
         }
 
         @Override
@@ -384,7 +557,14 @@ public class ManageTrickCommand extends SlashCommand {
      * {@return if the given {@code member} can edit the {@code trick}}
      */
     private static boolean checkCanEdit(Trick trick, Member member) {
-        return member.getIdLong() == trick.owner() || member.hasPermission(Permission.MODERATE_MEMBERS) ||
+        return member.getIdLong() == trick.owner() || isManager(member);
+    }
+
+    /**
+     * {@return if the given {@code member} is a trick manager
+     */
+    private static boolean isManager(Member member) {
+        return member.hasPermission(Permission.MODERATE_MEMBERS) ||
                 member.getRoles().stream().anyMatch(role -> role.getIdLong() == Config.TRICK_MASTER_ROLE);
     }
 

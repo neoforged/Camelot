@@ -13,7 +13,7 @@ import net.neoforged.camelot.db.transactionals.CountersDAO;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -28,7 +28,7 @@ public record ScriptContext(
         JDA jda, Guild guild, Member member, MessageChannel channel,
         Consumer<MessageCreateData> reply
 ) {
-    private static final Map<Class<?>, ScriptTransformer<?>> TRANSFORMERS = new HashMap<>();
+    private static final Map<Class<?>, ScriptTransformer<?>> TRANSFORMERS = new IdentityHashMap<>();
 
     /**
      * Transforms the given object to one which may be given to a script execution.

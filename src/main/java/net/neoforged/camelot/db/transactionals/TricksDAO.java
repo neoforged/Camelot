@@ -1,5 +1,7 @@
 package net.neoforged.camelot.db.transactionals;
 
+import net.neoforged.camelot.db.api.RegisterExecutionCallbacks;
+import net.neoforged.camelot.db.callback.TrickCallbacks;
 import net.neoforged.camelot.db.schemas.Trick;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -14,6 +16,7 @@ import java.util.List;
  * A transactional used to interact with {@link Trick tricks}.
  */
 @RegisterRowMapper(Trick.Mapper.class)
+@RegisterExecutionCallbacks(TrickCallbacks.class)
 public interface TricksDAO extends Transactional<TricksDAO> {
 
     /**
@@ -39,6 +42,12 @@ public interface TricksDAO extends Transactional<TricksDAO> {
     @Nullable
     @SqlQuery("select * from tricks where id = :id")
     Trick getTrick(@Bind("id") int id);
+
+    /**
+     * {@return the number of tricks}
+     */
+    @SqlQuery("select count(*) from tricks")
+    int getTrickAmount();
 
     /**
      * Get a trick by name.
@@ -128,5 +137,4 @@ public interface TricksDAO extends Transactional<TricksDAO> {
      */
     @SqlUpdate("delete from tricks where id = :id")
     void delete(@Bind("id") int trickId);
-
 }

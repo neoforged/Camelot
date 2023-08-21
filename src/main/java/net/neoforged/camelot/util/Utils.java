@@ -71,4 +71,20 @@ public class Utils {
     public static String truncate(final String str, int limit) {
         return str.length() > (limit - 3) ? str.substring(0, limit - 3) + "..." : str;
     }
+
+    /**
+     * Sneakily throws the given exception, bypassing compile-time checks for
+     * checked exceptions.
+     *
+     * <p>
+     * <strong>This method will never return normally.</strong> The exception passed
+     * to the method is always rethrown.
+     * </p>
+     *
+     * @param ex the exception to sneakily rethrow
+     */
+    @SuppressWarnings("unchecked")
+    public static <E extends Throwable> void sneakyThrow(Throwable ex) throws E {
+        throw (E) ex;
+    }
 }

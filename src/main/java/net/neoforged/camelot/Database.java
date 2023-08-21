@@ -1,8 +1,11 @@
 package net.neoforged.camelot;
 
+import net.neoforged.camelot.db.api.CallbackConfig;
+import net.neoforged.camelot.db.impl.PostCallbackDecorator;
 import net.neoforged.camelot.listener.CustomPingListener;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.sqlobject.HandlerDecorators;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,8 +97,10 @@ public class Database {
                 .load();
         flyway.migrate();
 
-        return Jdbi.create(dataSource)
+        final Jdbi jdbi = Jdbi.create(dataSource)
                 .installPlugin(new SqlObjectPlugin());
+        jdbi.getConfig(HandlerDecorators.class).register(new PostCallbackDecorator(jdbi.getConfig(CallbackConfig.class)));
+        return jdbi;
     }
 
 }
