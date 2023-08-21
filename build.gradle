@@ -2,11 +2,15 @@ import java.nio.file.Files
 
 plugins {
     id 'java'
+    id 'net.neoforged.gradleutils' version '2.+'
     id 'com.github.johnrengelman.shadow' version '7.+'
 }
 
 group 'net.neoforged'
-version project.bot_version
+println("Version: ${version = gradleutils.getTagOffsetVersion()}")
+changelog {
+    fromTag '1.0'
+}
 
 tasks.register('run', JavaExec).configure {
     classpath(sourceSets.main.runtimeClasspath)
@@ -81,19 +85,28 @@ dependencies {
 jar {
     manifest {
         mainAttributes(
-                'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.bot_version}",
+                'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
                 'Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
                 'Specification-Title': archivesBaseName,
-                'Specification-Vendor': 'Gemwire',
+                'Specification-Vendor': 'NeoForged',
                 'Specification-Version': '1',
                 'Implementation-Title': archivesBaseName,
-                'Implementation-Version': "${project.bot_version}",
-                'Implementation-Vendor': 'Gemwire',
+                'Implementation-Version': "${project.version}",
+                'Implementation-Vendor': 'NeoForged',
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
                 'Built-On-Java': "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
                 'Built-On': "${project.jda_version}-${project.jda_chewtils_version}",
-                'Class-Path': configurations.compileClasspath.collect { it.getName() }.join(' '),
                 'Main-Class': 'net.neoforged.camelot.BotMain'
         )
     }
+}
+
+tasks.register('outputVersion') {
+    doLast {
+        file(System.getenv('GITHUB_ENV')) << "\nBOT_VERSION=${project.version}"
+    }
+}
+
+shadowJar {
+    archiveFile.set(project.file("$buildDir/libs/camelot-all.jar"))
 }
