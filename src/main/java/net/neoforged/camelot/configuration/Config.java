@@ -49,6 +49,11 @@ public class Config {
     public static long PINGS_THREADS_CHANNEL = 0L;
 
     /**
+     * If {@code true}, tricks can be invoked using prefix commands.
+     */
+    public static boolean PREFIX_TRICKS = true;
+
+    /**
      * Read configs from file.
      * If the file does not exist, or the properties are invalid, the config is reset to defaults.
      * @throws IOException if something goes wrong with the universe.
@@ -63,7 +68,7 @@ public class Config {
             PREFIX = properties.getProperty("prefix");
             TRICK_MASTER_ROLE = Long.parseLong(properties.getProperty("trickMaster", "0"));
             PINGS_THREADS_CHANNEL = Long.parseLong(properties.getProperty("pingsThreadsChannel", "0"));
-
+            PREFIX_TRICKS = Boolean.parseBoolean(properties.getProperty("prefixTricks", "true"));
         } catch (Exception e) {
             Files.writeString(Path.of("config.properties"),
                     """
@@ -75,6 +80,8 @@ public class Config {
                             prefix=!
                             # The role that grants permission to edit any trick.
                             trickMaster=0
+                            # If true, tricks can be invoked using prefix commands
+                            prefixTricks=true
                             # The channel in which to create ping private threads if a member does not have DMs enabled.
                             pingsThreadsChannel=0
                             

@@ -156,7 +156,9 @@ public class BotMain {
         }
 
         Commands.init();
-        instance.addEventListener(new TrickListener(Commands.get().getPrefix()));
+        if (Config.PREFIX_TRICKS) {
+            instance.addEventListener(new TrickListener(Commands.get().getPrefix()));
+        }
 
         EXECUTOR.scheduleAtFixedRate(() -> {
             final PendingUnbansDAO db = Database.main().onDemand(PendingUnbansDAO.class);
