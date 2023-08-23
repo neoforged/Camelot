@@ -59,6 +59,9 @@ public record GithubLocation(String repository, String ref, String location) {
 
     public static GithubLocation parse(String str) {
         final String[] spl = str.split("@", 2);
+        if (!spl[0].contains("/")) {
+            throw new IllegalArgumentException("GitHub locations must specify the full path of the repository!");
+        }
         final String[] sub = spl[1].split(":", 2);
         return new GithubLocation(spl[0], sub[0], sub[1]);
     }

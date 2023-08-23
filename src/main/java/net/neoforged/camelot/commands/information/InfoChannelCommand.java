@@ -81,6 +81,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -148,7 +149,7 @@ public class InfoChannelCommand extends SlashCommand {
             try {
                 location = GithubLocation.parse(repo);
             } catch (Exception ex) {
-                event.reply("Invalid repository location format! The format is: `repository@branch:folder`").setEphemeral(true).queue();
+                event.reply("Invalid repository location format! The format is: `owner/repository@branch:folder`").setEphemeral(true).queue();
                 return;
             }
 
@@ -430,9 +431,11 @@ public class InfoChannelCommand extends SlashCommand {
     public static final EventListener EVENT_LISTENER = gevent -> {
         final MessageChannel channel;
         // Message edits and updates give us the message
-        if (gevent instanceof MessageReceivedEvent event && event.isFromGuild()) {
+        // Also don't attempt to rebuild the messages for non-webhook messages
+        // but ephemeral interaction replies are webhook messages so filter those out as well
+        if (gevent instanceof MessageReceivedEvent event && event.isFromGuild() && event.getMessage().isWebhookMessage() && !event.getMessage().isEphemeral()) {
             channel = event.getMessage().getChannel();
-        } else if (gevent instanceof MessageUpdateEvent event && event.isFromGuild()) {
+        } else if (gevent instanceof MessageUpdateEvent event && event.isFromGuild() && event.getMessage().isWebhookMessage() && !event.getMessage().isEphemeral()) {
             channel = event.getMessage().getChannel();
         } else if (gevent instanceof MessageDeleteEvent event && event.isFromGuild()) {
             // But deletes don't
@@ -453,6 +456,7 @@ public class InfoChannelCommand extends SlashCommand {
                         BotMain.LOGGER.error("Could not retrieve messages in info channel {}:", infoChannel, t);
                     } else {
                         try {
+                            msg.removeIf(Predicate.not(Message::isWebhookMessage)); // We want to filter out messages that aren't from the webhook
                             Collections.reverse(msg); // We receive newest to oldest
                             final String dump = MAPPER.writer().writeValueAsString(msg); // Format the messages
                             infoChannel.location().updateInDirectory(
