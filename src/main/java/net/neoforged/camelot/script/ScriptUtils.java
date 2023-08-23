@@ -10,6 +10,7 @@ import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.intellij.lang.annotations.Language;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.ParserProperties;
@@ -65,7 +66,7 @@ public class ScriptUtils {
             .build();
 
     @Language("js")
-    public static final String EXPORT_MEMBERS = "\ntry { simpleExports.execute = execute } catch(e) {} try { simpleExports.description = description } catch(e) {}";
+    public static final String EXPORT_MEMBERS = "simpleExports.description = () => {try {return description} catch (e) {return null}};simpleExports.execute = () => {try {return execute} catch(e) {return null}};";
 
     public static final Engine ENGINE = Engine.newBuilder()
             .allowExperimentalOptions(true)
@@ -188,21 +189,21 @@ public class ScriptUtils {
             context.compile().transferTo(bindings);
 
             try {
-                final Source source = Source.newBuilder("js", script + EXPORT_MEMBERS, "script.js")
+                final Source source = Source.newBuilder("js", EXPORT_MEMBERS + script, "script.js")
                         .mimeType("application/javascript+module")
                         .build();
                 graal.eval(source);
 
-                final Value execute = exports.getMember("execute");
-                if (execute != null) {
+                final Value execute = exports.getMember("execute").execute();
+                if (!execute.isNull()) {
                     execute.execute();
                 }
             } catch (PolyglotException ex) {
                 if (Objects.equals(ex.getMessage(), RequestedHelpException.MESSAGE)) {
                     final StringWriter writer = new StringWriter();
 
-                    final Value help = exports.getMember("description");
-                    if (help != null) {
+                    final Value help = exports.getMember("description").execute();
+                    if (!help.isNull()) {
                         writer.append("**Description**: ").append(toString(help)).append('\n');
                     }
 
@@ -254,14 +255,14 @@ public class ScriptUtils {
             final Value exports = bindings.getMember("simpleExports");
 
             try {
-                final Source source = Source.newBuilder("js", script + EXPORT_MEMBERS, "script.js")
+                final Source source = Source.newBuilder("js", EXPORT_MEMBERS + script, "script.js")
                         .mimeType("application/javascript+module")
                         .build();
                 graal.eval(source);
 
-                final Value desc = exports.getMember("description");
+                final Value desc = exports.getMember("description").execute();
                 return new ScriptInformation(
-                        desc == null ? "Trick has no description" : toString(desc),
+                        desc.isNull() ? "Trick has no description" : toString(desc),
                         parser.getOptions(), parser.getArguments()
                 );
             } catch (Exception ex) {

@@ -511,6 +511,7 @@ public class ManageTrickCommand extends SlashCommand {
                 final List<String> categories = Database.main().withExtension(SlashTricksDAO.class, db -> db.findCategoriesMatching(event.getGuild().getIdLong(),
                         "%" + event.getFocusedOption().getValue() + "%"));
                 event.replyChoices(categories.stream()
+                                .limit(OptionData.MAX_CHOICES)
                                 .map(tr -> new Command.Choice(tr, tr))
                                 .toList())
                         .queue(suc -> {}, e -> {});
@@ -679,6 +680,7 @@ public class ManageTrickCommand extends SlashCommand {
         if (!event.getFocusedOption().getName().equals(trickOpt)) return;
         final List<String> tricks = Database.main().withExtension(TricksDAO.class, db -> db.findTricksMatching("%" + event.getFocusedOption().getValue() + "%"));
         event.replyChoices(tricks.stream()
+                        .limit(OptionData.MAX_CHOICES)
                         .map(tr -> new Command.Choice(tr, tr))
                         .toList())
                 .queue(suc -> {}, e -> {});
