@@ -130,7 +130,7 @@ public class BotMain {
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CustomPingListener(), new CountersListener())
 
-                .addEventListeners((EventListener) ManageTrickCommand.Update::onEvent, (EventListener) ManageTrickCommand.Add::onEvent, (EventListener) EvalCommand::onEvent)
+                .addEventListeners((EventListener) ManageTrickCommand.Update::onEvent, (EventListener) ManageTrickCommand.Add::onEvent, (EventListener) ManageTrickCommand.AddText::onEvent, (EventListener) EvalCommand::onEvent)
 
                 .addEventListeners((EventListener) gevent -> {
                     if (gevent instanceof GuildReadyEvent event) {

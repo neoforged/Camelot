@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.dv8tion.jda.internal.utils.Checks;
@@ -29,9 +30,12 @@ import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.configuration.Config;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * The slash command used to manage tricks.
@@ -46,6 +50,7 @@ public class ManageTrickCommand extends SlashCommand {
         this.name = "manage-trick";
         this.children = new SlashCommand[] {
                 new Add(),
+                new AddText(),
                 new Delete(),
                 new Update(),
                 new Info(),
@@ -68,7 +73,7 @@ public class ManageTrickCommand extends SlashCommand {
 
     /**
      * The command used to add a new trick.
-     * <p>This command prompts a modal asking for the trick names (separated by a space) and the script,</p>
+     * <p>This command prompts a modal asking for the trick names (separated by a space) and the script</p>
      */
     public static final class Add extends SlashCommand {
         public static final String MODAL_ID = "add-trick";
@@ -128,7 +133,96 @@ public class ManageTrickCommand extends SlashCommand {
 
             final int id = Database.main().withExtension(TricksDAO.class, db -> db.insertTrick(script, event.getUser().getIdLong()));
             Database.main().useExtension(TricksDAO.class, db -> names.forEach(name -> db.addAlias(id, name)));
-            event.reply("Trick added!").queue();
+            event.reply("Trick with name" + (names.size() == 1 ? "" : "s") + " " + names.stream().map(name -> "`" + name + "`").collect(Collectors.joining(", ")) + " added!").queue();
+        }
+    }
+
+    /**
+     * The command used to add a new trick with a simple text reply.
+     * <p>This command prompts a modal asking for the trick names (separated by a space), the trick description and its string reply</p>
+     */
+    public static final class AddText extends SlashCommand {
+        public static final String MODAL_ID = "add-trick-text";
+
+        public AddText() {
+            this.name = "add-text";
+            this.help = "Add a new trick with a text reply";
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            event.replyModal(Modal.create(MODAL_ID, "Add a new trick with a text reply")
+                            .addActionRow(TextInput.create("names", "Trick names", TextInputStyle.SHORT)
+                                    .setRequired(true)
+                                    .setMinLength(1)
+                                    .build())
+                            .addActionRow(TextInput.create("description", "Trick description", TextInputStyle.SHORT)
+                                    .setRequired(false)
+                                    .build())
+                            .addActionRow(TextInput.create("text", "The trick text reply", TextInputStyle.PARAGRAPH)
+                                    .setRequired(true)
+                                    .setMinLength(1)
+                                    .build())
+                            .build())
+                    .queue();
+        }
+
+        public static void onEvent(final GenericEvent gevent) {
+            if (!(gevent instanceof ModalInteractionEvent event)) return;
+            if (!event.getModalId().equals(MODAL_ID)) return;
+
+            final String text = event.getValue("text").getAsString();
+            final List<String> names = List.of(event.getValue("names").getAsString().split(" "));
+            final String description = Optional.ofNullable(event.getValue("description")).map(ModalMapping::getAsString)
+                    .filter(str -> !str.isBlank()).orElse(null);
+            handleModal(event, text, names, description);
+        }
+
+        public static void handleModal(ModalInteractionEvent event, String text, List<String> names, @Nullable String description) {
+            if (Database.main().withExtension(TricksDAO.class, db -> names.stream()
+                    .anyMatch(it -> db.getTrickByName(it) != null))) {
+                event.reply("A trick with at least one of the given names exists already!")
+                        .addEmbeds(new EmbedBuilder()
+                                .setTitle("Reply text")
+                                .setDescription("```\n" + text + "\n```")
+                                .build())
+                        .setEphemeral(true).queue();
+                return;
+            }
+
+            for (final String name : names) {
+                if (!isNameValid(name)) {
+                    event.reply("`%s` is not a valid trick name!".formatted(name))
+                            .addEmbeds(new EmbedBuilder()
+                                    .setTitle("Reply text")
+                                    .setDescription("```\n" + text + "\n```")
+                                    .build())
+                            .setEphemeral(true).queue();
+                    return;
+                }
+            }
+
+            final StringBuilder script = new StringBuilder();
+            if (description != null) {
+                script.append("const description = ")
+                        .append("'")
+                        .append(description.replace("'", "\\'"))
+                        .append("'")
+                        .append('\n');
+            }
+            script.append("function execute() {")
+                    .append('\n')
+                    .append("\treply(`")
+                    .append(text.replace("`", "\\`"))
+                    .append("`")
+                    .append(")")
+                    .append('\n')
+                    .append('}');
+
+            final int id = Database.main().withExtension(TricksDAO.class, db -> db.insertTrick(script.toString(), event.getUser().getIdLong()));
+            Database.main().useExtension(TricksDAO.class, dao -> names.forEach(name -> dao.addAlias(id, name)));
+            event.reply("Trick with name" + (names.size() == 1 ? "" : "s") + " " + names.stream().map(name -> "`" + name + "`")
+                    .collect(Collectors.joining(", ")) + " added!").queue();
         }
     }
 
@@ -357,7 +451,7 @@ public class ManageTrickCommand extends SlashCommand {
             this.subcommandGroup = PROMOTIONS;
             this.options = List.of(
                     new OptionData(OptionType.STRING, "trick", "The trick to promote", true).setAutoComplete(true),
-                    new OptionData(OptionType.STRING, "category", "The category to promote the trick to", true),
+                    new OptionData(OptionType.STRING, "category", "The category to promote the trick to", true).setAutoComplete(true),
                     new OptionData(OptionType.STRING, "name", "The promoted name (the second part in the slash command)", true)
             );
         }
