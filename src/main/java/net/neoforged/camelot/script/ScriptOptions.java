@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
+import net.neoforged.camelot.script.option.EnumOptionHandler;
 import net.neoforged.camelot.util.Utils;
 import org.graalvm.polyglot.HostAccess;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,7 +88,7 @@ public class ScriptOptions implements Iterable<Object> {
         final List<Object> args = createArgsList(config);
         theArguments.put(decidedNames.get(0), args);
         cmdLineParser.addOption(new ListSetter(
-                context, args, option.commonConfig.typeInfo.clazz, option.commonConfig.typeInfo.multi
+                context, args, option.commonConfig.typeInfo.clazz, option.commonConfig.typeInfo.multi, (List<String>) config.get("values")
         ), option);
         return this;
     }
@@ -106,7 +108,7 @@ public class ScriptOptions implements Iterable<Object> {
         final List<Object> args = createArgsList(config);
         theArguments.put(option.name(), args);
         cmdLineParser.addArgument(new ListSetter(
-                context, args, option.commonConfig.typeInfo.clazz, option.commonConfig.typeInfo.multi
+                context, args, option.commonConfig.typeInfo.clazz, option.commonConfig.typeInfo.multi, (List<String>) config.get("values")
         ), option);
         return this;
     }
@@ -148,6 +150,7 @@ public class ScriptOptions implements Iterable<Object> {
             case "string" -> new TypeInfo(String.class, StringOptionHandler.class, multi, "<string>");
             case "int" -> new TypeInfo(Integer.class, IntOptionHandler.class, multi, "<int>");
             case "boolean" -> new TypeInfo(Boolean.class, BooleanOptionHandler.class, multi, "");
+            case "enum" -> new TypeInfo(String.class, EnumOptionHandler.class, multi, "");
 
             case "user" -> new TypeInfo(User.class, MentionableOptionHandler.class, multi, "");
             case "member" -> new TypeInfo(Member.class, MentionableOptionHandler.class, multi, "");
@@ -199,14 +202,20 @@ public class ScriptOptions implements Iterable<Object> {
         private final List<T> list;
         private final Class<T> type;
         private final boolean multiValued;
+        public final Set<T> asEnum;
 
         private boolean isDefault = true;
 
         public ListSetter(ScriptContext context, List<T> list, Class<T> type, boolean multiValued) {
+            this(context, list, type, multiValued, null);
+        }
+
+        public ListSetter(ScriptContext context, List<T> list, Class<T> type, boolean multiValued, List<T> asEnum) {
             this.context = context;
             this.list = list;
             this.type = type;
             this.multiValued = multiValued;
+            this.asEnum = asEnum == null ? Set.of() : Set.copyOf(asEnum);
         }
 
         @Override

@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -20,6 +21,7 @@ import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
+import net.neoforged.camelot.script.option.EnumOptionHandler;
 import net.neoforged.camelot.script.option.MentionableOptionHandler;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -200,20 +202,20 @@ public class SlashTrickManager implements EventListener {
 
         for (int i = 0; i < information.arguments().size(); i++) {
             final var argument = information.arguments().get(i);
-            options.add(new OptionData(
+            options.add(configure(new OptionData(
                     decideTypeFrom(argument), sanitizeName(argument.option.metaVar(), "arg" + (i == 0 ? "" : String.valueOf(i))),
                     argument.option.usage().isBlank() ? "No help provided" : argument.option.usage(),
                     argument.option.required()
-            ));
+            ), argument));
         }
         for (int i = 0; i < information.options().size(); i++) {
             final var opt = information.options().get(i);
-            options.add(new OptionData(
+            options.add(configure(new OptionData(
                     decideTypeFrom(opt),
                     sanitizeName(((NamedOptionDef) opt.option).name().length() == 2 ? ((NamedOptionDef) opt.option).name().substring(1) : ((NamedOptionDef) opt.option).name().substring(2), "opt" + (i == 0 ? "" : String.valueOf(i))), // We enforce - and --
                     opt.option.usage().isBlank() ? "No help provided" : opt.option.usage(),
                     opt.option.required()
-            ));
+            ), opt));
         }
         options.sort((o1, o2) -> o1.isRequired() == o2.isRequired() ? 0 : (o1.isRequired() ? 1 : -1));
 
@@ -222,6 +224,14 @@ public class SlashTrickManager implements EventListener {
         sortedHandlers.addAll(information.options());
 
         return Pair.of(options, sortedHandlers);
+    }
+
+    private static OptionData configure(OptionData data, OptionHandler<?> handler) {
+        if (handler instanceof EnumOptionHandler enumOptionHandler) {
+            return data.addChoices(enumOptionHandler.enumType.stream()
+                    .map(s -> new Command.Choice(s, s)).toList());
+        }
+        return data;
     }
 
     private static String sanitizeName(String name, String defaultName) {
