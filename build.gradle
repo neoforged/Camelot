@@ -110,5 +110,6 @@ tasks.register('outputVersion') {
 }
 
 shadowJar {
+    mergeServiceFiles()
     archiveFile.set(project.file("$buildDir/libs/camelot-all.jar"))
 }
