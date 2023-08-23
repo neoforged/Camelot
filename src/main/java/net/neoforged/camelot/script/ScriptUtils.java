@@ -1,7 +1,6 @@
 package net.neoforged.camelot.script;
 
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.util.Utils;
 import org.graalvm.polyglot.Context;
@@ -178,7 +177,7 @@ public class ScriptUtils {
         try (final Context graal = buildContext()) {
             final var bindings = graal.getBindings("js");
 
-            final CmdLineParser parser = new CmdLineParser(ParserProperties.defaults().withAtSyntax(false).withUsageWidth(40));
+            final CmdLineParser parser = new NegativeNumberAwareParser(null, ParserProperties.defaults().withAtSyntax(false).withUsageWidth(40));
             final ScriptOptions scriptOptions = new ScriptOptions(
                     arguments, parser, context
             );
@@ -248,7 +247,7 @@ public class ScriptUtils {
         try (final Context graal = buildContext()) {
             final var bindings = graal.getBindings("js");
 
-            final CmdLineParser parser = new CmdLineParser(ParserProperties.defaults().withAtSyntax(false));
+            final CmdLineParser parser = new NegativeNumberAwareParser(null, ParserProperties.defaults().withAtSyntax(false));
             final ScriptOptions scriptOptions = new ScriptOptions.OptionBuilding(parser);
             bindings.putMember("options", scriptOptions);
             bindings.putMember("simpleExports", ScriptObject.of("Exports"));
