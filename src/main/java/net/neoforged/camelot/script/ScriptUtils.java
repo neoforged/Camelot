@@ -272,7 +272,7 @@ public class ScriptUtils {
     }
 
     private static Context buildContext() {
-        final Context context = Context.newBuilder("js")
+        final Context context = Context.newBuilder("js", "regex")
                 .allowNativeAccess(false)
                 .allowIO(true) // Allow IO but install a custom file system with the other tricks
                 .fileSystem(GRAAL_FS)
