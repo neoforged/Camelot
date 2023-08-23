@@ -217,7 +217,7 @@ public class SlashTrickManager implements EventListener {
                     opt.option.required()
             ), opt));
         }
-        options.sort((o1, o2) -> o1.isRequired() == o2.isRequired() ? 0 : (o1.isRequired() ? 1 : -1));
+        options.sort((o1, o2) -> o1.isRequired() == o2.isRequired() ? 0 : (o1.isRequired() ? -1 : 1));
 
         final List<OptionHandler> sortedHandlers = new ArrayList<>(size);
         sortedHandlers.addAll(information.arguments());
