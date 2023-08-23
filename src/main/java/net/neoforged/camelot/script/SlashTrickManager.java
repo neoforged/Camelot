@@ -13,7 +13,9 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
@@ -115,7 +117,12 @@ public class SlashTrickManager implements EventListener {
 
             event.deferReply().queue();
             final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(),
-                    event.getChannel(), createData -> event.getHook().editOriginal(MessageEditData.fromCreateData(createData)).complete());
+                    event.getChannel(), new ScriptReplier() {
+                @Override
+                protected RestAction<?> doSend(MessageCreateData createData) {
+                    return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
+                }
+            });
 
             ScriptUtils.submitExecution(context, tricksDAO.getTrick(info.id).script(), options);
         }

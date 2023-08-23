@@ -1,7 +1,9 @@
 package net.neoforged.camelot.script;
 
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.neoforged.camelot.util.Utils;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.EnvironmentAccess;
@@ -150,7 +152,11 @@ public class ScriptUtils {
         final Future<Void> execution = ScriptUtils.SERVICE.submit(() -> ScriptUtils.execute(context, script, args instanceof List<?> ? (List<String>) args : ScriptUtils.toArgs(args.toString())), null);
 
         ScriptUtils.SERVICE.schedule(() -> {
-            if (!execution.isDone()) {
+            if (execution.isDone()) {
+                if (!context.reply().wasReplied()) {
+                    context.reply().send(MessageCreateData.fromContent("Script did not send any reply!")).queue();
+                }
+            } else {
                 execution.cancel(true);
                 context.reply().accept(MessageCreateData.fromContent("Script execution timed out!"));
             }
@@ -214,7 +220,7 @@ public class ScriptUtils {
                 } else if (!ex.getMessage().equals("Thread was interrupted.")) { // If it is interrupted then the user would be informed about the time out
                     final StringBuilder message = new StringBuilder();
                     final boolean isCmdLine = ex.getMessage().startsWith(CmdLineParseException.PREFIX);
-                    message.append("Script failed execution due to an exception: **").append(isCmdLine ? ex.getMessage().substring(CmdLineParseException.PREFIX.length()) : ex.getMessage()).append("**");
+                    message.append("Script failed execution due to an exception: **").append(isCmdLine ? ex.getMessage().substring(CmdLineParseException.PREFIX.length()) : Utils.truncate(ex.getMessage(), 1500)).append("**");
                     if (!isCmdLine) {
                         final String trace = String.join("\n", Stream.of(ex.getStackTrace())
                                 .filter(it -> it.getClassName().equals("<js>"))

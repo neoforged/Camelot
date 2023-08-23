@@ -4,17 +4,18 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.script.ScriptContext;
+import net.neoforged.camelot.script.ScriptReplier;
 import net.neoforged.camelot.script.ScriptUtils;
 import org.jetbrains.annotations.NotNull;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 
 import java.util.EnumSet;
-import java.util.function.Consumer;
 
 /**
  * A listener listening for {@link MessageReceivedEvent} and seeing if they match a trick alias, which if found,
@@ -39,15 +40,19 @@ public record TrickListener(String prefix) implements EventListener {
 
             final String args = nextSpace < 0 ? "" : content.substring(nextSpace + 1);
 
-            final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(), event.getChannel(), new Consumer<>() {
+            final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(), event.getChannel(), new ScriptReplier() {
                 Message reply;
+
                 @Override
-                public void accept(MessageCreateData create) {
-                    if (reply == null) {
-                        reply = event.getMessage().reply(create)
-                                .setAllowedMentions(ALLOWED_MENTIONS).complete();
-                    } else {
-                        reply.editMessage(MessageEditData.fromCreateData(create)).complete();
+                protected RestAction<?> doSend(MessageCreateData createData) {
+                    synchronized (this) {
+                        if (reply == null) {
+                            return event.getMessage().reply(createData)
+                                    .setAllowedMentions(ALLOWED_MENTIONS)
+                                    .onSuccess(msg -> this.reply = msg);
+                        } else {
+                            return reply.editMessage(MessageEditData.fromCreateData(createData));
+                        }
                     }
                 }
             });

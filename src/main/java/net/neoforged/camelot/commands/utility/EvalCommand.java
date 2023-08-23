@@ -11,11 +11,14 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.script.ScriptContext;
+import net.neoforged.camelot.script.ScriptReplier;
 import net.neoforged.camelot.script.ScriptUtils;
 
 import java.util.List;
@@ -68,7 +71,12 @@ public class EvalCommand extends Command {
                     .queue(script -> {
                         event.deferReply().queue();
                         final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(),
-                                event.getChannel(), createData -> event.getHook().editOriginal(MessageEditData.fromCreateData(createData)).complete());
+                                event.getChannel(), new ScriptReplier() {
+                            @Override
+                            protected RestAction<?> doSend(MessageCreateData createData) {
+                                return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
+                            }
+                        });
 
                         ScriptUtils.submitExecution(context, script, Optional.ofNullable(event.getValue("args")).map(ModalMapping::getAsString).orElse(""));
                     });

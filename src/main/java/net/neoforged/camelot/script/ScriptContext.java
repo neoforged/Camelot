@@ -25,8 +25,7 @@ import java.util.stream.Collectors;
  * @param reply a consumer used to send a message to the user
  */
 public record ScriptContext(
-        JDA jda, Guild guild, Member member, MessageChannel channel,
-        Consumer<MessageCreateData> reply
+        JDA jda, Guild guild, Member member, MessageChannel channel, ScriptReplier reply
 ) {
     private static final Map<Class<?>, ScriptTransformer<?>> TRANSFORMERS = new IdentityHashMap<>();
 

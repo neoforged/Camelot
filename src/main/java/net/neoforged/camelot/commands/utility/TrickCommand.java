@@ -6,9 +6,12 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.script.ScriptContext;
+import net.neoforged.camelot.script.ScriptReplier;
 import net.neoforged.camelot.script.ScriptUtils;
 
 import java.util.List;
@@ -38,7 +41,12 @@ public class TrickCommand extends SlashCommand {
 
         event.deferReply().queue();
         final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(),
-                event.getChannel(), createData -> event.getHook().editOriginal(MessageEditData.fromCreateData(createData)).complete());
+                event.getChannel(), new ScriptReplier() {
+            @Override
+            protected RestAction<?> doSend(MessageCreateData createData) {
+                return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
+            }
+        });
 
         ScriptUtils.submitExecution(context, trick.script(), args);
     }
