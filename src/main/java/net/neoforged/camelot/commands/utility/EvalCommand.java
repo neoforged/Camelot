@@ -59,7 +59,6 @@ public class EvalCommand extends Command {
                                 .queue()).toString(), "Add trick")
                 )
                 .build())
-                .mentionRepliedUser(false)
                 .queue();
     }
 

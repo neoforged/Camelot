@@ -11,8 +11,11 @@ import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.dv8tion.jda.api.utils.messages.MessageRequest;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
@@ -117,6 +120,8 @@ public class BotMain {
             LOGGER.error("Something is wrong with the universe. Error: " + e.getMessage());
             System.exit(-1);
         }
+
+        MessageRequest.setDefaultMentionRepliedUser(false);
 
         instance = JDABuilder
                 .create(Config.LOGIN_TOKEN, INTENTS)
