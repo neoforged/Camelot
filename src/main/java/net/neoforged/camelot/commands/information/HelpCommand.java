@@ -44,7 +44,7 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
      */
     public EmbedBuilder getHelpStartingAt(int index) {
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setAuthor(Common.NAME, Common.REPO, BotMain.get().getSelfUser().getAvatarUrl());
+        embed.setAuthor(Common.NAME_WITH_VERSION, Common.REPO, BotMain.get().getSelfUser().getAvatarUrl());
         embed.setDescription("All registered commands:");
 
         List<Command> commandList = Commands.get().getCommands();
