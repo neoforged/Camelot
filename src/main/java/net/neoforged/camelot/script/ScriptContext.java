@@ -109,6 +109,7 @@ public record ScriptContext(
         return ScriptObject.mentionable("Member", member)
                 .put("user", createUser(member.getUser()))
                 .put("avatarUrl", member.getAvatarUrl())
+                .put("effectiveAvatarUrl", member.getEffectiveAvatar())
                 .put("nickname", member.getNickname())
                 .putLazyGetter("getPermissions", () -> new ArrayList<>(member.getPermissions()))
                 .putLazyGetter("getRoles", () -> transformList(member.getRoles()))
