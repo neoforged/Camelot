@@ -111,6 +111,7 @@ public record ScriptContext(
                 .put("avatarUrl", member.getAvatarUrl())
                 .put("effectiveAvatarUrl", member.getEffectiveAvatarUrl())
                 .put("nickname", member.getNickname())
+                .put("effectiveName", member.getEffectiveName())
                 .putLazyGetter("getPermissions", () -> new ArrayList<>(member.getPermissions()))
                 .putLazyGetter("getRoles", () -> transformList(member.getRoles()))
                 .putMethod("toString", args -> member.getUser().getAsTag() + " in " + member.getGuild().getName());
