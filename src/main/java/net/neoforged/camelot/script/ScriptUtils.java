@@ -78,6 +78,17 @@ public class ScriptUtils {
             .option("log.level", "OFF")
             .build();
 
+    public static final ProxyExecutable CATCH_UNDEFINED = args -> {
+        try {
+            return args[0].execute();
+        } catch (Exception exception) {
+            if (!exception.getMessage().startsWith("ReferenceError: ")) {
+                Utils.sneakyThrow(exception);
+            }
+            return null;
+        }
+    };
+
     public static final java.nio.file.FileSystem SCRIPT_FS = ScriptFileSystemProvider.provider().getFileSystem();
     public static final org.graalvm.polyglot.io.FileSystem GRAAL_FS = new org.graalvm.polyglot.io.FileSystem() {
         @Override
@@ -182,6 +193,7 @@ public class ScriptUtils {
             final ScriptOptions scriptOptions = new ScriptOptions(
                     arguments, parser, context
             );
+            bindings.putMember("catchUndefined", CATCH_UNDEFINED);
             bindings.putMember("options", scriptOptions);
             bindings.putMember("simpleExports", ScriptObject.of("Exports"));
             final Value exports = bindings.getMember("simpleExports");
@@ -221,7 +233,7 @@ public class ScriptUtils {
                     final StringBuilder message = new StringBuilder();
                     final boolean isCmdLine = ex.getMessage().startsWith(CmdLineParseException.PREFIX);
                     message.append("Script failed execution due to an exception: **").append(isCmdLine ? ex.getMessage().substring(CmdLineParseException.PREFIX.length()) : Utils.truncate(ex.getMessage(), 1500)).append("**");
-                    if (!isCmdLine) {
+                    if (!isCmdLine && !ex.getMessage().startsWith("Validation error: ")) {
                         final String trace = String.join("\n", Stream.of(ex.getStackTrace())
                                 .filter(it -> it.getClassName().equals("<js>"))
                                 .map(el -> " at " + el).toList());
@@ -250,6 +262,7 @@ public class ScriptUtils {
 
             final CmdLineParser parser = new NegativeNumberAwareParser(null, ParserProperties.defaults().withAtSyntax(false));
             final ScriptOptions scriptOptions = new ScriptOptions.OptionBuilding(parser);
+            bindings.putMember("catchUndefined", CATCH_UNDEFINED);
             bindings.putMember("options", scriptOptions);
             bindings.putMember("simpleExports", ScriptObject.of("Exports"));
             final Value exports = bindings.getMember("simpleExports");
@@ -358,7 +371,7 @@ public class ScriptUtils {
 
     /**
      * Converts the given {@code value} to a string.
-     * <p>If the value has a {@code toString()} method, it will be called, otherwise {@link Value#asString()} will be used.</p>
+     * <p>If the value has a {@code toString()} method, it will be called, otherwise {@link Value#toString()} will be used.</p>
      *
      * @param value the value to convert to a string
      * @return the string representation of the value
@@ -367,7 +380,7 @@ public class ScriptUtils {
         if (value.hasMember("toString")) {
             return value.getMember("toString").execute().asString();
         }
-        return value.asString();
+        return value.toString();
     }
 
     private static Method getMethod(Class<?> clazz, String name, Class<?>... params) {
