@@ -88,6 +88,15 @@ public interface TricksDAO extends Transactional<TricksDAO> {
     void updateScript(@Bind("id") int trickId, @Bind("script") String script);
 
     /**
+     * Changes the owner of a trick.
+     *
+     * @param trickId  the trick whose owner to change
+     * @param newOwner the new owner of the trick
+     */
+    @SqlUpdate("update tricks set owner = :owner where id = :id")
+    void updateOwner(@Bind("id") int trickId, @Bind("owner") long newOwner);
+
+    /**
      * {@return all the aliases of the trick with the given {@code trickId}}
      */
     @SqlQuery("select name from trick_names where trick = :id")

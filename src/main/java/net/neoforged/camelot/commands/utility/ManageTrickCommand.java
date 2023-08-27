@@ -54,6 +54,7 @@ public class ManageTrickCommand extends SlashCommand {
                 new Delete(),
                 new Update(),
                 new Info(),
+                new SetOwner(),
                 new ListCmd(BotMain.BUTTON_MANAGER),
 
                 new AliasAdd(),
@@ -348,6 +349,41 @@ public class ManageTrickCommand extends SlashCommand {
                             .addField("Owner", "<@" + trick.owner() + "> (" + trick.owner() + ")", false)
                             .build())
                     .queue();
+        }
+
+        @Override
+        public void onAutoComplete(CommandAutoCompleteInteractionEvent event) {
+            suggestTrickAutocomplete(event, "trick");
+        }
+    }
+
+    /**
+     * The command used to change a trick's owner.
+     */
+    public static final class SetOwner extends SlashCommand {
+        public SetOwner() {
+            this.name = "set-owner";
+            this.help = "Change the owner of a trick";
+            this.options = List.of(
+                    new OptionData(OptionType.STRING, "trick", "The trick whose owner to change", true).setAutoComplete(true),
+                    new OptionData(OptionType.USER, "owner", "The new owner of the trick", true)
+            );
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            final Trick trick = event.getOption("trick", ManageTrickCommand::getTrick);
+            if (trick == null) {
+                event.reply("Unknown trick!").setEphemeral(true).queue();
+                return;
+            }
+            if (!isManager(event.getMember())) {
+                event.reply("You cannot change the owner of that trick!").setEphemeral(true).queue();
+                return;
+            }
+
+            Database.main().useExtension(TricksDAO.class, db -> db.updateOwner(trick.id(), event.getOption("owner", OptionMapping::getAsUser).getIdLong()));
+            event.reply("Owner changed!").queue();
         }
 
         @Override
