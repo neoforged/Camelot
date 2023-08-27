@@ -3,6 +3,8 @@ package net.neoforged.camelot.db.transactionals;
 import com.google.re2j.Pattern;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.neoforged.camelot.db.api.RegisterExecutionCallbacks;
+import net.neoforged.camelot.db.callback.PingsCallbacks;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -17,6 +19,7 @@ import java.util.List;
  * Transactional used to interact with {@link Ping custom pings}.
  */
 @RegisterRowMapper(Ping.Mapper.class)
+@RegisterExecutionCallbacks(PingsCallbacks.class)
 public interface PingsDAO extends Transactional<PingsDAO> {
     /**
      * Insert a custom ping.

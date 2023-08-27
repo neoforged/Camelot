@@ -84,10 +84,7 @@ public class CustomPingListener implements EventListener {
                                             .map(p -> p.id() + ". `" + p.regex().toString() + "` | " + p.message())
                                             .collect(Collectors.joining("\n")))
                                     .build())))
-                            .queue($ -> {
-                                Database.pings().useExtension(PingsDAO.class, db -> db.deletePingsOf(ping.user(), message.getGuild().getIdLong()));
-                                requestRefresh();
-                            });
+                            .queue($ -> Database.pings().useExtension(PingsDAO.class, db -> db.deletePingsOf(ping.user(), message.getGuild().getIdLong())));
                 }));
     }
 
