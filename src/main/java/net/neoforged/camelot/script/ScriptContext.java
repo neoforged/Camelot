@@ -7,9 +7,12 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.CountersDAO;
+import org.graalvm.polyglot.proxy.ProxyInstant;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,6 +63,8 @@ public record ScriptContext(
                 return cast(ScriptContext::createRole);
             } else if (obj instanceof Guild) {
                 return cast(ScriptContext::createGuild);
+            } else if (obj instanceof Emoji) {
+                return cast(ScriptContext::createEmoji);
             } else if (obj instanceof JDA) {
                 return cast(ScriptContext::createJDA);
             } else if (obj instanceof List<?>) {
@@ -89,7 +94,7 @@ public record ScriptContext(
                 .put("console", ScriptObject.of("console")
                         .putVoidMethod("log", args -> reply.accept(MessageCreateData.fromContent(Arrays.stream(args.getArguments())
                                 .map(ScriptUtils::toString).collect(Collectors.joining())))))
-                .putVoidMethod("replyEmbed", args -> reply.accept(MessageCreateData.fromEmbeds(args.argMap(0, true).asEmbed())));
+                .putVoidMethod("replyEmbed", args -> reply.accept(MessageCreateData.fromEmbeds(args.argList(0, true, val -> new ScriptMap(val).asEmbed()))));
     }
 
     public List<Object> transformList(List<?> other) {
@@ -110,8 +115,10 @@ public record ScriptContext(
                 .put("user", createUser(member.getUser()))
                 .put("avatarUrl", member.getAvatarUrl())
                 .put("effectiveAvatarUrl", member.getEffectiveAvatarUrl())
+                .put("color", member.getColorRaw())
                 .put("nickname", member.getNickname())
                 .put("effectiveName", member.getEffectiveName())
+                .putLazyGetter("getJoinTime", () -> ProxyInstant.from(member.getTimeJoined().toInstant()))
                 .putLazyGetter("getPermissions", () -> new ArrayList<>(member.getPermissions()))
                 .putLazyGetter("getRoles", () -> transformList(member.getRoles()))
                 .putMethod("toString", args -> member.getUser().getAsTag() + " in " + member.getGuild().getName());
@@ -126,15 +133,24 @@ public record ScriptContext(
     public ScriptObject createGuild(Guild guild) {
         return ScriptObject.snowflake("Guild", guild)
                 .put("name", guild.getName())
+                .put("iconUrl", guild.getIconUrl())
+                .put("memberCount", guild.getMemberCount())
                 .putMethod("getRoles", args -> transformList(guild.getRoles()))
                 .putMethod("getCounter", args -> Database.main().withExtension(CountersDAO.class,
-                        db -> db.getCounterAmount(guild.getIdLong(), args.argString(0, true))));
+                        db -> db.getCounterAmount(guild.getIdLong(), args.argString(0, true))))
+                .putMethod("getEmojis", args -> transformList(guild.getEmojis()));
     }
 
     public ScriptObject createRole(Role role) {
         return ScriptObject.mentionable("Role", role)
                 .put("name", role.getName())
+                .put("color", role.getColorRaw())
                 .putLazyGetter("getGuild", () -> createGuild(role.getGuild()));
+    }
+
+    public ScriptObject createEmoji(CustomEmoji emoji) {
+        return ScriptObject.mentionable("Emoji", emoji)
+                .put("name", emoji.getName());
     }
 
     public ScriptObject createJDA(JDA jda) {
