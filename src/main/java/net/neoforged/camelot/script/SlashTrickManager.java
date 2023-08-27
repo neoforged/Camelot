@@ -163,7 +163,7 @@ public class SlashTrickManager implements EventListener {
                 });
 
                 command.addSubcommands(subcommands);
-                command.addSubcommandGroups(subgroups.entries().stream()
+                command.addSubcommandGroups(subgroups.asMap().entrySet().stream()
                         .map(entry -> new SubcommandGroupData(entry.getKey(), ".").addSubcommands(entry.getValue()))
                         .toArray(SubcommandGroupData[]::new));
 
