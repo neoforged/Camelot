@@ -1,5 +1,6 @@
 package net.neoforged.camelot.util;
 
+import net.dv8tion.jda.api.entities.User;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -86,5 +87,12 @@ public class Utils {
     @SuppressWarnings("unchecked")
     public static <E extends Throwable> void sneakyThrow(Throwable ex) throws E {
         throw (E) ex;
+    }
+
+    /**
+     * {@return the username of the {@code user}, appending the discriminator if they have one}
+     */
+    public static String getName(User user) {
+        return user.getDiscriminator().equals("0000") ? user.getName() : user.getAsTag();
     }
 }

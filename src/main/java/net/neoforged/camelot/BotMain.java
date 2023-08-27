@@ -22,6 +22,7 @@ import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.CustomPingListener;
+import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.listener.TrickListener;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.script.SlashTrickManager;
@@ -128,7 +129,7 @@ public class BotMain {
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS)
                 .setActivity(Activity.playing("the fiddle"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CustomPingListener(), new CountersListener())
+                .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CustomPingListener(), new CountersListener(), new ReferencingListener())
 
                 .addEventListeners((EventListener) ManageTrickCommand.Update::onEvent, (EventListener) ManageTrickCommand.Add::onEvent, (EventListener) ManageTrickCommand.AddText::onEvent, (EventListener) EvalCommand::onEvent)
 
