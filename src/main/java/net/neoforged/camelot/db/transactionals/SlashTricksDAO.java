@@ -20,7 +20,7 @@ public interface SlashTricksDAO {
      * {@return all promoted tricks in the guild with the given {@code guildId}}
      */
     @UseRowMapper(SlashTrick.Mapper.class)
-    @SqlQuery("select trick, guild, name, category from slash_tricks where guild = ?")
+    @SqlQuery("select trick, guild, name, category, subgroup from slash_tricks where guild = ?")
     List<SlashTrick> getPromotedTricksIn(long guildId);
 
     /**
@@ -38,7 +38,7 @@ public interface SlashTricksDAO {
      * @return the promoted tricks
      */
     @UseRowMapper(SlashTrick.Mapper.class)
-    @SqlQuery("select trick, guild, name, category from slash_tricks where guild = :guild limit :limit offset :from")
+    @SqlQuery("select trick, guild, name, category, subgroup from slash_tricks where guild = :guild limit :limit offset :from")
     List<SlashTrick> getPromotedTricksIn(@Bind("guild") long guildId, @Bind("from") int from, @Bind("limit") int limit);
 
     /**
@@ -47,7 +47,7 @@ public interface SlashTricksDAO {
      * @param trickId the ID of the trick to query promotions of
      */
     @UseRowMapper(SlashTrick.Mapper.class)
-    @SqlQuery("select trick, guild, name, category from slash_tricks where trick = ?")
+    @SqlQuery("select trick, guild, name, category, subgroup from slash_tricks where trick = ?")
     List<SlashTrick> getPromotionsOfTrick(int trickId);
 
     /**
@@ -55,7 +55,7 @@ public interface SlashTricksDAO {
      */
     @Nullable
     @UseRowMapper(SlashTrick.Mapper.class)
-    @SqlQuery("select trick, guild, name, category from slash_tricks where trick = ? and guild = ?")
+    @SqlQuery("select trick, guild, name, category, subgroup from slash_tricks where trick = ? and guild = ?")
     SlashTrick getPromotion(int trickId, long guildId);
 
     /**
@@ -63,8 +63,8 @@ public interface SlashTricksDAO {
      */
     @Nullable
     @UseRowMapper(SlashTrick.Mapper.class)
-    @SqlQuery("select trick, guild, name, category from slash_tricks where guild = ? and category = ? and name = ?")
-    SlashTrick getPromotion(long guildId, String category, String name);
+    @SqlQuery("select trick, guild, name, category, subgroup from slash_tricks where guild = ? and category = ? and subgroup = ? and name = ?")
+    SlashTrick getPromotion(long guildId, String category, @Nullable String subgroup, String name);
 
     /**
      * {@return all known categories matching the query}
@@ -75,6 +75,15 @@ public interface SlashTricksDAO {
     List<String> findCategoriesMatching(long guildId, String query);
 
     /**
+     * {@return all known subgroups matching the query}
+     *
+     * @param guildId the guild whose categories to query
+     * @param category the category whose groups to query
+     */
+    @SqlQuery("select distinct subgroup from slash_tricks where guild = ? and category = ? and subgroup like ?")
+    List<String> findGroupsMatching(long guildId, String category, String query);
+
+    /**
      * Promotes a trick as a slash trick.
      *
      * @param guildId  the guild to promote the trick in
@@ -82,8 +91,8 @@ public interface SlashTricksDAO {
      * @param category the category under which to promote the trick
      * @param name     the name to promote the trick with
      */
-    @SqlUpdate("insert into slash_tricks(guild, trick, category, name) values (?, ?, ?, ?)")
-    void promote(long guildId, int trickId, String category, String name);
+    @SqlUpdate("insert into slash_tricks(guild, trick, category, subgroup, name) values (?, ?, ?, ?, ?)")
+    void promote(long guildId, int trickId, String category, @Nullable String subgroup, String name);
 
     /**
      * Demotes the trick with the given ID in the given guild.

@@ -452,7 +452,8 @@ public class ManageTrickCommand extends SlashCommand {
             this.options = List.of(
                     new OptionData(OptionType.STRING, "trick", "The trick to promote", true).setAutoComplete(true),
                     new OptionData(OptionType.STRING, "category", "The category to promote the trick to", true).setAutoComplete(true),
-                    new OptionData(OptionType.STRING, "name", "The promoted name (the second part in the slash command)", true)
+                    new OptionData(OptionType.STRING, "name", "The promoted name (the second part in the slash command)", true),
+                    new OptionData(OptionType.STRING, "subgroup", "The category group to promote the trick to", false).setAutoComplete(true)
             );
         }
 
@@ -471,12 +472,13 @@ public class ManageTrickCommand extends SlashCommand {
             }
             SlashTrick existingPromotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
             if (existingPromotion != null) {
-                event.reply("That trick is already promoted as `/" + existingPromotion.category() + " " + existingPromotion.name() + "`!").setEphemeral(true).queue();
+                event.reply("That trick is already promoted as `/" + existingPromotion.getFullName() + "`!").setEphemeral(true).queue();
                 return;
             }
 
             final String category = event.getOption("category", "", OptionMapping::getAsString);
             final String name = event.getOption("name", "", OptionMapping::getAsString);
+            final String subgroup = event.getOption("subgroup", null, OptionMapping::getAsString);
             if (!Checks.ALPHANUMERIC_WITH_DASH.matcher(category).matches()) {
                 event.reply("Invalid category name!").setEphemeral(true).queue();
                 return;
@@ -487,7 +489,12 @@ public class ManageTrickCommand extends SlashCommand {
                 return;
             }
 
-            existingPromotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(event.getGuild().getIdLong(), category, name));
+            if (subgroup != null && !Checks.ALPHANUMERIC_WITH_DASH.matcher(subgroup).matches()) {
+                event.reply("Invalid subgroup!").setEphemeral(true).queue();
+                return;
+            }
+
+            existingPromotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(event.getGuild().getIdLong(), category, subgroup, name));
             if (existingPromotion != null) {
                 event.reply("A trick with the same name was already promoted! (trick ID: " + existingPromotion.id() + ")").setEphemeral(true).queue();
                 return;
@@ -497,6 +504,7 @@ public class ManageTrickCommand extends SlashCommand {
                     event.getGuild().getIdLong(),
                     trick.id(),
                     category,
+                    subgroup,
                     name
             ));
 
@@ -514,6 +522,18 @@ public class ManageTrickCommand extends SlashCommand {
                                 .limit(OptionData.MAX_CHOICES)
                                 .map(tr -> new Command.Choice(tr, tr))
                                 .toList())
+                        .queue(suc -> {}, e -> {});
+            } else if (event.getFocusedOption().getName().equals("subgroup")) {
+                final String category = event.getOption("category", null, OptionMapping::getAsString);
+                if (category == null) {
+                    event.replyChoices().queue();
+                    return;
+                }
+
+                final List<String> groups = Database.main().withExtension(SlashTricksDAO.class, db -> db.findGroupsMatching(event.getGuild().getIdLong(),
+                        category, "%" + event.getFocusedOption().getValue() + "%"));
+                event.replyChoices(groups.stream()
+                                .limit(OptionData.MAX_CHOICES).map(tr -> new Command.Choice(tr, tr)).toList())
                         .queue(suc -> {}, e -> {});
             }
         }
@@ -596,7 +616,7 @@ public class ManageTrickCommand extends SlashCommand {
                                 } else {
                                     msg += String.join(" / ", names);
                                 }
-                                msg += ": `/" + trick.category() + " " + trick.name() + "`";
+                                msg += ": `/" + trick.getFullName() + "`";
 
                                 return msg;
                             }).toList()))));

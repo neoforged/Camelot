@@ -1,0 +1,1 @@
+alter table slash_tricks add subgroup text default null;

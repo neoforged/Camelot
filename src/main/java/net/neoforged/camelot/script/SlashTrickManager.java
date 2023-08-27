@@ -1,5 +1,6 @@
 package net.neoforged.camelot.script;
 
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import it.unimi.dsi.fastutil.Pair;
@@ -14,6 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
@@ -144,22 +146,28 @@ public class SlashTrickManager implements EventListener {
             dao.getPromotedTricksIn(guildId).forEach(trick -> byCategory.put(trick.category(), trick));
             byCategory.asMap().forEach((category, tricks) -> {
                 final SlashCommandData command = Commands.slash(category, "Tricks in the " + category + " category");
+
                 final List<SubcommandData> subcommands = Collections.synchronizedList(new ArrayList<>());
+                final ListMultimap<String, SubcommandData> subgroups = Multimaps.synchronizedListMultimap(Multimaps.newListMultimap(new HashMap<>(), ArrayList::new));
                 tricks.stream().parallel().forEach(trick -> {
                     try {
                         consumeTrick(
                                 trick,
                                 ScriptUtils.getInformation(tricksDAO.getTrick(trick.id()).script()),
-                                subcommands::add,
+                                trick.subgroup() == null ? subcommands::add : cmd -> subgroups.put(trick.subgroup(), cmd),
                                 trickInfos::put
                         );
                     } catch (CannotRetrieveInformationException e) {
-                        LOGGER.error("Could not retrieve information for trick {}, registered as slash trick with name `/{} {}` in guild {}: ", trick.id(), trick.category(), trick.name(), guildId, e);
+                        LOGGER.error("Could not retrieve information for trick {}, registered as slash trick with name `/{}` in guild {}: ", trick.id(), trick.getFullName(), guildId, e);
                     }
                 });
 
-                if (!subcommands.isEmpty()) { // This can happen if trick information could not be gathered
-                    command.addSubcommands(subcommands);
+                command.addSubcommands(subcommands);
+                command.addSubcommandGroups(subgroups.entries().stream()
+                        .map(entry -> new SubcommandGroupData(entry.getKey(), ".").addSubcommands(entry.getValue()))
+                        .toArray(SubcommandGroupData[]::new));
+
+                if (!subcommands.isEmpty() || !subgroups.isEmpty()) { // The collections could be empty if trick information could not be gathered
                     updater.addCommands(command);
                 }
             });
@@ -183,7 +191,7 @@ public class SlashTrickManager implements EventListener {
         consumer.accept(new SubcommandData(slashTrick.name(), Utils.truncate(information.description(), 100))
                 .addOptions(args.key()));
         infoConsumer.accept(
-                slashTrick.category() + " " + slashTrick.name(),
+                slashTrick.getFullName(),
                 new TrickInfo(
                         slashTrick.id(),
                         IntStream.range(0, args.key().size())

@@ -274,8 +274,9 @@ public class ScriptUtils {
                 graal.eval(source);
 
                 final Value desc = exports.getMember("description").execute();
+                final String descString = desc.isNull() ? "" : toString(desc);
                 return new ScriptInformation(
-                        desc.isNull() ? "Trick has no description" : toString(desc),
+                        descString.isBlank() ? "Trick has no description" : descString,
                         parser.getOptions(), parser.getArguments()
                 );
             } catch (Exception ex) {
