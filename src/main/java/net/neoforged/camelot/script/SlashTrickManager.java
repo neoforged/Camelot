@@ -115,7 +115,13 @@ public class SlashTrickManager implements EventListener {
                     ScriptUtils.toArgs(mapping.getAsString())
                             .forEach(argumentAcceptor);
                 } else {
-                    argumentAcceptor.accept(mapping.getAsString());
+                    if (!opt.option.isArgument() && mapping.getType() == OptionType.BOOLEAN) {
+                        if (mapping.getAsBoolean()) {
+                            options.add(((NamedOptionDef) opt.option).name());
+                        }
+                    } else {
+                        argumentAcceptor.accept(mapping.getAsString());
+                    }
                 }
             });
 
