@@ -23,6 +23,7 @@ import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
+import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.script.option.EnumOptionHandler;
 import net.neoforged.camelot.script.option.MentionableOptionHandler;
 import net.neoforged.camelot.util.Utils;
@@ -55,7 +56,7 @@ import java.util.stream.IntStream;
  * The class used to manage {@link SlashTrick guild-level tricks} that are registered as slash commands.
  *
  * @see net.neoforged.camelot.commands.utility.ManageTrickCommand.NewPromotion
- * @see net.neoforged.camelot.BotMain#TRICK_MANAGERS
+ * @see TricksModule#slashTrickManagers
  */
 public class SlashTrickManager implements EventListener {
 

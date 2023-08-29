@@ -81,6 +81,9 @@ dependencies {
     implementation group: 'com.google.re2j', name: 're2j', version: project.re2j_version
     implementation group: 'it.unimi.dsi', name: 'fastutil', version: project.fastutil_version
 
+    compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
+    annotationProcessor group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
+
     compileOnly 'org.jetbrains:annotations:24.0.1'
 }
 

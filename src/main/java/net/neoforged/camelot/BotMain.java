@@ -5,45 +5,38 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.UserSnowflake;
-import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
-import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
-import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageRequest;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
-import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
-import net.neoforged.camelot.db.transactionals.TricksDAO;
-import net.neoforged.camelot.listener.CountersListener;
-import net.neoforged.camelot.listener.CustomPingListener;
-import net.neoforged.camelot.listener.ReferencingListener;
-import net.neoforged.camelot.listener.TrickListener;
-import net.neoforged.camelot.log.ModerationActionRecorder;
-import net.neoforged.camelot.script.SlashTrickManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import net.neoforged.camelot.commands.utility.EvalCommand;
-import net.neoforged.camelot.commands.utility.ManageTrickCommand;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
+import net.neoforged.camelot.listener.CountersListener;
+import net.neoforged.camelot.listener.ReferencingListener;
+import net.neoforged.camelot.log.ModerationActionRecorder;
+import net.neoforged.camelot.module.CamelotModule;
 import net.neoforged.camelot.util.jda.ButtonManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ServiceLoader;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Bot program entry point.
@@ -90,10 +83,9 @@ public class BotMain {
     public static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     /**
-     * A map mapping a guild ID to its own {@link SlashTrickManager}. <br>
-     * New managers are added to this map during {@link GuildReadyEvent}.
+     * Logger instance for the whole bot. Perhaps overkill.
      */
-    public static final Map<Long, SlashTrickManager> TRICK_MANAGERS = new ConcurrentHashMap<>();
+    public static final Logger LOGGER = LoggerFactory.getLogger(Common.NAME);
 
     /**
      * Static instance of the bot. Can be accessed by any class with {@link #get()}
@@ -101,10 +93,24 @@ public class BotMain {
     private static JDA instance;
 
     /**
-     * Logger instance for the whole bot. Perhaps overkill.
+     * The loaded and enabled modules of the bot.
      */
+    private static Map<Class<?>, CamelotModule> modules;
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(Common.NAME);
+    /**
+     * Gets the loaded module of the given {@code type}, or {@code null} if the module is not enabled.
+     */
+    public static <T extends CamelotModule> T getModule(Class<T> type) {
+        //noinspection unchecked
+        return (T) modules.get(type);
+    }
+
+    /**
+     * Accepts the given {@code consumer} on all loaded modules.
+     */
+    public static void forEachModule(Consumer<? super CamelotModule> consumer) {
+        modules.values().forEach(consumer);
+    }
 
     /**
      * Fetch the static instance of the bot stored in this class.
@@ -122,37 +128,28 @@ public class BotMain {
             System.exit(-1);
         }
 
+        modules = Map.copyOf(ServiceLoader.load(CamelotModule.class)
+                .stream()
+                .map(ServiceLoader.Provider::get)
+                .collect(Collectors.toMap(
+                        CamelotModule::getClass,
+                        Function.identity(),
+                        (a, b) -> b,
+                        IdentityHashMap::new
+                )));
+        LOGGER.info("Loaded {} modules: {}", modules.size(), modules.values().stream().map(CamelotModule::id).toList());
+
         MessageRequest.setDefaultMentionRepliedUser(false);
 
-        instance = JDABuilder
+        final JDABuilder botBuilder = JDABuilder
                 .create(Config.LOGIN_TOKEN, INTENTS)
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS)
-                .setActivity(Activity.playing("the fiddle"))
+                .setActivity(Activity.listening("for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CustomPingListener(), new CountersListener(), new ReferencingListener())
+                .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener());
+        forEachModule(module -> module.registerListeners(botBuilder));
+        instance = botBuilder.build();
 
-                .addEventListeners((EventListener) ManageTrickCommand.Update::onEvent, (EventListener) ManageTrickCommand.Add::onEvent, (EventListener) ManageTrickCommand.AddText::onEvent, (EventListener) EvalCommand::onEvent)
-
-                .addEventListeners((EventListener) gevent -> {
-                    if (gevent instanceof GuildReadyEvent event) {
-                        if (TRICK_MANAGERS.containsKey(event.getGuild().getIdLong())) return;
-
-                        final SlashTrickManager manager = new SlashTrickManager(
-                                event.getGuild().getIdLong(), Database.main().onDemand(SlashTricksDAO.class), Database.main().onDemand(TricksDAO.class)
-                        );
-                        manager.updateCommands(event.getGuild());
-                        event.getJDA().addEventListener(manager);
-                        TRICK_MANAGERS.put(event.getGuild().getIdLong(), manager);
-                    } else if (gevent instanceof GuildLeaveEvent event) {
-                        final SlashTrickManager trickManager = TRICK_MANAGERS.get(event.getGuild().getIdLong());
-                        if (trickManager == null) return;
-
-                        event.getJDA().removeEventListener(trickManager);
-                        TRICK_MANAGERS.remove(event.getGuild().getIdLong());
-                    }
-                })
-
-                .build();
         Config.populate(instance);
 
         try {
@@ -162,9 +159,7 @@ public class BotMain {
         }
 
         Commands.init();
-        if (Config.PREFIX_TRICKS) {
-            instance.addEventListener(new TrickListener(Commands.get().getPrefix()));
-        }
+        forEachModule(module -> module.setup(instance));
 
         EXECUTOR.scheduleAtFixedRate(() -> {
             final PendingUnbansDAO db = Database.main().onDemand(PendingUnbansDAO.class);

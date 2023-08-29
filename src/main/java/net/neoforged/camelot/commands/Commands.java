@@ -2,23 +2,20 @@ package net.neoforged.camelot.commands;
 
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
 import net.neoforged.camelot.commands.moderation.BanCommand;
 import net.neoforged.camelot.commands.moderation.KickCommand;
 import net.neoforged.camelot.commands.moderation.ModLogsCommand;
 import net.neoforged.camelot.commands.moderation.MuteCommand;
 import net.neoforged.camelot.commands.moderation.NoteCommand;
-import net.neoforged.camelot.commands.moderation.UnbanCommand;
-import net.neoforged.camelot.commands.utility.CustomPingsCommand;
-import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.moderation.PurgeCommand;
+import net.neoforged.camelot.commands.moderation.UnbanCommand;
 import net.neoforged.camelot.commands.moderation.UnmuteCommand;
 import net.neoforged.camelot.commands.moderation.WarnCommand;
-import net.neoforged.camelot.commands.utility.EvalCommand;
+import net.neoforged.camelot.commands.utility.CustomPingsCommand;
 import net.neoforged.camelot.commands.utility.PingCommand;
-import net.neoforged.camelot.commands.utility.ManageTrickCommand;
-import net.neoforged.camelot.commands.utility.TrickCommand;
 import net.neoforged.camelot.configuration.Config;
 
 /**
@@ -42,9 +39,10 @@ public class Commands {
      * To remove a command from the bot, simply comment the line where it is added.
      */
     public static void init() {
-        commands = new CommandClientBuilder()
+        final var builder = new CommandClientBuilder()
                 .setOwnerId(String.valueOf(Config.OWNER_SNOWFLAKE))
                 .setPrefix(Config.PREFIX)
+                .setActivity(null)
                 .useHelpBuilder(false) // We use the slash command instead
 
                 .addSlashCommand(new PingCommand())
@@ -63,14 +61,11 @@ public class Commands {
                 .addSlashCommands(new InfoChannelCommand())
 
                 // Message context menus
-                .addContextMenus(new InfoChannelCommand.UploadToDiscohookContextMenu())
+                .addContextMenus(new InfoChannelCommand.UploadToDiscohookContextMenu());
 
-                .addSlashCommands(new ManageTrickCommand(), new TrickCommand())
-                .addCommand(new EvalCommand())
+        BotMain.forEachModule(module -> module.registerCommands(builder));
 
-                .addSlashCommand(new CustomPingsCommand())
-
-                .build();
+        commands = builder.build();
 
         // Register the commands to the listener.
         BotMain.get().addEventListener(commands);

@@ -3,6 +3,7 @@ package net.neoforged.camelot.db.callback;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.db.api.ExecutionCallback;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
+import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.script.ScriptUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,7 @@ public class SlashTrickCallbacks {
      */
     @ExecutionCallback(methodName = "promote", phase = ExecutionCallback.Phase.POST)
     public static void onTrickPromoted(SlashTricksDAO dao, long guildId, int trickId, String category, @Nullable String subgroup, String name) {
-        ScriptUtils.SERVICE.submit(() -> BotMain.TRICK_MANAGERS.get(guildId).updateCommands(BotMain.get().getGuildById(guildId)));
+        ScriptUtils.SERVICE.submit(() -> BotMain.getModule(TricksModule.class).slashTrickManagers.get(guildId).updateCommands(BotMain.get().getGuildById(guildId)));
     }
 
     /**
@@ -23,6 +24,6 @@ public class SlashTrickCallbacks {
      */
     @ExecutionCallback(methodName = "demote", phase = ExecutionCallback.Phase.POST)
     public static void onTrickDemoted(SlashTricksDAO dao, long guildId, int trickId) {
-        ScriptUtils.SERVICE.submit(() -> BotMain.TRICK_MANAGERS.get(guildId).updateCommands(BotMain.get().getGuildById(guildId)));
+        ScriptUtils.SERVICE.submit(() -> BotMain.getModule(TricksModule.class).slashTrickManagers.get(guildId).updateCommands(BotMain.get().getGuildById(guildId)));
     }
 }
