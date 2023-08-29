@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The module for tricks.
  */
-@AutoService(TricksModule.class)
+@AutoService(CamelotModule.class)
 public class TricksModule implements CamelotModule {
     /**
      * A map mapping a guild ID to its own {@link SlashTrickManager}. <br>
