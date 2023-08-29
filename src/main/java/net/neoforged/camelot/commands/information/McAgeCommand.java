@@ -42,6 +42,7 @@ public class McAgeCommand extends SlashCommand {
     }
     @Override
     protected void execute(SlashCommandEvent event) {
+        event.deferReply().queue();
         if (event.optBoolean("bust", false)) {
             if (!event.getMember().hasPermission(Permission.MODERATE_MEMBERS)) {
                 event.reply("You do not have the necessary permissions to bust the cache!").setEphemeral(true).queue();
@@ -49,7 +50,6 @@ public class McAgeCommand extends SlashCommand {
             }
 
             VERSIONS.bust();
-            event.deferReply().queue(); // Busting isn't instant
         }
 
         final String versionString = event.optString("version", "");
