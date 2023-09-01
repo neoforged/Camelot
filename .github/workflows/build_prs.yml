@@ -3,7 +3,7 @@ name: Build Pull Requests
 on: [ pull_request ]
 
 jobs:
-  push-image:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

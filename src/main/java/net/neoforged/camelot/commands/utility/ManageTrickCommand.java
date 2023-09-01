@@ -5,7 +5,6 @@ import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.interactions.Interaction;
@@ -23,13 +22,14 @@ import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.dv8tion.jda.internal.utils.Checks;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.commands.InteractiveCommand;
+import net.neoforged.camelot.commands.PaginatableCommand;
+import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.util.jda.ButtonManager;
-import net.neoforged.camelot.commands.PaginatableCommand;
-import net.neoforged.camelot.configuration.Config;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -76,9 +76,7 @@ public class ManageTrickCommand extends SlashCommand {
      * The command used to add a new trick.
      * <p>This command prompts a modal asking for the trick names (separated by a space) and the script</p>
      */
-    public static final class Add extends SlashCommand {
-        public static final String MODAL_ID = "add-trick";
-
+    public static final class Add extends InteractiveCommand {
         public Add() {
             this.name = "add";
             this.help = "Add a new trick";
@@ -86,7 +84,7 @@ public class ManageTrickCommand extends SlashCommand {
 
         @Override
         protected void execute(SlashCommandEvent event) {
-            event.replyModal(Modal.create(MODAL_ID, "Add a new trick")
+            event.replyModal(Modal.create(getComponentId(), "Add a new trick")
                             .addActionRow(TextInput.create("names", "Trick names", TextInputStyle.SHORT)
                                     .setRequired(true)
                                     .setMinLength(1)
@@ -99,10 +97,8 @@ public class ManageTrickCommand extends SlashCommand {
                     .queue();
         }
 
-        public static void onEvent(final GenericEvent gevent) {
-            if (!(gevent instanceof ModalInteractionEvent event)) return;
-            if (!event.getModalId().equals(MODAL_ID)) return;
-
+        @Override
+        protected void onModal(ModalInteractionEvent event, String[] arguments) {
             final String script = event.getValue("script").getAsString();
             final List<String> names = List.of(event.getValue("names").getAsString().split(" "));
             handleModal(event, script, names);
@@ -142,9 +138,7 @@ public class ManageTrickCommand extends SlashCommand {
      * The command used to add a new trick with a simple text reply.
      * <p>This command prompts a modal asking for the trick names (separated by a space), the trick description and its string reply</p>
      */
-    public static final class AddText extends SlashCommand {
-        public static final String MODAL_ID = "add-trick-text";
-
+    public static final class AddText extends InteractiveCommand {
         public AddText() {
             this.name = "add-text";
             this.help = "Add a new trick with a text reply";
@@ -152,7 +146,7 @@ public class ManageTrickCommand extends SlashCommand {
 
         @Override
         protected void execute(SlashCommandEvent event) {
-            event.replyModal(Modal.create(MODAL_ID, "Add a new trick with a text reply")
+            event.replyModal(Modal.create(getComponentId(), "Add a new trick with a text reply")
                             .addActionRow(TextInput.create("names", "Trick names", TextInputStyle.SHORT)
                                     .setRequired(true)
                                     .setMinLength(1)
@@ -168,10 +162,8 @@ public class ManageTrickCommand extends SlashCommand {
                     .queue();
         }
 
-        public static void onEvent(final GenericEvent gevent) {
-            if (!(gevent instanceof ModalInteractionEvent event)) return;
-            if (!event.getModalId().equals(MODAL_ID)) return;
-
+        @Override
+        protected void onModal(ModalInteractionEvent event, String[] arguments) {
             final String text = event.getValue("text").getAsString();
             final List<String> names = List.of(event.getValue("names").getAsString().split(" "));
             final String description = Optional.ofNullable(event.getValue("description")).map(ModalMapping::getAsString)
@@ -266,9 +258,7 @@ public class ManageTrickCommand extends SlashCommand {
      * The command used to delete a trick, by name or ID.
      * <p>This command will prompt a modal asking for the new script of the trick.</p>
      */
-    public static final class Update extends SlashCommand {
-        public static final String MODAL_ID = "update-trick-";
-
+    public static final class Update extends InteractiveCommand {
         public Update() {
             this.name = "update";
             this.help = "Update a trick's script";
@@ -290,7 +280,7 @@ public class ManageTrickCommand extends SlashCommand {
                 return;
             }
 
-            event.replyModal(Modal.create(MODAL_ID + trick.id(), "Update a trick")
+            event.replyModal(Modal.create(getComponentId(trick.id()), "Update a trick")
                             .addActionRow(TextInput.create("script", "The trick new script", TextInputStyle.PARAGRAPH)
                                     .setRequired(true)
                                     .setMinLength(1)
@@ -305,12 +295,10 @@ public class ManageTrickCommand extends SlashCommand {
             suggestTrickAutocomplete(event, "trick");
         }
 
-        public static void onEvent(final GenericEvent gevent) {
-            if (!(gevent instanceof ModalInteractionEvent event)) return;
-            if (!event.getModalId().startsWith(MODAL_ID)) return;
-
+        @Override
+        protected void onModal(ModalInteractionEvent event, String[] arguments) {
             final String script = event.getValue("script").getAsString();
-            final int id = Integer.parseInt(event.getModalId().substring(MODAL_ID.length()));
+            final int id = Integer.parseInt(arguments[0]);
 
             Database.main().useExtension(TricksDAO.class, db -> db.updateScript(id, script));
             event.reply("Trick updated!").queue();

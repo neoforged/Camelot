@@ -2,6 +2,7 @@ package net.neoforged.camelot.commands;
 
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import com.jagrosh.jdautilities.command.SlashCommand;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
@@ -15,7 +16,6 @@ import net.neoforged.camelot.commands.moderation.PurgeCommand;
 import net.neoforged.camelot.commands.moderation.UnbanCommand;
 import net.neoforged.camelot.commands.moderation.UnmuteCommand;
 import net.neoforged.camelot.commands.moderation.WarnCommand;
-import net.neoforged.camelot.commands.utility.CustomPingsCommand;
 import net.neoforged.camelot.commands.utility.PingCommand;
 import net.neoforged.camelot.configuration.Config;
 
@@ -67,6 +67,33 @@ public class Commands {
         BotMain.forEachModule(module -> module.registerCommands(builder));
 
         commands = builder.build();
+
+        // Assign each interactive command without an ID an computed ID
+        for (final SlashCommand slashCommand : commands.getSlashCommands()) {
+            if (slashCommand instanceof InteractiveCommand cmd) {
+                final String id = cmd.baseComponentId;
+                if (id == null) {
+                    cmd.baseComponentId = "cmd." + slashCommand.getName();
+                }
+            }
+
+            for (final SlashCommand child : slashCommand.getChildren()) {
+                if (child instanceof InteractiveCommand cmd) {
+                    final String id = cmd.baseComponentId;
+                    if (id == null) {
+                        final StringBuilder newId = new StringBuilder()
+                                .append("cmd.").append(slashCommand.getName())
+                                .append('.');
+
+                        if (child.getSubcommandGroup() != null) {
+                            newId.append(child.getSubcommandGroup().getName()).append('.');
+                        }
+
+                        cmd.baseComponentId = newId.append(child.getName()).toString();
+                    }
+                }
+            }
+        }
 
         // Register the commands to the listener.
         BotMain.get().addEventListener(commands);
