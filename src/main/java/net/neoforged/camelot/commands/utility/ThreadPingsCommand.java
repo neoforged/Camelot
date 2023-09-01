@@ -2,6 +2,7 @@ package net.neoforged.camelot.commands.utility;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Role;
@@ -40,6 +41,9 @@ public class ThreadPingsCommand extends InteractiveCommand {
                 new ConfigureChannel(),
                 new ConfigureGuild(),
                 new View(),
+        };
+        this.userPermissions = new Permission[] {
+                Permission.MESSAGE_MANAGE
         };
     }
 
@@ -161,7 +165,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
             boolean hasRoles = false;
             final StringBuilder builder = new StringBuilder();
 
-            builder.append("The following roles are configured to be mentioned in threads public created under **")
+            builder.append("The following roles are configured to be mentioned in public threads created under **")
                     .append(result.channel.getAsMention())
                     .append("**, along with the level of configuration:")
                     .append('\n').append('\n');

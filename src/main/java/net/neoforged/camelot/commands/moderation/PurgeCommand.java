@@ -3,6 +3,7 @@ package net.neoforged.camelot.commands.moderation;
 import com.google.common.base.Predicates;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -27,6 +28,9 @@ public class PurgeCommand extends SlashCommand {
                 new OptionData(OptionType.INTEGER, "amount", "The amount of messages to delete", true).setMinValue(1).setMaxValue(1000),
                 new OptionData(OptionType.USER, "user", "Filter messages by an user")
         );
+        this.userPermissions = new Permission[] {
+                Permission.MESSAGE_MANAGE
+        };
     }
 
     @Override
