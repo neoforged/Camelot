@@ -15,6 +15,8 @@ import net.dv8tion.jda.api.hooks.EventListener;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.ThreadPingsDAO;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ThreadPingsListener implements EventListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPingsListener.class);
+
     @Override
     public void onEvent(@NotNull GenericEvent gevent) {
         if (!(gevent instanceof ChannelCreateEvent event)) return;
@@ -54,7 +58,8 @@ public class ThreadPingsListener implements EventListener {
         for (Long roleId : roleIds) {
             final Role role = thread.getGuild().getRoleCache().getElementById(roleId);
             if (role == null) {
-                // TODO: log, maybe delete from DB
+                LOGGER.info("Role {} does not exist; deleting role from database", roleId);
+                Database.pings().useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearRole(roleId));
                 continue;
             }
             roles.add(role);

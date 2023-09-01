@@ -46,6 +46,14 @@ public interface ThreadPingsDAO extends Transactional<ThreadPingsDAO> {
     void clearChannel(@Bind("channel") long channel);
 
     /**
+     * Clears a role ID from all associations.
+     *
+     * @param role the role ID
+     */
+    @SqlUpdate("delete from thread_pings where role = :role")
+    void clearRole(@Bind("role") long role);
+
+    /**
      * {@return a list of role IDs associated with the given channel ID}
      *
      * @param channel the channel ID
