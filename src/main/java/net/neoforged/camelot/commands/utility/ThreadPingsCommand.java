@@ -41,7 +41,6 @@ public class ThreadPingsCommand extends InteractiveCommand {
                 new ConfigureGuild(),
                 new View(),
         };
-        this.baseComponentId = "thread-pings";
     }
 
     @Override
