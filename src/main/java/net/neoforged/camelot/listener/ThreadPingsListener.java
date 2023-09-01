@@ -1,5 +1,6 @@
 package net.neoforged.camelot.listener;
 
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Message.MentionType;
@@ -72,6 +73,10 @@ public class ThreadPingsListener implements EventListener {
                 .map(IMentionable::getAsMention)
                 .collect(Collectors.joining(", ", "Hello to ", "!"));
 
+        if (!event.getGuild().getSelfMember().hasPermission(thread, Permission.MESSAGE_MENTION_EVERYONE)) {
+            LOGGER.warn("Bot user lacks Mention Everyone permission for thread {}; role adding may not work properly", thread.getId());
+        }
+
         thread.sendMessage("A new thread! Adding some people into here...")
                 .setSuppressedNotifications(true)
                 .setAllowedMentions(Set.of(MentionType.ROLE))
@@ -88,6 +93,5 @@ public class ThreadPingsListener implements EventListener {
                         .handle(Set.of(ErrorResponse.MESSAGE_BLOCKED_BY_AUTOMOD, ErrorResponse.MESSAGE_BLOCKED_BY_HARMFUL_LINK_FILTER),
                                 err -> LOGGER.warn("Got auto-blocked while trying to send thread ping message", err))
                 );
-
     }
 }
