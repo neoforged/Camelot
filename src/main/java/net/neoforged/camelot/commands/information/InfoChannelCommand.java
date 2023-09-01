@@ -72,6 +72,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,9 @@ import java.util.stream.Stream;
  * @author matyrobbrt
  */
 public class InfoChannelCommand extends SlashCommand {
+    public static final EnumSet<Message.MentionType> ALLOWED_MENTIONS = EnumSet.of(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND);
+    public static final AllowedMentions WEBHOOK_ALLOWED = AllowedMentions.none();
+
     public InfoChannelCommand() {
         this.name = "info-channel";
         this.userPermissions = new Permission[] {
@@ -267,7 +271,6 @@ public class InfoChannelCommand extends SlashCommand {
             .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
             .enable(YAMLGenerator.Feature.LITERAL_BLOCK_STYLE)
             .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES)
-            .disable(YAMLGenerator.Feature.SPLIT_LINES)
     ).registerModule(new MessagesModule());
 
     /**
@@ -402,9 +405,11 @@ public class InfoChannelCommand extends SlashCommand {
                     .setAvatarUrl(messageData.avatarUrl)
                     .setUsername(messageData.authorName)
                     .addEmbeds(messageData.data.getEmbeds().stream().map(m -> WebhookEmbedBuilder.fromJDA(m).build()).toList())
+                    .setAllowedMentions(WEBHOOK_ALLOWED)
                     .build());
         }
-        return messageData -> channel.sendMessage(messageData.data).submit();
+        return messageData -> channel.sendMessage(messageData.data)
+                .setAllowedMentions(ALLOWED_MENTIONS).submit();
     }
 
     private static BiFunction<Long, MessageData, CompletableFuture<?>> getMessageEdit(MessageChannel channel) {
