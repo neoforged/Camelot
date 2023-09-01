@@ -11,7 +11,9 @@ import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel;
 import net.dv8tion.jda.api.entities.channel.unions.IThreadContainerUnion;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent;
+import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.ThreadPingsDAO;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +79,15 @@ public class ThreadPingsListener implements EventListener {
                 .flatMap(message -> message.editMessage(message.getContentRaw() + '\n' + mentionMessage))
                 .delay(Duration.ofSeconds(3))
                 .flatMap(Message::delete)
-                .queue();
-        // TODO: error handling (e.g. unable to send message)
+                .queue(null, new ErrorHandler()
+                        .ignore(ErrorResponse.UNKNOWN_CHANNEL) // Thread was auto-deleted
+                        .handle(ErrorResponse.UNKNOWN_MESSAGE,
+                                err -> LOGGER.warn("Thread ping message was deleted by another party", err))
+                        .handle(ErrorResponse.MISSING_ACCESS,
+                                err -> LOGGER.warn("Lost access to thread {} while handling thread ping message", thread.getId(), err))
+                        .handle(Set.of(ErrorResponse.MESSAGE_BLOCKED_BY_AUTOMOD, ErrorResponse.MESSAGE_BLOCKED_BY_HARMFUL_LINK_FILTER),
+                                err -> LOGGER.warn("Got auto-blocked while trying to send thread ping message", err))
+                );
+
     }
 }
