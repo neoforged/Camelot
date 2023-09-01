@@ -59,7 +59,7 @@ public class ThreadPingsListener implements EventListener {
 
         final List<Role> roles = new ArrayList<>();
         for (Long roleId : roleIds) {
-            final Role role = thread.getGuild().getRoleCache().getElementById(roleId);
+            final Role role = thread.getGuild().getRoleById(roleId);
             if (role == null) {
                 LOGGER.info("Role {} does not exist; deleting role from database", roleId);
                 Database.pings().useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearRole(roleId));
