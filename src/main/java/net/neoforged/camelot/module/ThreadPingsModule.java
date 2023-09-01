@@ -7,6 +7,14 @@ import net.dv8tion.jda.api.hooks.EventListener;
 import net.neoforged.camelot.commands.utility.ThreadPingsCommand;
 import net.neoforged.camelot.listener.ThreadPingsListener;
 
+/**
+ * Module for thread pings, for automatically mentioning a role in public threads created under a channel and
+ * therefore adding all holders of the role to that thread.
+ *
+ * @see ThreadPingsCommand
+ * @see ThreadPingsListener
+ * @see net.neoforged.camelot.db.transactionals.ThreadPingsDAO
+ */
 @AutoService(CamelotModule.class)
 public class ThreadPingsModule implements CamelotModule {
     @Override
