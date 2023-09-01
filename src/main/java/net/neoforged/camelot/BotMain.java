@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
+import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Bot program entry point.
@@ -159,6 +161,11 @@ public class BotMain {
         }
 
         Commands.init();
+        instance.addEventListener(Commands.get().getSlashCommands().stream()
+                .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
+                .filter(EventListener.class::isInstance)
+                .toArray()); // A command implementing EventListener shall be treated as a listener
+
         forEachModule(module -> module.setup(instance));
 
         EXECUTOR.scheduleAtFixedRate(() -> {

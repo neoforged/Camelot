@@ -45,8 +45,7 @@ public class TricksModule implements CamelotModule {
 
     @Override
     public void registerListeners(JDABuilder builder) {
-        builder.addEventListeners((EventListener) ManageTrickCommand.Update::onEvent, (EventListener) ManageTrickCommand.Add::onEvent, (EventListener) ManageTrickCommand.AddText::onEvent, (EventListener) EvalCommand::onEvent)
-
+        builder.addEventListeners((EventListener) EvalCommand::onEvent)
                 .addEventListeners((EventListener) gevent -> {
                     if (gevent instanceof GuildReadyEvent event) {
                         if (slashTrickManagers.containsKey(event.getGuild().getIdLong())) return;
