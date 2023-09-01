@@ -23,12 +23,15 @@ import net.dv8tion.jda.api.utils.MiscUtil;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.ThreadPingsDAO;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ThreadPingsCommand extends SlashCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPingsCommand.class);
     private static final String SELECT_MENU_ID_PREFIX = "thread-pings-configure-";
 
     public ThreadPingsCommand() {
@@ -57,7 +60,8 @@ public class ThreadPingsCommand extends SlashCommand {
 
         final GuildChannel channel = event.getJDA().getGuildChannelById(channelId);
         if (!isGuildId && channel == null) {
-            // TODO: handle this?
+            LOGGER.info("Received interaction for non-existent channel {}; deleting associated pings from database", channelId);
+            Database.pings().useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearChannel(channelId));
             return;
         }
 
