@@ -4,10 +4,16 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.configuration.Config;
+import net.neoforged.camelot.db.schemas.SlashTrick;
+import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
+import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.script.ScriptContext;
 import net.neoforged.camelot.script.ScriptReplier;
 import net.neoforged.camelot.script.ScriptUtils;
@@ -37,6 +43,20 @@ public record TrickListener(String prefix) implements EventListener {
             final Trick trick = Database.main().withExtension(TricksDAO.class, db -> db.getNamedTrick(trickName));
 
             if (trick == null) return;
+
+            if (Config.PROMOTED_SLASH_ONLY) {
+                final SlashTrick promotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
+                if (promotion != null) {
+                    final Command.Subcommand asSlash = BotMain.getModule(TricksModule.class)
+                            .slashTrickManagers.get(event.getGuild().getIdLong())
+                            .getByName(promotion.getFullName());
+
+                    if (asSlash != null) {
+                        event.getMessage().reply("That trick is promoted. Use " + asSlash.getAsMention() + " instead.").queue();
+                        return;
+                    }
+                }
+            }
 
             final String args = nextSpace < 0 ? "" : content.substring(nextSpace + 1);
 

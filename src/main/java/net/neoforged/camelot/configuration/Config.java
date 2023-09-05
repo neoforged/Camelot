@@ -54,6 +54,11 @@ public class Config {
     public static boolean PREFIX_TRICKS = true;
 
     /**
+     * If {@code true}, promoted tricks can only be invoked via the slash variant.
+     */
+    public static boolean PROMOTED_SLASH_ONLY = false;
+
+    /**
      * Read configs from file.
      * If the file does not exist, or the properties are invalid, the config is reset to defaults.
      * @throws IOException if something goes wrong with the universe.
@@ -66,9 +71,11 @@ public class Config {
             LOGIN_TOKEN = properties.getProperty("token");
             OWNER_SNOWFLAKE = Long.parseLong(properties.getProperty("owner"));
             PREFIX = properties.getProperty("prefix");
-            TRICK_MASTER_ROLE = Long.parseLong(properties.getProperty("trickMaster", "0"));
             PINGS_THREADS_CHANNEL = Long.parseLong(properties.getProperty("pingsThreadsChannel", "0"));
-            PREFIX_TRICKS = Boolean.parseBoolean(properties.getProperty("prefixTricks", "true"));
+
+            TRICK_MASTER_ROLE = Long.parseLong(properties.getProperty("trick.master", properties.getProperty("trickMaster", "0")));
+            PREFIX_TRICKS = Boolean.parseBoolean(properties.getProperty("tricks.prefix", properties.getProperty("prefixTricks", "true")));
+            PROMOTED_SLASH_ONLY = Boolean.parseBoolean(properties.getProperty("tricks.promotedSlashOnly", "false"));
         } catch (Exception e) {
             Files.writeString(Path.of("config.properties"),
                     """
@@ -78,12 +85,15 @@ public class Config {
                             owner=0
                             # The prefix for textual commands. Temporary.
                             prefix=!
-                            # The role that grants permission to edit any trick.
-                            trickMaster=0
-                            # If true, tricks can be invoked using prefix commands
-                            prefixTricks=true
                             # The channel in which to create ping private threads if a member does not have DMs enabled.
                             pingsThreadsChannel=0
+                            
+                            # The role that grants permission to edit any trick.
+                            trick.master=0
+                            # If true, tricks can be invoked using prefix commands
+                            tricks.prefix=true
+                            # If true, promoted tricks can only be invoked via the slash variant.
+                            tricks.promotedSlashOnly=false
                             
                             # The channel in which to send moderation logs.
                             moderationLogs=0

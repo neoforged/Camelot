@@ -28,6 +28,7 @@ import net.neoforged.camelot.script.option.EnumOptionHandler;
 import net.neoforged.camelot.script.option.MentionableOptionHandler;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.kohsuke.args4j.NamedOptionDef;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 import org.kohsuke.args4j.spi.DoubleOptionHandler;
@@ -76,7 +77,9 @@ public class SlashTrickManager implements EventListener {
     private final SlashTricksDAO dao;
     private final TricksDAO tricksDAO;
     private final Set<Integer> tricksPendingUpdate = new CopyOnWriteArraySet<>();
+
     private Map<String, TrickInfo> tricks;
+    private Map<String, Command.Subcommand> tricksSlash;
 
     public SlashTrickManager(long guildId, SlashTricksDAO dao, TricksDAO tricksDAO) {
         this.guildId = guildId;
@@ -178,11 +181,31 @@ public class SlashTrickManager implements EventListener {
                     updater.addCommands(command);
                 }
             });
-            updater.queue($ -> {
+            updater.queue(cmds -> {
                 tricks = Map.copyOf(trickInfos);
                 tricksPendingUpdate.clear(); // Clear again in case markNeedsUpdate was called while commands were being built... somehow
+
+                final Map<String, Command.Subcommand> commandsByName = new HashMap<>();
+                cmds.forEach(cmd -> {
+                    cmd.getSubcommands().forEach(sub -> commandsByName.put(cmd.getName() + " " + sub.getName(), sub));
+                    cmd.getSubcommandGroups().forEach(group ->
+                            group.getSubcommands().forEach(sub ->
+                                    commandsByName.put(cmd.getName() + " " + group.getName() + " " + sub.getName(), sub)));
+                });
+                tricksSlash = Map.copyOf(commandsByName);
             });
         }
+    }
+
+    /**
+     * Get an upstarted trick subcommand by its name.
+     *
+     * @param name the name of the slash trick, with separating spaces
+     * @return the slash subcommand, or {@code null}
+     */
+    @Nullable
+    public Command.Subcommand getByName(String name) {
+        return this.tricksSlash.get(name);
     }
 
     /**
