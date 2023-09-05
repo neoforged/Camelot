@@ -59,6 +59,11 @@ public class Config {
     public static boolean PROMOTED_SLASH_ONLY = false;
 
     /**
+     * A {@link GitHub} instance used for creating file preview gists.
+     */
+    public static GitHub FILE_PREVIEW_GISTS;
+
+    /**
      * Read configs from file.
      * If the file does not exist, or the properties are invalid, the config is reset to defaults.
      * @throws IOException if something goes wrong with the universe.
@@ -98,6 +103,9 @@ public class Config {
                             # The channel in which to send moderation logs.
                             moderationLogs=0
                             
+                            # A GitHub PAT used for creating file preview gists.
+                            filePreview.gistToken=
+                            
                             # In the case of a GitHub bot being used for GitHub interaction, the ID of the application
                             githubAppId=
                             # In the case of a GitHub bot being used for GitHub interaction, the name of the owner of the application
@@ -113,6 +121,17 @@ public class Config {
             GITHUB = readGithub();
         } catch (Exception ex) {
             BotMain.LOGGER.error("Could not read GitHub credentials: ", ex);
+        }
+
+        final String gistToken = properties.getProperty("filePreview.gistToken");
+        if (gistToken != null && !gistToken.isBlank()) {
+            try {
+                FILE_PREVIEW_GISTS = new GitHubBuilder()
+                        .withJwtToken(gistToken)
+                        .build();
+            } catch (Exception exception) {
+                BotMain.LOGGER.error("Failed to build file preview github instance: ", exception);
+            }
         }
     }
 

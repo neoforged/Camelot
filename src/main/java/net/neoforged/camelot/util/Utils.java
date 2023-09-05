@@ -1,10 +1,12 @@
 package net.neoforged.camelot.util;
 
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.hooks.EventListener;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -94,5 +96,16 @@ public class Utils {
      */
     public static String getName(User user) {
         return user.getDiscriminator().equals("0000") ? user.getName() : user.getAsTag();
+    }
+
+    /**
+     * Creates a {@link EventListener} listening for events of the given {@code type}.
+     */
+    public static <T> EventListener listenerFor(Class<T> type, Consumer<T> listener) {
+        return event -> {
+            if (type.isInstance(event)) {
+                listener.accept(type.cast(event));
+            }
+        };
     }
 }
