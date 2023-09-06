@@ -7,6 +7,7 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
 import net.neoforged.camelot.commands.information.McAgeCommand;
+import net.neoforged.camelot.commands.information.VersioningCommand;
 import net.neoforged.camelot.commands.moderation.BanCommand;
 import net.neoforged.camelot.commands.moderation.KickCommand;
 import net.neoforged.camelot.commands.moderation.ModLogsCommand;
@@ -59,7 +60,7 @@ public class Commands {
                 )
 
                 // Information commands
-                .addSlashCommands(new InfoChannelCommand(), new McAgeCommand())
+                .addSlashCommands(new InfoChannelCommand(), new McAgeCommand(), new VersioningCommand())
 
                 // Message context menus
                 .addContextMenus(new InfoChannelCommand.UploadToDiscohookContextMenu());
