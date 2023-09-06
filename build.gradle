@@ -81,6 +81,7 @@ dependencies {
     implementation group: 'com.google.re2j', name: 're2j', version: project.re2j_version
     implementation group: 'it.unimi.dsi', name: 'fastutil', version: project.fastutil_version
 
+    implementation group: 'com.matyrobbrt', name: 'semver-graaljs', version: project.semver_version
     implementation group: 'org.apache.maven', name: 'maven-artifact', version: project.maven_artifact_version
 
     compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'

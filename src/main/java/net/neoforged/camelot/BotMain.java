@@ -149,16 +149,17 @@ public class BotMain {
                 .setActivity(Activity.listening("for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener());
-        forEachModule(module -> module.registerListeners(botBuilder));
-        instance = botBuilder.build();
-
-        Config.populate(instance);
 
         try {
             Database.init();
         } catch (IOException exception) {
             throw new RuntimeException("Encountered exception setting up database connections:", exception);
         }
+
+        forEachModule(module -> module.registerListeners(botBuilder));
+        instance = botBuilder.build();
+
+        Config.populate(instance);
 
         Commands.init();
         instance.addEventListener(Commands.get().getSlashCommands().stream()
