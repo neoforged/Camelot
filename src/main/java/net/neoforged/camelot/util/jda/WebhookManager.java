@@ -3,6 +3,8 @@ package net.neoforged.camelot.util.jda;
 import club.minnced.discord.webhook.WebhookClientBuilder;
 import club.minnced.discord.webhook.external.JDAWebhookClient;
 import club.minnced.discord.webhook.send.AllowedMentions;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer;
 import okhttp3.OkHttpClient;
@@ -65,7 +67,7 @@ public final class WebhookManager {
     private final Predicate<String> predicate;
     private final String webhookName;
     private final AllowedMentions allowedMentions;
-    private final Map<Long, JDAWebhookClient> webhooks = new HashMap<>();
+    private final Long2ObjectMap<JDAWebhookClient> webhooks = new Long2ObjectOpenHashMap<>();
     @Nullable
     private final Consumer<Webhook> creationListener;
 

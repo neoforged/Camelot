@@ -2,6 +2,9 @@ package net.neoforged.camelot.module;
 
 import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
@@ -18,9 +21,6 @@ import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.listener.TrickListener;
 import net.neoforged.camelot.script.SlashTrickManager;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * The module for tricks.
  */
@@ -30,7 +30,7 @@ public class TricksModule implements CamelotModule {
      * A map mapping a guild ID to its own {@link SlashTrickManager}. <br>
      * New managers are added to this map during {@link GuildReadyEvent}.
      */
-    public final Map<Long, SlashTrickManager> slashTrickManagers = new ConcurrentHashMap<>();
+    public final Long2ObjectMap<SlashTrickManager> slashTrickManagers = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
 
     @Override
     public String id() {

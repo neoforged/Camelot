@@ -11,10 +11,10 @@ import net.dv8tion.jda.internal.requests.DeferredRestAction;
 import net.dv8tion.jda.internal.requests.RestActionImpl;
 import net.dv8tion.jda.internal.utils.UnlockHook;
 import net.dv8tion.jda.internal.utils.cache.SnowflakeCacheViewImpl;
-import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.BotMain;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * @see #of(JDA)
  */
 public record WebhookCache(JDAImpl jda, SnowflakeCacheViewImpl<Webhook> webhooks) {
-    private static final Map<JDA, WebhookCache> CACHES = new HashMap<>();
+    private static final Map<JDA, WebhookCache> CACHES = new IdentityHashMap<>();
 
     static {
         BotMain.EXECUTOR.scheduleAtFixedRate(() -> CACHES.forEach((jda, cache) -> cache.webhooks.clear()), 0, 10, TimeUnit.MINUTES); // Forget the webhooks every 10 minutes as otherwise they will become outdated
