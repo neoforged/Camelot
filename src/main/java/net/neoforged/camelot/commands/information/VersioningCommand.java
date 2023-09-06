@@ -3,6 +3,7 @@ package net.neoforged.camelot.commands.information;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.matyrobbrt.semver.SemverAPI;
+import com.matyrobbrt.semver.SemverOptions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
@@ -17,6 +18,8 @@ import java.util.List;
  * Command used to compare and test version ranges of different types.
  */
 public class VersioningCommand extends SlashCommand {
+    public static final SemverAPI SEMVER_API = SemverAPI.getWithOptions(SemverOptions.DEFAULT.withIncludePrerelease(true));
+
     public static final SubcommandGroupData MAVEN = new SubcommandGroupData("maven", "Maven versioning");
     public static final SubcommandGroupData SEMVER = new SubcommandGroupData("semver", "Semver versioning");
 
@@ -46,7 +49,7 @@ public class VersioningCommand extends SlashCommand {
             new TestCommand(SEMVER) {
                 @Override
                 public boolean isIn(String version, String range) throws Exception {
-                    return SemverAPI.API.satisfies(version, range);
+                    return SEMVER_API.actuallySatisfies(version, range);
                 }
             }
         };
