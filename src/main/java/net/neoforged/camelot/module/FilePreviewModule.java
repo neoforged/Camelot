@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @AutoService(CamelotModule.class)
@@ -95,10 +96,24 @@ public class FilePreviewModule implements CamelotModule {
         }));
     }
 
-    // A message has a codeblock if it has at least two "counts" of ```
+    // A message has a codeblock if it has at least two "counts" of ```, and if the codeblock is at least 10 lines long or 300 characters
     private static boolean hasCodeBlock(String msg) {
         final int idx = msg.indexOf("```");
-        return idx != -1 && (idx < msg.lastIndexOf("```"));
+        final boolean hasBlock = idx != -1 && (idx < msg.lastIndexOf("```"));
+
+        if (hasBlock) {
+            final Matcher matcher = CODEBLOCK_PATTERN.matcher(msg);
+            int matchFindingStart = 0;
+            while (matcher.find(matchFindingStart)) {
+                final String content = matcher.group("content");
+                if (content.length() >= 300 || content.split("\n").length >= 10) {
+                    return true;
+                }
+
+                matchFindingStart = matcher.end();
+            }
+        }
+        return false;
     }
 
     public static String generateName(int length) {
