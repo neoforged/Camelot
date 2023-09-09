@@ -1,11 +1,14 @@
 package net.neoforged.camelot.listener;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
@@ -66,6 +69,22 @@ public record TrickListener(String prefix) implements EventListener {
                 @Override
                 protected RestAction<?> doSend(MessageCreateData createData) {
                     synchronized (this) {
+                        if (Config.ENCOURAGE_PROMOTED_SLASH) {
+                            final SlashTrick promotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
+                            if (promotion != null) {
+                                final Command.Subcommand asSlash = BotMain.getModule(TricksModule.class)
+                                        .slashTrickManagers.get(event.getGuild().getIdLong())
+                                                           .getByName(promotion.getFullName());
+                                if (asSlash != null && createData.getEmbeds().size() < 10) {
+                                    //noinspection resource
+                                    createData = MessageCreateBuilder.from(createData)
+                                                                     .addEmbeds(new EmbedBuilder().setDescription("That trick is promoted. Consider using " + asSlash.getAsMention() + " instead.")
+                                                                                                  .setColor(0x2F3136)
+                                                                                                  .build())
+                                                                     .build();
+                                }
+                            }
+                        }
                         if (reply == null) {
                             return event.getMessage().reply(createData)
                                     .setAllowedMentions(ALLOWED_MENTIONS)
