@@ -79,6 +79,7 @@ public record TrickListener(String prefix) implements EventListener {
                                     //noinspection resource
                                     createData = MessageCreateBuilder.from(createData)
                                                                      .addEmbeds(new EmbedBuilder().setDescription("That trick is promoted. Consider using " + asSlash.getAsMention() + " instead.")
+                                                                                                  .setColor(0x2F3136)
                                                                                                   .build())
                                                                      .build();
                                 }
