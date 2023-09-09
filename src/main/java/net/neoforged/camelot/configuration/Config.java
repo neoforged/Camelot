@@ -59,6 +59,11 @@ public class Config {
     public static boolean PROMOTED_SLASH_ONLY = false;
 
     /**
+     * If {@code true}, prefix command invocations of promoted tricks tell the user they should prefer the slash variant.
+     */
+    public static boolean ENCOURAGE_PROMOTED_SLASH = false;
+
+    /**
      * A {@link GitHub} instance used for creating file preview gists.
      */
     public static GitHub FILE_PREVIEW_GISTS;
@@ -81,6 +86,7 @@ public class Config {
             TRICK_MASTER_ROLE = Long.parseLong(properties.getProperty("trick.master", properties.getProperty("trickMaster", "0")));
             PREFIX_TRICKS = Boolean.parseBoolean(properties.getProperty("tricks.prefix", properties.getProperty("prefixTricks", "true")));
             PROMOTED_SLASH_ONLY = Boolean.parseBoolean(properties.getProperty("tricks.promotedSlashOnly", "false"));
+            ENCOURAGE_PROMOTED_SLASH = Boolean.parseBoolean(properties.getProperty("tricks.encouragePromotedSlash", "false"));
         } catch (Exception e) {
             Files.writeString(Path.of("config.properties"),
                     """
@@ -99,6 +105,8 @@ public class Config {
                             tricks.prefix=true
                             # If true, promoted tricks can only be invoked via the slash variant.
                             tricks.promotedSlashOnly=false
+                            # If true, prefix command invocations of promoted tricks tell the user they should prefer the slash variant.
+                            tricks.encouragePromotedSlash=false
                             
                             # The channel in which to send moderation logs.
                             moderationLogs=0
