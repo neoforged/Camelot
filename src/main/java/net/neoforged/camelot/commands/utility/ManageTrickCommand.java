@@ -153,6 +153,7 @@ public class ManageTrickCommand extends SlashCommand {
                                     .build())
                             .addActionRow(TextInput.create("description", "Trick description", TextInputStyle.SHORT)
                                     .setRequired(false)
+                                    .setMaxLength(100)
                                     .build())
                             .addActionRow(TextInput.create("text", "The trick text reply", TextInputStyle.PARAGRAPH)
                                     .setRequired(true)
