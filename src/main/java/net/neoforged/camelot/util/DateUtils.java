@@ -35,7 +35,7 @@ public class DateUtils {
 
         final long hours = duration.toHours();
         duration = duration.minus(Duration.ofHours(hours));
-        if (hours > 0) appendMaybePlural(str, days, "hour");
+        if (hours > 0) appendMaybePlural(str, hours, "hour");
 
         final long mins = duration.toMinutes();
         duration = duration.minus(Duration.ofMinutes(mins));

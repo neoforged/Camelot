@@ -18,10 +18,13 @@ import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.listener.CountersListener;
+import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.CamelotModule;
+import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.ButtonManager;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +124,19 @@ public class BotMain {
         return instance;
     }
 
+    /**
+     * Returns the {@link #get() bot instance} and calls {@link JDA#awaitReady()} on it.
+     */
+    @NotNull
+    public static JDA awaitReady() {
+        try {
+            return get().awaitReady();
+        } catch (InterruptedException e) {
+            Utils.sneakyThrow(e);
+            return null; // should never get here
+        }
+    }
+
     public static void main(String[] args) {
         // This throw shouldn't occur by any Earthly means but Java demands that i catch it.
         try {
@@ -148,7 +164,7 @@ public class BotMain {
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS)
                 .setActivity(Activity.listening("for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener());
+                .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener(), new DismissListener());
 
         try {
             Database.init();
@@ -157,11 +173,12 @@ public class BotMain {
         }
 
         forEachModule(module -> module.registerListeners(botBuilder));
+        Commands.init();
+        botBuilder.addEventListeners(Commands.get());
         instance = botBuilder.build();
 
         Config.populate(instance);
 
-        Commands.init();
         instance.addEventListener(Commands.get().getSlashCommands().stream()
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)

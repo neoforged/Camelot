@@ -2,10 +2,12 @@ package net.neoforged.camelot.util;
 
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.neoforged.camelot.BotMain;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -106,6 +108,19 @@ public class Utils {
             if (type.isInstance(event)) {
                 listener.accept(type.cast(event));
             }
+        };
+    }
+
+    /**
+     * {@return a thread factory which creates daemon threads that are part of a group with the give {@code name}}
+     */
+    public static ThreadFactory daemonGroup(String name) {
+        final var group = new ThreadGroup(name);
+        return r -> {
+            final Thread thread = new Thread(group, r, name + " #" + group.activeCount());
+            thread.setDaemon(true);
+            thread.setUncaughtExceptionHandler((t, e) -> BotMain.LOGGER.error("Encountered exception on thread {}: ", t.getName(), e));
+            return thread;
         };
     }
 }

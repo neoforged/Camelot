@@ -28,7 +28,7 @@ public class PostCallbackDecorator implements HandlerDecorator {
                 .filter(callback -> Modifier.isStatic(callback.getModifiers()) && callback.getAnnotation(ExecutionCallback.class) != null)
                 .filter(callback -> {
                     final ExecutionCallback annotation = callback.getAnnotation(ExecutionCallback.class);
-                    return annotation.methodName().equals(method.getName()) && (annotation.phase() == ExecutionCallback.Phase.POST && callback.getReturnType() != void.class ?
+                    return annotation.methodName().equals(method.getName()) && (annotation.phase() == ExecutionCallback.Phase.POST && method.getReturnType() != void.class ?
                             (Arrays.equals(method.getParameterTypes(), 0, method.getParameterTypes().length, callback.getParameterTypes(), 1, callback.getParameterTypes().length - 1)
                                     && callback.getParameterTypes()[callback.getParameterCount() - 1] == method.getReturnType()
                                     && callback.getParameterTypes()[0] == sqlObjectType) :

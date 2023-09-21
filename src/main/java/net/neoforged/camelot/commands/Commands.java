@@ -95,9 +95,6 @@ public class Commands {
                 }
             }
         }
-
-        // Register the commands to the listener.
-        BotMain.get().addEventListener(commands);
     }
 
 }

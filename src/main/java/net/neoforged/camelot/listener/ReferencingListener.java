@@ -2,6 +2,7 @@ package net.neoforged.camelot.listener;
 
 import com.jagrosh.jdautilities.commons.utils.SafeIdUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -11,6 +12,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.util.Utils;
@@ -53,9 +55,7 @@ public final class ReferencingListener implements EventListener {
         }
 
         decodeMessageLink(msg[0])
-                .flatMap(info -> Optional.ofNullable(BotMain.get().getGuildById(info.guildId))
-                        .flatMap(guild -> Optional.ofNullable(guild.getChannelById(MessageChannel.class, info.channelId)))
-                        .map(channel -> channel.retrieveMessageById(info.messageId)))
+                .flatMap(info -> info.retrieve(BotMain.get()))
                 .ifPresent(action -> action.flatMap(message -> event.getChannel().sendMessageEmbeds(reference(message, event.getMember())))
                         .flatMap($ -> msg.length == 1 && originalMsg.getMessageReference() == null, $ -> originalMsg.delete().reason("Reference successful"))
                         .queue(null, ERROR_HANDLER));
@@ -103,5 +103,10 @@ public final class ReferencingListener implements EventListener {
     }
 
     public record MessageLinkInformation(long guildId, long channelId, long messageId) {
+        public Optional<RestAction<Message>> retrieve(JDA bot) {
+            return Optional.ofNullable(bot.getGuildById(guildId))
+                    .flatMap(guild -> Optional.ofNullable(guild.getChannelById(MessageChannel.class, channelId)))
+                    .map(channel -> channel.retrieveMessageById(messageId));
+        }
     }
 }
