@@ -29,6 +29,9 @@ import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
+import net.neoforged.camelot.module.TricksModule;
+import net.neoforged.camelot.script.CannotRetrieveInformationException;
+import net.neoforged.camelot.script.ScriptUtils;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +65,7 @@ public class ManageTrickCommand extends SlashCommand {
 
                 new NewPromotion(),
                 new RemovePromotion(),
+                new RefreshPromotions(),
                 new ListPromoted(BotMain.BUTTON_MANAGER)
         };
         this.guildOnly = true;
@@ -329,15 +333,24 @@ public class ManageTrickCommand extends SlashCommand {
                 return;
             }
 
+            event.deferReply().queue();
+
             // Explicit generics because IJ gets confused
             final String names = String.join(" ", Database.main().<List<String>, TricksDAO, RuntimeException>withExtension(TricksDAO.class, db -> db.getTrickNames(trick.id())));
-            event.replyEmbeds(new EmbedBuilder()
-                            .setTitle("Information about trick nr. " + trick.id()) // TODO - description member
-                            .appendDescription("Script:\n```js\n" + trick.script() + "\n```")
-                            .addField("Names", names.isBlank() ? "*This trick has no names*" : names, false)
-                            .addField("Owner", "<@" + trick.owner() + "> (" + trick.owner() + ")", false)
-                            .build())
-                    .queue();
+            final EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("Information about trick nr. " + trick.id()) // TODO - description member
+                    .appendDescription("Script:\n```js\n" + trick.script() + "\n```")
+                    .addField("Names", names.isBlank() ? "*This trick has no names*" : names, false);
+
+            try {
+                embed.addField("Description", ScriptUtils.getInformation(trick.script()).description(), false);
+            } catch (CannotRetrieveInformationException ignored) {
+
+            }
+
+            embed.addField("Owner", "<@" + trick.owner() + "> (" + trick.owner() + ")", false);
+
+            event.getHook().editOriginalEmbeds(embed.build()).queue();
         }
 
         @Override
@@ -605,6 +618,30 @@ public class ManageTrickCommand extends SlashCommand {
         @Override
         public void onAutoComplete(CommandAutoCompleteInteractionEvent event) {
             suggestTrickAutocomplete(event, "trick");
+        }
+    }
+
+    /**
+     * The command used to refresh guild-level slash trick.
+     */
+    public static final class RefreshPromotions extends SlashCommand {
+        public RefreshPromotions() {
+            this.name = "refresh";
+            this.help = "Refresh the trick promotions in this guild";
+            this.subcommandGroup = PROMOTIONS;
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            if (!isManager(event.getMember())) {
+                event.reply("You cannot refresh trick promotions!").setEphemeral(true).queue();
+                return;
+            }
+
+            ScriptUtils.SERVICE.submit(() -> BotMain.getModule(TricksModule.class).slashTrickManagers
+                    .get(event.getGuild().getIdLong())
+                    .updateCommands(event.getGuild()));
+            event.reply("Started refresh!").queue();
         }
     }
 

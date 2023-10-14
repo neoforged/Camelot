@@ -50,7 +50,7 @@ public class CustomPingsCommand extends SlashCommand {
             this.name = "add";
             this.help = "Add a new ping";
             this.options = List.of(
-                    new OptionData(OptionType.STRING, "regex", "The ping regex", true),
+                    new OptionData(OptionType.STRING, "regex", "The ping regex, in RE2 flavour", true),
                     new OptionData(OptionType.STRING, "message", "The ping message", true)
             );
         }
