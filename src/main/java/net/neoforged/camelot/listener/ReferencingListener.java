@@ -73,10 +73,10 @@ public final class ReferencingListener implements EventListener {
             embed.setAuthor(message.getAuthor().getName(), msgLink, message.getAuthor().getEffectiveAvatarUrl());
         }
         if (!message.getContentRaw().isBlank()) {
-            embed.appendDescription(MarkdownUtil.maskedLink("Reference ➤ ", msgLink))
-                    .appendDescription(message.getContentRaw());
+            embed.appendDescription(MarkdownUtil.maskedLink("Reference to ", msgLink) + message.getChannel().getAsMention() + " " + MarkdownUtil.maskedLink("➤ ", msgLink))
+                    .appendDescription(Utils.truncate(message.getContentRaw(), MessageEmbed.DESCRIPTION_MAX_LENGTH - 300));
         } else {
-            embed.appendDescription(MarkdownUtil.maskedLink("Jump to referenced message.", msgLink));
+            embed.appendDescription(MarkdownUtil.maskedLink("Jump to referenced message", msgLink) + " in " + message.getChannel().getAsMention() + ".");
         }
         if (quoter.getIdLong() != message.getAuthor().getIdLong()) {
             embed.setFooter(Utils.getName(quoter.getUser()) + " referenced", quoter.getEffectiveAvatarUrl());
