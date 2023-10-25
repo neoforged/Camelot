@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.CountersDAO;
+import net.neoforged.camelot.util.Utils;
 import org.graalvm.polyglot.proxy.ProxyInstant;
 
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public record ScriptContext(
                 .put("discriminator", user.getDiscriminator())
                 .put("avatarUrl", user.getAvatarUrl())
                 .putMethod("asTag", _ -> user.getAsTag())
-                .putMethod("toString", _ -> user.getAsTag());
+                .putMethod("toString", _ -> Utils.getName(user));
     }
 
     public ScriptObject createMember(Member member) {
@@ -110,7 +111,7 @@ public record ScriptContext(
                 .putLazyGetter("getJoinTime", () -> ProxyInstant.from(member.getTimeJoined().toInstant()))
                 .putLazyGetter("getPermissions", () -> new ArrayList<>(member.getPermissions()))
                 .putLazyGetter("getRoles", () -> transformList(member.getRoles()))
-                .putMethod("toString", _ -> member.getUser().getAsTag() + " in " + member.getGuild().getName());
+                .putMethod("toString", _ -> Utils.getName(member.getUser()) + " in " + member.getGuild().getName());
     }
 
     public ScriptObject createChannel(Channel channel) {

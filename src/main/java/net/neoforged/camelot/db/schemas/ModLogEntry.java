@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.utils.TimeFormat;
+import net.neoforged.camelot.util.Utils;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jetbrains.annotations.Nullable;
@@ -167,7 +168,7 @@ public final class ModLogEntry {
             public CompletableFuture<MessageEmbed.Field> format(ModLogEntry entry, JDA jda) {
                 return jda.retrieveUserById(entry.moderator())
                         .submit()
-                        .thenApply(mod -> mod.getAsTag() + " (" + mod.getId() + ")")
+                        .thenApply(mod -> Utils.getName(mod) + " (" + mod.getId() + ")")
                         .exceptionally(ex -> String.valueOf(entry.moderator()))
                         .thenApply(mod -> Lists.newArrayList(
                                 "**Type**: note",
@@ -233,7 +234,7 @@ public final class ModLogEntry {
         protected final CompletableFuture<List<String>> collectInformation(ModLogEntry entry, JDA jda) {
             return jda.retrieveUserById(entry.moderator())
                     .submit()
-                    .thenApply(mod -> mod.getAsTag() + " (" + mod.getId() + ")")
+                    .thenApply(mod -> Utils.getName(mod) + " (" + mod.getId() + ")")
                     .exceptionally(ex -> String.valueOf(entry.moderator()))
                     .thenApply(data -> Lists.newArrayList(
                             "**Type**: " + name().toLowerCase(Locale.ROOT),

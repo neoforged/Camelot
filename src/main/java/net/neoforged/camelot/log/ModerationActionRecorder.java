@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
+import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.BotMain;
@@ -110,7 +111,7 @@ public class ModerationActionRecorder implements EventListener {
     public static void log(ModLogEntry entry, User user) {
         entry.format(user.getJDA())
                 .thenAccept(caseData -> Config.MODERATION_LOGS.log(new EmbedBuilder()
-                        .setTitle("%s has been %s".formatted(user.getAsTag(), entry.type().getAction()))
+                        .setTitle("%s has been %s".formatted(Utils.getName(user), entry.type().getAction()))
                         .setDescription("Case information below:")
                         .addField(caseData)
                         .setTimestamp(entry.timestamp())

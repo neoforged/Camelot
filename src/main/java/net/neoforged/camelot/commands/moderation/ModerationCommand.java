@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
+import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
@@ -146,7 +147,7 @@ public abstract class ModerationCommand<T> extends SlashCommand {
                     ModerationActionRecorder.log(action.entry, user);
 
                     final EmbedBuilder builder = new EmbedBuilder()
-                            .setDescription("%s has been %s. | **%s**".formatted(user.getAsTag(), action.entry.type().getAction(), action.entry.reasonOrDefault()))
+                            .setDescription("%s has been %s. | **%s**".formatted(Utils.getName(user), action.entry.type().getAction(), action.entry.reasonOrDefault()))
                             .setTimestamp(action.entry.timestamp())
                             .setColor(action.entry().type().getColor());
                     if (!dmedUser && shouldDMUser) {

@@ -3,6 +3,8 @@ package net.neoforged.camelot.commands.moderation;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -74,14 +76,18 @@ public class ModLogsCommand extends PaginatableCommand<ModLogsCommand.Data> {
                 data.target(), interaction.getGuild().getIdLong(), page * itemsPerPage,
                 this.itemsPerPage, data.include(), data.exclude()
         ));
+
+        record UserAndFields(User user, List<MessageEmbed.Field> fields) {}
         return interaction.getJDA().retrieveUserById(data.target())
-                .submit().thenCompose(usr -> Utils.allOf(logs.stream().map(log -> log.format(interaction.getJDA())).toList()).thenApply(fields -> Pair.of(usr, fields)))
-                .thenApply(result -> {
+                .submit().thenCompose(usr -> Utils.allOf(logs.stream().map(log -> log.format(interaction.getJDA())).toList()).thenApply(fields -> new UserAndFields(usr, fields)))
+                .thenApply(rs -> {
+                    if (!(rs instanceof UserAndFields(var user, var fields))) throw null;
+
                     final EmbedBuilder embed = new EmbedBuilder();
-                    result.getRight().forEach(embed::addField);
-                    embed.setAuthor(result.getLeft().getName(), null, result.getLeft().getAvatarUrl());
-                    embed.setTitle("Modlogs for " + result.getLeft().getAsTag() + " (Page " + (page + 1) + " of " + pageAmount(data.itemAmount()) + ")");
-                    embed.setFooter(data.itemAmount() + " total logs | User ID: " + result.getLeft().getId());
+                    fields.forEach(embed::addField);
+                    embed.setAuthor(user.getName(), null, user.getAvatarUrl());
+                    embed.setTitle("Modlogs for " + Utils.getName(user) + " (Page " + (page + 1) + " of " + pageAmount(data.itemAmount()) + ")");
+                    embed.setFooter(data.itemAmount() + " total logs | User ID: " + user.getId());
                     return MessageEditData.fromEmbeds(embed.build());
                 })
                 .exceptionally(this.exceptionally);
