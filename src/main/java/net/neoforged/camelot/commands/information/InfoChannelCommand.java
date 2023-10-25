@@ -438,15 +438,16 @@ public class InfoChannelCommand extends SlashCommand {
         // Message edits and updates give us the message
         // Also don't attempt to rebuild the messages for non-webhook messages
         // but ephemeral interaction replies are webhook messages so filter those out as well
-        if (gevent instanceof MessageReceivedEvent event && event.isFromGuild() && event.getMessage().isWebhookMessage() && !event.getMessage().isEphemeral()) {
-            channel = event.getMessage().getChannel();
-        } else if (gevent instanceof MessageUpdateEvent event && event.isFromGuild() && event.getMessage().isWebhookMessage() && !event.getMessage().isEphemeral()) {
-            channel = event.getMessage().getChannel();
-        } else if (gevent instanceof MessageDeleteEvent event && event.isFromGuild()) {
+        switch (gevent) {
+            case MessageReceivedEvent event when event.isFromGuild() &&
+                    event.getMessage().isWebhookMessage() && !event.getMessage().isEphemeral() -> channel = event.getMessage().getChannel();
+            case MessageUpdateEvent event when event.isFromGuild() &&
+                    event.getMessage().isWebhookMessage() && !event.getMessage().isEphemeral() -> channel = event.getMessage().getChannel();
             // But deletes don't
-            channel = event.getChannel();
-        } else {
-            return;
+            case MessageDeleteEvent event when event.isFromGuild() -> channel = event.getChannel();
+            default -> {
+                return;
+            }
         }
 
         // If the channel isn't an info channel or is being updated, early-exit

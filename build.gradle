@@ -15,15 +15,20 @@ changelog {
 tasks.register('run', JavaExec).configure {
     classpath(sourceSets.main.runtimeClasspath)
     mainClass.set('net.neoforged.camelot.BotMain')
+    jvmArgs('--enable-preview')
     workingDir = project.file('run')
     doFirst {
         if (!workingDir.exists()) {
             Files.createDirectories(workingDir.toPath())
         }
     }
+    javaLauncher.set(project.javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.vendor = JvmVendorSpec.GRAAL_VM
 
 repositories {
     mavenCentral()
@@ -43,6 +48,7 @@ repositories {
 
 compileJava {
     options.encoding = 'UTF-8'
+    options.compilerArgs.add('--enable-preview')
 }
 
 dependencies {

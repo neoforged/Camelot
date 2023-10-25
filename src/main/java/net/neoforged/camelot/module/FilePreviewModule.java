@@ -83,9 +83,9 @@ public class FilePreviewModule implements CamelotModule {
                             }
 
                             final var url = gist.create().getHtmlUrl().toString();
-                            it.reply("Created Gist at the request of <@" + event.getUserIdLong() + ">: <" + url + ">")
+                            it.reply(STR."Created Gist at the request of <@\{event.getUserIdLong()}>: <\{url}>")
                                 .setAllowedMentions(List.of())
-                                .flatMap($ -> event.getReaction().clearReactions())
+                                .flatMap(_ -> event.getReaction().clearReactions())
                                 .queue();
                         }
                     } catch (Exception e) {

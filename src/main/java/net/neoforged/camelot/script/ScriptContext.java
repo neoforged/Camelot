@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -52,26 +51,16 @@ public record ScriptContext(
      */
     @SuppressWarnings("unchecked")
     public static <T> ScriptTransformer<T> getTransformer(T obj) {
-        return (ScriptTransformer<T>) TRANSFORMERS.computeIfAbsent(obj.getClass(), k -> {
-            if (obj instanceof User) {
-                return cast(ScriptContext::createUser);
-            } else if (obj instanceof Member) {
-                return cast(ScriptContext::createMember);
-            } else if (obj instanceof Channel) {
-                return cast(ScriptContext::createChannel);
-            } else if (obj instanceof Role) {
-                return cast(ScriptContext::createRole);
-            } else if (obj instanceof Guild) {
-                return cast(ScriptContext::createGuild);
-            } else if (obj instanceof Emoji) {
-                return cast(ScriptContext::createEmoji);
-            } else if (obj instanceof JDA) {
-                return cast(ScriptContext::createJDA);
-            } else if (obj instanceof List<?>) {
-                return cast(ScriptContext::transformList);
-            }
-
-            return (context, object) -> object;
+        return (ScriptTransformer<T>) TRANSFORMERS.computeIfAbsent(obj.getClass(), _ -> switch (obj) {
+            case User _ -> cast(ScriptContext::createUser);
+            case Member _ -> cast(ScriptContext::createMember);
+            case Channel _ -> cast(ScriptContext::createChannel);
+            case Role _ -> cast(ScriptContext::createRole);
+            case Guild _ -> cast(ScriptContext::createGuild);
+            case Emoji _ -> cast(ScriptContext::createEmoji);
+            case JDA _ -> cast(ScriptContext::createJDA);
+            case List<?> _ -> cast(ScriptContext::transformList);
+            default -> ((_, object) -> object);
         });
     }
 
@@ -106,8 +95,8 @@ public record ScriptContext(
                 .put("name", user.getName())
                 .put("discriminator", user.getDiscriminator())
                 .put("avatarUrl", user.getAvatarUrl())
-                .putMethod("asTag", args -> user.getAsTag())
-                .putMethod("toString", args -> user.getAsTag());
+                .putMethod("asTag", _ -> user.getAsTag())
+                .putMethod("toString", _ -> user.getAsTag());
     }
 
     public ScriptObject createMember(Member member) {
@@ -121,7 +110,7 @@ public record ScriptContext(
                 .putLazyGetter("getJoinTime", () -> ProxyInstant.from(member.getTimeJoined().toInstant()))
                 .putLazyGetter("getPermissions", () -> new ArrayList<>(member.getPermissions()))
                 .putLazyGetter("getRoles", () -> transformList(member.getRoles()))
-                .putMethod("toString", args -> member.getUser().getAsTag() + " in " + member.getGuild().getName());
+                .putMethod("toString", _ -> member.getUser().getAsTag() + " in " + member.getGuild().getName());
     }
 
     public ScriptObject createChannel(Channel channel) {

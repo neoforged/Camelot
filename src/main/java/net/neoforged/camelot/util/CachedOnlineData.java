@@ -101,7 +101,7 @@ public interface CachedOnlineData<T> {
          * @param token the type to decode to
          */
         public Builder<T> gsonDecode(Gson gson, TypeToken<T> token) {
-            return this.bodyHandler(info -> HttpResponse.BodySubscribers.mapping(
+            return this.bodyHandler(_ -> HttpResponse.BodySubscribers.mapping(
                     HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8),
                     in -> gson.fromJson(in, token)
             ));
@@ -145,7 +145,7 @@ class CODImpl<T> implements CachedOnlineData<T> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachedOnlineData.class);
     private static final ScheduledExecutorService CACHE_BUSTER = Executors.newScheduledThreadPool(1, r -> {
         final Thread thread = new Thread(r, "OnlineDataCacheBuster");
-        thread.setUncaughtExceptionHandler((t, e) -> LOGGER.error("Cache busting failed: " + e));
+        thread.setUncaughtExceptionHandler((_, e) -> LOGGER.error("Cache busting failed: " + e));
         thread.setDaemon(true);
         return thread;
     });

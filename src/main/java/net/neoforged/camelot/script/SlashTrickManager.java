@@ -89,56 +89,58 @@ public class SlashTrickManager implements EventListener {
 
     @Override
     public void onEvent(@NotNull GenericEvent gevent) {
-        if (gevent instanceof GuildReadyEvent event && event.getGuild().getIdLong() == guildId) {
-            updateCommands(event.getGuild());
-        } else if (gevent instanceof SlashCommandInteractionEvent event && event.getInteraction().isGuildCommand() && event.getGuild().getIdLong() == guildId) {
-            if (tricks == null) {
-                return;
-            }
+        switch (gevent) {
+            case GuildReadyEvent event when event.getGuild().getIdLong() == guildId -> updateCommands(event.getGuild());
+            case SlashCommandInteractionEvent event when event.getInteraction().isGuildCommand() && event.getGuild().getIdLong() == guildId -> {
+                if (tricks == null) {
+                    return;
+                }
 
-            final String fullName = event.getFullCommandName();
-            final TrickInfo info = tricks.get(fullName);
-            if (info == null) return;
+                final String fullName = event.getFullCommandName();
+                final TrickInfo info = tricks.get(fullName);
+                if (info == null) return;
 
-            if (tricksPendingUpdate.contains(info.id)) {
-                event.reply("Trick was either updated or deleted, started refreshing slash tricks... Please wait.").setEphemeral(true).queue();
-                updateCommands(event.getGuild());
-                return;
-            }
+                if (tricksPendingUpdate.contains(info.id)) {
+                    event.reply("Trick was either updated or deleted, started refreshing slash tricks... Please wait.").setEphemeral(true).queue();
+                    updateCommands(event.getGuild());
+                    return;
+                }
 
-            final List<String> options = new ArrayList<>();
-            event.getOptions().forEach(mapping -> {
-                final var opt = info.options.get(mapping.getName());
-                final Consumer<String> argumentAcceptor = arg -> {
-                    if (!opt.option.isArgument()) {
-                        options.add(((NamedOptionDef) opt.option).name());
-                    }
-                    options.add(arg);
-                };
-                if (opt.option.isMultiValued()) {
-                    ScriptUtils.toArgs(mapping.getAsString())
-                            .forEach(argumentAcceptor);
-                } else {
-                    if (!opt.option.isArgument() && mapping.getType() == OptionType.BOOLEAN) {
-                        if (mapping.getAsBoolean()) {
+                final List<String> options = new ArrayList<>();
+                event.getOptions().forEach(mapping -> {
+                    final var opt = info.options.get(mapping.getName());
+                    final Consumer<String> argumentAcceptor = arg -> {
+                        if (!opt.option.isArgument()) {
                             options.add(((NamedOptionDef) opt.option).name());
                         }
+                        options.add(arg);
+                    };
+                    if (opt.option.isMultiValued()) {
+                        ScriptUtils.toArgs(mapping.getAsString())
+                                .forEach(argumentAcceptor);
                     } else {
-                        argumentAcceptor.accept(mapping.getAsString());
+                        if (!opt.option.isArgument() && mapping.getType() == OptionType.BOOLEAN) {
+                            if (mapping.getAsBoolean()) {
+                                options.add(((NamedOptionDef) opt.option).name());
+                            }
+                        } else {
+                            argumentAcceptor.accept(mapping.getAsString());
+                        }
                     }
-                }
-            });
+                });
 
-            event.deferReply().queue();
-            final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(),
-                    event.getChannel(), new ScriptReplier() {
-                @Override
-                protected RestAction<?> doSend(MessageCreateData createData) {
-                    return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
-                }
-            });
+                event.deferReply().queue();
+                final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(),
+                        event.getChannel(), new ScriptReplier() {
+                    @Override
+                    protected RestAction<?> doSend(MessageCreateData createData) {
+                        return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
+                    }
+                });
 
-            ScriptUtils.submitExecution(context, tricksDAO.getTrick(info.id).script(), options);
+                ScriptUtils.submitExecution(context, tricksDAO.getTrick(info.id).script(), options);
+            }
+            default -> {}
         }
     }
 
