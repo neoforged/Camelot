@@ -1,9 +1,5 @@
 package net.neoforged.camelot.commands.information;
 
-import club.minnced.discord.webhook.external.JDAWebhookClient;
-import club.minnced.discord.webhook.send.AllowedMentions;
-import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
-import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -92,7 +88,6 @@ import java.util.stream.Stream;
  */
 public class InfoChannelCommand extends SlashCommand {
     public static final EnumSet<Message.MentionType> ALLOWED_MENTIONS = EnumSet.of(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND);
-    public static final AllowedMentions WEBHOOK_ALLOWED = AllowedMentions.none();
 
     public InfoChannelCommand() {
         this.name = "info-channel";
@@ -279,9 +274,7 @@ public class InfoChannelCommand extends SlashCommand {
     private static final WebhookManager WEBHOOKS = new WebhookManager(
             e -> e.contains("Info"),
             "Info",
-            AllowedMentions.none(),
-            web -> {
-            }
+            _ -> {}
     );
 
     /**
@@ -353,7 +346,7 @@ public class InfoChannelCommand extends SlashCommand {
                                         return;
                                     }
                                     final long senderId = messageChannel instanceof IWebhookContainer web ?
-                                            WEBHOOKS.getWebhook(web).getId() : messageChannel.getJDA().getSelfUser().getIdLong();
+                                            WEBHOOKS.getWebhook(web).getIdLong() : messageChannel.getJDA().getSelfUser().getIdLong();
                                     final var msgEdit = getMessageEdit(messageChannel);
                                     final var msgSend = getMessageSender(messageChannel);
                                     CompletableFuture<?> cf = null;
@@ -399,14 +392,10 @@ public class InfoChannelCommand extends SlashCommand {
 
     private static Function<MessageData, CompletableFuture<?>> getMessageSender(MessageChannel channel) {
         if (channel instanceof IWebhookContainer container) {
-            final JDAWebhookClient client = WEBHOOKS.getWebhook(container);
-            return messageData -> client.send(new WebhookMessageBuilder()
-                    .setContent(messageData.data.getContent())
-                    .setAvatarUrl(messageData.avatarUrl)
-                    .setUsername(messageData.authorName)
-                    .addEmbeds(messageData.data.getEmbeds().stream().map(m -> WebhookEmbedBuilder.fromJDA(m).build()).toList())
-                    .setAllowedMentions(WEBHOOK_ALLOWED)
-                    .build());
+            final var client = WEBHOOKS.getWebhook(container);
+            return messageData -> client.sendMessage(messageData.data)
+                    .setAllowedMentions(ALLOWED_MENTIONS)
+                    .submit();
         }
         return messageData -> channel.sendMessage(messageData.data)
                 .setAllowedMentions(ALLOWED_MENTIONS).submit();
@@ -414,13 +403,8 @@ public class InfoChannelCommand extends SlashCommand {
 
     private static BiFunction<Long, MessageData, CompletableFuture<?>> getMessageEdit(MessageChannel channel) {
         if (channel instanceof IWebhookContainer container) {
-            final JDAWebhookClient client = WEBHOOKS.getWebhook(container);
-            return (id, messageData) -> client.edit(id, new WebhookMessageBuilder()
-                    .setContent(messageData.data.getContent())
-                    .setAvatarUrl(messageData.avatarUrl)
-                    .setUsername(messageData.authorName)
-                    .addEmbeds(messageData.data.getEmbeds().stream().map(m -> WebhookEmbedBuilder.fromJDA(m).build()).toList())
-                    .build());
+            final var client = WEBHOOKS.getWebhook(container);
+            return (id, messageData) -> client.editMessageById(id, MessageEditBuilder.fromCreateData(messageData.data).build()).submit();
         }
         return (id, messageData) -> channel.editMessageById(id, MessageEditBuilder.fromCreateData(messageData.data).build()).submit();
     }
