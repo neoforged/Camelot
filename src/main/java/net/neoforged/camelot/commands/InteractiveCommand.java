@@ -78,21 +78,27 @@ public abstract class InteractiveCommand extends SlashCommand implements EventLi
 
     @Override
     public void onEvent(@NotNull GenericEvent gevent) {
-        if (gevent instanceof GenericComponentInteractionCreateEvent event) {
-            if (event.getComponentId().startsWith(baseComponentId)) {
-                final String[] arguments = computeArgs(event.getComponentId(), baseComponentId);
-                switch (event.getComponentType()) {
-                    case BUTTON -> onButton((ButtonInteractionEvent) event, arguments);
-                    case STRING_SELECT -> onStringSelect((StringSelectInteractionEvent) event, arguments);
-                    case USER_SELECT, CHANNEL_SELECT, ROLE_SELECT, MENTIONABLE_SELECT ->
-                            onEntitySelect((EntitySelectInteractionEvent) event, arguments);
+        switch (gevent) {
+            case GenericComponentInteractionCreateEvent event -> {
+                if (event.getComponentId().startsWith(baseComponentId)) {
+                    final String[] arguments = computeArgs(event.getComponentId(), baseComponentId);
+                    switch (event.getComponentType()) {
+                        case BUTTON -> onButton((ButtonInteractionEvent) event, arguments);
+                        case STRING_SELECT -> onStringSelect((StringSelectInteractionEvent) event, arguments);
+                        case USER_SELECT, CHANNEL_SELECT, ROLE_SELECT, MENTIONABLE_SELECT ->
+                                onEntitySelect((EntitySelectInteractionEvent) event, arguments);
+                    }
                 }
             }
-        } else if (gevent instanceof ModalInteractionEvent event) {
-            if (event.getModalId().startsWith(baseComponentId)) {
-                final String[] arguments = computeArgs(event.getModalId(), baseComponentId);
-                onModal(event, arguments);
+
+            case ModalInteractionEvent event -> {
+                if (event.getModalId().startsWith(baseComponentId)) {
+                    final String[] arguments = computeArgs(event.getModalId(), baseComponentId);
+                    onModal(event, arguments);
+                }
             }
+
+            default -> {}
         }
     }
 

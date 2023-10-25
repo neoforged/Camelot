@@ -15,23 +15,51 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
 import java.util.stream.IntStream;
 
 @ParametersAreNonnullByDefault
-public final class ScriptPath implements Path {
-    private final ScriptFileSystem fileSystem;
-    private final boolean absolute;
-    private final String[] pathParts;
+public record ScriptPath(ScriptFileSystem fileSystem, boolean absolute, String[] pathParts,
+                         Function<ScriptPath, ScriptPath> normalized /* lazily-compute the normalized path */) implements Path {
 
-    // Store the normalized path after it has been created first
-    private ScriptPath normalized;
+    public static final Function<ScriptPath, ScriptPath> NORMALIZE_SELF = p -> p;
+    private static Function<ScriptPath, ScriptPath> normalizeCompute() {
+        return new Function<>() {
+            ScriptPath normalized;
 
-    ScriptPath(final ScriptFileSystem fileSystem, final String... pathParts) {
-        this.fileSystem = fileSystem;
+            @Override
+            public ScriptPath apply(ScriptPath paths) {
+                if (normalized != null) return normalized;
+
+                final Deque<String> normalizedPath = new ArrayDeque<>();
+                for (final String pathPart : paths.pathParts) {
+                    switch (pathPart) {
+                        case "." -> {
+                        }
+                        case ".." -> {
+                            if (normalizedPath.isEmpty() || normalizedPath.getLast().equals("..")) {
+                                // .. on an empty path is allowed, so keep it
+                                normalizedPath.addLast(pathPart);
+                            } else {
+                                normalizedPath.removeLast();
+                            }
+                        }
+                        default -> normalizedPath.addLast(pathPart);
+                    }
+                }
+                normalized = new ScriptPath(paths.fileSystem, paths.absolute, true, normalizedPath.toArray(new String[0]));
+                return normalized;
+            }
+        };
+    }
+
+    static ScriptPath path(final ScriptFileSystem fileSystem, final String... pathParts) {
+        final boolean absolute;
+        final String[] pp;
         if (pathParts.length == 0) {
-            this.absolute = false;
-            this.pathParts = new String[0];
+            absolute = false;
+            pp = new String[0];
         } else {
             StringBuilder joiner = new StringBuilder();
             for (int i = 0; i < pathParts.length; i++) {
@@ -42,10 +70,10 @@ public final class ScriptPath implements Path {
                 }
             }
             final var longstring = joiner.toString();
-            this.absolute = longstring.startsWith("/");
-            this.pathParts = getPathParts(longstring);
+            absolute = longstring.startsWith("/");
+            pp = getPathParts(longstring);
         }
-        this.normalized = null;
+        return new ScriptPath(fileSystem, absolute, pp);
     }
 
     // Private constructor only for known correct split and extra value for absolute
@@ -54,14 +82,10 @@ public final class ScriptPath implements Path {
     }
 
     private ScriptPath(final ScriptFileSystem fileSystem, boolean absolute, boolean isNormalized, final String... pathParts) {
-        this.fileSystem = fileSystem;
-        this.absolute = absolute;
-        this.pathParts = pathParts;
-        if (isNormalized) this.normalized = this;
-        else this.normalized = null;
+        this(fileSystem, absolute, pathParts, isNormalized ? NORMALIZE_SELF : normalizeCompute());
     }
 
-    private String[] getPathParts(final String longstring) {
+    private static String[] getPathParts(final String longstring) {
         final String clean = longstring.replace('\\', '/');
         int startIndex = 0;
         final List<String> parts = new ArrayList<>();
@@ -142,9 +166,9 @@ public final class ScriptPath implements Path {
         if (other.getFileSystem() != this.getFileSystem()) {
             return false;
         }
-        if (other instanceof ScriptPath bp) {
-            if (this.absolute != bp.absolute) return false;
-            return checkArraysMatch(this.pathParts, bp.pathParts, false);
+        if (other instanceof ScriptPath(_, boolean abs, String[] bparts, _)) {
+            if (this.absolute != abs) return false;
+            return checkArraysMatch(this.pathParts, bparts, false);
         }
         return false;
     }
@@ -155,9 +179,9 @@ public final class ScriptPath implements Path {
         if (other.getFileSystem() != this.getFileSystem()) {
             return false;
         }
-        if (other instanceof ScriptPath bp) {
-            if (!this.absolute && bp.absolute) return false;
-            return checkArraysMatch(this.pathParts, bp.pathParts, true);
+        if (other instanceof ScriptPath(_, boolean abs, String[] bparts, _)) {
+            if (!this.absolute && abs) return false;
+            return checkArraysMatch(this.pathParts, bparts, true);
         }
         return false;
     }
@@ -174,33 +198,16 @@ public final class ScriptPath implements Path {
 
     @Override
     public Path normalize() {
-        if (normalized != null) return normalized;
-        final Deque<String> normalizedPath = new ArrayDeque<>();
-        for (final String pathPart : this.pathParts) {
-            switch (pathPart) {
-                case "." -> {}
-                case ".." -> {
-                    if (normalizedPath.isEmpty() || normalizedPath.getLast().equals("..")) {
-                        // .. on an empty path is allowed, so keep it
-                        normalizedPath.addLast(pathPart);
-                    } else {
-                        normalizedPath.removeLast();
-                    }
-                }
-                default -> normalizedPath.addLast(pathPart);
-            }
-        }
-        normalized = new ScriptPath(this.fileSystem, this.absolute, true, normalizedPath.toArray(new String[0]));
-        return normalized;
+        return normalized.apply(this);
     }
 
     @Override
     public Path resolve(final Path other) {
-        if (other instanceof ScriptPath path) {
-            if (path.isAbsolute()) return path;
-            final String[] mergedParts = new String[this.pathParts.length + path.pathParts.length];
+        if (other instanceof ScriptPath(_, boolean isAbs, String[] parts, _)) {
+            if (isAbs) return other;
+            final String[] mergedParts = new String[this.pathParts.length + parts.length];
             System.arraycopy(this.pathParts, 0, mergedParts, 0, this.pathParts.length);
-            System.arraycopy(path.pathParts, 0, mergedParts, this.pathParts.length, path.pathParts.length);
+            System.arraycopy(parts, 0, mergedParts, this.pathParts.length, parts.length);
             return new ScriptPath(this.fileSystem, this.absolute, mergedParts);
         }
         return other;
@@ -263,10 +270,10 @@ public final class ScriptPath implements Path {
 
     @Override
     public int compareTo(final Path other) {
-        if (other instanceof ScriptPath path) {
-            if (this.absolute && !path.absolute) return 1;
-            else if (!this.absolute && path.absolute) return -1;
-            else return Arrays.compare(this.pathParts, path.pathParts);
+        if (other instanceof ScriptPath(_, boolean abs, String[] parts, _)) {
+            if (this.absolute && !abs) return 1;
+            else if (!this.absolute && abs) return -1;
+            else return Arrays.compare(this.pathParts, parts);
         } else {
             return 0;
         }
@@ -274,9 +281,9 @@ public final class ScriptPath implements Path {
 
     @Override
     public boolean equals(final Object o) {
-        return o instanceof ScriptPath p &&
-                p.getFileSystem() == this.getFileSystem() &&
-                this.absolute == p.absolute && Arrays.equals(this.pathParts, p.pathParts);
+        return o instanceof ScriptPath(ScriptFileSystem fs, boolean abs, String[] parts, _) &&
+                fs == this.getFileSystem() &&
+                this.absolute == abs && Arrays.equals(this.pathParts, parts);
     }
 
     @Override

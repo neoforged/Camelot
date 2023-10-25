@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ScriptFileSystem extends FileSystem {
-    private final ScriptPath root = new ScriptPath(this, "/");
+    private final ScriptPath root = ScriptPath.path(this, "/");
     private final FileSystemProvider provider;
 
     public ScriptFileSystem(FileSystemProvider provider) {
@@ -73,9 +73,9 @@ public class ScriptFileSystem extends FileSystem {
             final String[] args = new String[more.length + 1];
             args[0] = first;
             System.arraycopy(more, 0, args, 1, more.length);
-            return new ScriptPath(this, args);
+            return ScriptPath.path(this, args);
         }
-        return new ScriptPath(this, first);
+        return ScriptPath.path(this, first);
     }
 
     @Override

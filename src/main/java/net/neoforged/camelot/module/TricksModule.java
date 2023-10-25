@@ -47,21 +47,27 @@ public class TricksModule implements CamelotModule {
     public void registerListeners(JDABuilder builder) {
         builder.addEventListeners((EventListener) EvalCommand::onEvent)
                 .addEventListeners((EventListener) gevent -> {
-                    if (gevent instanceof GuildReadyEvent event) {
-                        if (slashTrickManagers.containsKey(event.getGuild().getIdLong())) return;
+                    switch (gevent) {
+                        case GuildReadyEvent event -> {
+                            if (slashTrickManagers.containsKey(event.getGuild().getIdLong())) return;
 
-                        final SlashTrickManager manager = new SlashTrickManager(
-                                event.getGuild().getIdLong(), Database.main().onDemand(SlashTricksDAO.class), Database.main().onDemand(TricksDAO.class)
-                        );
-                        manager.updateCommands(event.getGuild());
-                        event.getJDA().addEventListener(manager);
-                        slashTrickManagers.put(event.getGuild().getIdLong(), manager);
-                    } else if (gevent instanceof GuildLeaveEvent event) {
-                        final SlashTrickManager trickManager = slashTrickManagers.get(event.getGuild().getIdLong());
-                        if (trickManager == null) return;
+                            final SlashTrickManager manager = new SlashTrickManager(
+                                    event.getGuild().getIdLong(), Database.main().onDemand(SlashTricksDAO.class), Database.main().onDemand(TricksDAO.class)
+                            );
+                            manager.updateCommands(event.getGuild());
+                            event.getJDA().addEventListener(manager);
+                            slashTrickManagers.put(event.getGuild().getIdLong(), manager);
+                        }
 
-                        event.getJDA().removeEventListener(trickManager);
-                        slashTrickManagers.remove(event.getGuild().getIdLong());
+                        case GuildLeaveEvent event -> {
+                            final SlashTrickManager trickManager = slashTrickManagers.get(event.getGuild().getIdLong());
+                            if (trickManager == null) return;
+
+                            event.getJDA().removeEventListener(trickManager);
+                            slashTrickManagers.remove(event.getGuild().getIdLong());
+                        }
+
+                        default -> {}
                     }
                 });
     }
