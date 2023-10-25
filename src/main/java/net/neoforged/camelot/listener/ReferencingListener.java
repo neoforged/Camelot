@@ -3,6 +3,7 @@ package net.neoforged.camelot.listener;
 import com.jagrosh.jdautilities.commons.utils.SafeIdUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -18,6 +19,8 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
@@ -65,7 +68,7 @@ public final class ReferencingListener implements EventListener {
         return string.equals(".") || string.equals(ZERO_WIDTH_SPACE);
     }
 
-    public static MessageEmbed reference(final Message message, final Member quoter) {
+    public static List<MessageEmbed> reference(final Message message, final Member quoter) {
         final boolean hasAuthor = !message.isWebhookMessage();
         final String msgLink = message.getJumpUrl();
         final EmbedBuilder embed = new EmbedBuilder().setTimestamp(message.getTimeCreated()).setColor(0x2F3136);
@@ -73,10 +76,10 @@ public final class ReferencingListener implements EventListener {
             embed.setAuthor(message.getAuthor().getName(), msgLink, message.getAuthor().getEffectiveAvatarUrl());
         }
         if (!message.getContentRaw().isBlank()) {
-            embed.appendDescription(MarkdownUtil.maskedLink("Reference to ", msgLink) + message.getChannel().getAsMention() + " " + MarkdownUtil.maskedLink("➤ ", msgLink))
+            embed.appendDescription(STR."\{MarkdownUtil.maskedLink("Reference to", msgLink)} \{message.getChannel().getAsMention()} \{MarkdownUtil.maskedLink("➤ ", msgLink)}")
                     .appendDescription(Utils.truncate(message.getContentRaw(), MessageEmbed.DESCRIPTION_MAX_LENGTH - 300));
         } else {
-            embed.appendDescription(MarkdownUtil.maskedLink("Jump to referenced message", msgLink) + " in " + message.getChannel().getAsMention() + ".");
+            embed.appendDescription(MarkdownUtil.maskedLink("Jump to referenced message", msgLink) + " in " + message.getChannel().getAsMention());
         }
         if (quoter.getIdLong() != message.getAuthor().getIdLong()) {
             embed.setFooter(Utils.getName(quoter.getUser()) + " referenced", quoter.getEffectiveAvatarUrl());
@@ -84,7 +87,17 @@ public final class ReferencingListener implements EventListener {
         if (!message.getAttachments().isEmpty()) {
             embed.setImage(message.getAttachments().get(0).getUrl());
         }
-        return embed.build();
+
+        final List<MessageEmbed> embeds = new ArrayList<>();
+        embeds.add(embed.build());
+
+        message.getEmbeds().stream()
+                .filter(em -> em.getType() == EmbedType.RICH)
+                .forEach(em -> embeds.add(new EmbedBuilder(em)
+                        .setFooter("Quoted" + (em.getFooter() == null ? "" : " | " + Utils.truncate(em.getFooter().getText(), MessageEmbed.TEXT_MAX_LENGTH - 9)))
+                        .build()));
+
+        return embeds;
     }
 
     public static Optional<MessageLinkInformation> decodeMessageLink(final String link) {
