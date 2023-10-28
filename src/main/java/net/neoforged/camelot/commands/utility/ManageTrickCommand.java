@@ -12,12 +12,15 @@ import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.dv8tion.jda.internal.utils.Checks;
@@ -37,11 +40,13 @@ import net.neoforged.camelot.script.ScriptUtils;
 import net.neoforged.camelot.script.ScriptWriter;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
+import org.kohsuke.args4j.spi.SubCommand;
 
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -71,7 +76,8 @@ public class ManageTrickCommand extends SlashCommand {
                 new NewPromotion(),
                 new RemovePromotion(),
                 new RefreshPromotions(),
-                new ListPromoted(BotMain.BUTTON_MANAGER)
+                new ListPromoted(BotMain.BUTTON_MANAGER),
+                new CountCommandUsage()
         };
         this.guildOnly = true;
     }
@@ -766,6 +772,89 @@ public class ManageTrickCommand extends SlashCommand {
             return CompletableFuture.completedFuture(new MessageEditBuilder()
                     .setEmbeds(embed.build())
                     .build());
+        }
+    }
+
+    /**
+     * The command used to count how many chars and groups/subgroups a command uses.
+     */
+    public static final class CountCommandUsage extends SlashCommand {
+        private CountCommandUsage() {
+            this.name = "count-usage";
+            this.help = "Count the usage of characters of a category";
+            this.subcommandGroup = PROMOTIONS;
+            this.options = List.of(
+                    new OptionData(OptionType.STRING, "category", "The category whose chars to count", true).setAutoComplete(true),
+                    new OptionData(OptionType.BOOLEAN, "global", "If to query global instead of guild commands")
+            );
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            event.deferReply().queue();
+
+            final String cat = event.optString("category");
+            (event.optBoolean("global") ? event.getJDA().retrieveCommands() : event.getGuild().retrieveCommands())
+                    .map(cmds -> cmds.stream().filter(cmd -> cmd.getName().equals(cat)).findFirst())
+                    .flatMap(cmdOp -> {
+                        if (cmdOp.isEmpty()) {
+                            return event.getHook().sendMessage("Unknown root command!");
+                        }
+                        final Command command = cmdOp.get();
+                        return event.getHook().sendMessageEmbeds(buildInfoEmbed(command).build());
+                    })
+                    .queue();
+        }
+
+        @Override
+        public void onAutoComplete(CommandAutoCompleteInteractionEvent event) {
+            if (event.getFocusedOption().getName().equals("category")) {
+                event.replyChoices(Database.main().withExtension(SlashTricksDAO.class, db ->
+                                db.findCategoriesMatching(event.getGuild().getIdLong(), "%" + event.getFocusedOption().getValue() + "%"))
+                                .stream().limit(OptionData.MAX_CHOICES).map(tr -> new Command.Choice(tr, tr)).toList())
+                        .queue(_ -> {}, _ -> {});
+            }
+        }
+
+        private static EmbedBuilder buildInfoEmbed(Command command) {
+            final AtomicInteger chars = new AtomicInteger();
+            countChars(command, chars);
+            final EmbedBuilder embed = new EmbedBuilder();
+            embed.setTitle("Usage of /" + command.getName());
+            embed.addField("Used characters", STR."`\{chars.get()}` / `4000`", true);
+            embed.addField("Subcommand amount", STR."`\{command.getSubcommands().size()}` / `\{CommandData.MAX_OPTIONS}`", true);
+            embed.addField("Subcommand groups amount", STR."`\{command.getSubcommandGroups().size()}` / `\{CommandData.MAX_OPTIONS}`", true);
+
+            if (!command.getSubcommandGroups().isEmpty()) {
+                embed.addField("Subcommand information", command.getSubcommandGroups().stream()
+                        .map(cmd -> STR."`/\{command.getName()} \{cmd.getName()}`: `\{cmd.getSubcommands().size()}` / `\{CommandData.MAX_OPTIONS}` subcommands")
+                        .collect(Collectors.joining("\n")), false);
+            }
+
+            return embed;
+        }
+
+        private static void countChars(Command.Subcommand command, AtomicInteger counter) {
+            counter.addAndGet(command.getName().length());
+            counter.addAndGet(command.getDescription().length());
+            command.getOptions().forEach(op -> countChars(op, counter));
+        }
+        private static void countChars(Command command, AtomicInteger counter) {
+            counter.addAndGet(command.getName().length());
+            counter.addAndGet(command.getDescription().length());
+            command.getOptions().forEach(op -> countChars(op, counter));
+            command.getSubcommands().forEach(sub -> countChars(sub, counter));
+            command.getSubcommandGroups().forEach(group -> {
+                counter.addAndGet(group.getName().length());
+                counter.addAndGet(group.getDescription().length());
+                group.getSubcommands().forEach(sub -> countChars(sub, counter));
+            });
+        }
+
+        private static void countChars(Command.Option option, AtomicInteger counter) {
+            counter.addAndGet(option.getName().length());
+            counter.addAndGet(option.getDescription().length());
+            counter.addAndGet(option.getChoices().stream().mapToInt(ch -> ch.getName().length() + ch.getAsString().length()).sum());
         }
     }
 
