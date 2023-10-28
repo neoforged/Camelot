@@ -403,6 +403,8 @@ public class InfoChannelCommand extends SlashCommand {
         if (channel instanceof IWebhookContainer container) {
             final var client = WEBHOOKS.getWebhook(container);
             return messageData -> client.sendMessage(messageData.data)
+                    .setAvatarUrl(messageData.avatarUrl)
+                    .setUsername(messageData.authorName)
                     .setAllowedMentions(ALLOWED_MENTIONS)
                     .submit();
         }
