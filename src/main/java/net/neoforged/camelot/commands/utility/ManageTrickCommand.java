@@ -4,6 +4,7 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -29,12 +30,15 @@ import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
+import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.script.CannotRetrieveInformationException;
 import net.neoforged.camelot.script.ScriptUtils;
+import net.neoforged.camelot.script.ScriptWriter;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -54,6 +58,7 @@ public class ManageTrickCommand extends SlashCommand {
         this.children = new SlashCommand[] {
                 new Add(),
                 new AddText(),
+                new AddEmbed(),
                 new Delete(),
                 new Update(),
                 new Info(),
@@ -135,6 +140,82 @@ public class ManageTrickCommand extends SlashCommand {
             final int id = Database.main().withExtension(TricksDAO.class, db -> db.insertTrick(script, event.getUser().getIdLong()));
             Database.main().useExtension(TricksDAO.class, db -> names.forEach(name -> db.addAlias(id, name)));
             event.reply("Trick with name" + (names.size() == 1 ? "" : "s") + " " + names.stream().map(name -> "`" + name + "`").collect(Collectors.joining(", ")) + " added!").queue();
+        }
+    }
+
+    /**
+     * The command used to add a new trick with a simple embed reply.
+     * <p>This command takes a message, and uses its first embed as the trick reply.</p>
+     */
+    public static final class AddEmbed extends SlashCommand {
+
+        public AddEmbed() {
+            this.name = "add-embed";
+            this.help = "Add a new trick with an embed reply";
+            this.options = List.of(
+                    new OptionData(OptionType.STRING, "names", "The trick names, comma-separated", true),
+                    new OptionData(OptionType.STRING, "message", "A link to the message with the embed", true),
+                    new OptionData(OptionType.STRING, "description", "The description of the trick")
+            );
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            final List<String> names = List.of(event.optString("names").split(" "));
+            final String description = Optional.ofNullable(event.optString("description"))
+                    .filter(str -> !str.isBlank()).orElse(null);
+
+            if (Database.main().withExtension(TricksDAO.class, db -> names.stream()
+                    .anyMatch(it -> db.getTrickByName(it) != null))) {
+                event.reply("A trick with at least one of the given names exists already!").setEphemeral(true).queue();
+                return;
+            }
+
+            for (final String name : names) {
+                if (!isNameValid(name)) {
+                    event.reply(STR."`\{name}` is not a valid trick name!").setEphemeral(true).queue();
+                    return;
+                }
+            }
+
+            final var msgOptional = ReferencingListener.decodeMessageLink(event.optString("message"))
+                    .flatMap(link -> link.retrieve(event.getJDA()));
+            if (msgOptional.isEmpty()) {
+                event.reply("Invalid message link!").setEphemeral(true).queue();
+                return;
+            }
+
+            event.deferReply().flatMap(_ -> msgOptional.get())
+                    .queue(msg -> {
+                        final var validEmbed = msg.getEmbeds().stream()
+                                .filter(embed -> embed.getType() == EmbedType.RICH)
+                                .findFirst();
+
+                        if (validEmbed.isEmpty()) {
+                            event.getHook().editOriginal("No embeds found in the message!").queue();
+                            return;
+                        }
+
+                        final StringBuilder script = new StringBuilder();
+                        if (description != null) {
+                            script.append("const description = ")
+                                    .append("'")
+                                    .append(description.replace("'", "\\'"))
+                                    .append("'")
+                                    .append('\n');
+                        }
+                        script.append(new ScriptWriter(new StringWriter())
+                                .writeLine("function execute()")
+                                .startBlock()
+                                .writeLine("replyEmbed(")
+                                .writeEmbed(validEmbed.get())
+                                .writeLine(");")
+                                .endBlock());
+
+                        final int id = Database.main().withExtension(TricksDAO.class, db -> db.insertTrick(script.toString(), event.getUser().getIdLong()));
+                        Database.main().useExtension(TricksDAO.class, dao -> names.forEach(name -> dao.addAlias(id, name)));
+                        event.getHook().editOriginal("Trick added!").queue();
+                    }, _ -> event.getHook().editOriginal("Unknown message!").queue());
         }
     }
 
