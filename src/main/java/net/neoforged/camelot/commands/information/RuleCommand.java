@@ -55,7 +55,7 @@ public class RuleCommand extends SlashCommand {
     protected void execute(final CommandEvent event) {
         final int id;
         try {
-            id = Integer.parseInt(event.getArgs().trim());
+            id = Integer.parseInt(event.getArgs().trim().split(" ", 2)[0]);
         } catch (NumberFormatException ignored) {
             event.reply("Provided argument is not a number!");
             return;
