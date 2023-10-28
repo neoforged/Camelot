@@ -154,7 +154,7 @@ public class InfoChannelCommand extends SlashCommand {
                 return;
             }
 
-            final InfoChannel ic = new InfoChannel(event.getChannel().getIdLong(), location, event.getOption("recreate", false, OptionMapping::getAsBoolean), null, event.getOption("type", InfoChannel.Type.NORMAL, t -> InfoChannel.Type.valueOf(t.getName())));
+            final InfoChannel ic = new InfoChannel(event.getChannel().getIdLong(), location, event.getOption("recreate", false, OptionMapping::getAsBoolean), null, event.getOption("type", InfoChannel.Type.NORMAL, t -> InfoChannel.Type.valueOf(t.getAsString())));
             Database.main().useExtension(InfoChannelsDAO.class, db -> db.insert(ic));
             event.reply("Successfully set channel as info channel!")
                     .setEphemeral(true)
@@ -309,7 +309,7 @@ public class InfoChannelCommand extends SlashCommand {
                         return;
                     }
 
-                    final List<MessageData> data = ch.type().read(ct, MAPPER);
+                    final List<MessageData> data = ch.type().read(ct, MAPPER, ch.channel());
                     if (data.isEmpty()) return; // No reason to waste computing power if there's no messages
 
                     if (ch.forceRecreate()) {
@@ -449,7 +449,7 @@ public class InfoChannelCommand extends SlashCommand {
                         try {
                             msg.removeIf(Predicate.not(Message::isWebhookMessage)); // We want to filter out messages that aren't from the webhook
                             Collections.reverse(msg); // We receive newest to oldest
-                            final String dump = infoChannel.type().write(msg, MAPPER); // Format the messages
+                            final String dump = infoChannel.type().write(msg, MAPPER, infoChannel.channel()); // Format the messages
                             infoChannel.location().updateInDirectory(
                                     Config.GITHUB, infoChannel.channel() + ".yml",
                                     "Updated info channel content: " + infoChannel.channel(),
