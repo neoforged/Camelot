@@ -29,6 +29,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.Webhook;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
@@ -112,18 +113,21 @@ public class InfoChannelCommand extends SlashCommand {
     public static final class Delete extends SlashCommand {
         public Delete() {
             this.name = "delete";
-            this.help = "Removes this channel's status as an info channel";
+            this.help = "Removes a channel's status as an info channel";
+            this.options.add(new OptionData(OptionType.CHANNEL, "channel", "The channel to modify").setChannelTypes(ChannelType.TEXT));
         }
 
         @Override
         protected void execute(SlashCommandEvent event) {
-            final InfoChannel ch = Database.main().withExtension(InfoChannelsDAO.class, db -> db.getChannel(event.getChannel().getIdLong()));
+            final MessageChannel messageChannel = event.optMessageChannel("channel", event.getChannel());
+
+            final InfoChannel ch = Database.main().withExtension(InfoChannelsDAO.class, db -> db.getChannel(messageChannel.getIdLong()));
             if (ch == null) {
-                event.reply("This channel is not an info channel!").setEphemeral(true).queue();
+                event.reply("The channel is not an info channel!").setEphemeral(true).queue();
                 return;
             }
 
-            Database.main().useExtension(InfoChannelsDAO.class, db -> db.delete(event.getChannel().getIdLong()));
+            Database.main().useExtension(InfoChannelsDAO.class, db -> db.delete(messageChannel.getIdLong()));
             event.reply("The channel is no longer an info channel!").queue();
         }
     }
@@ -134,12 +138,13 @@ public class InfoChannelCommand extends SlashCommand {
     public static final class Add extends SlashCommand {
         public Add() {
             this.name = "add";
-            this.help = "Makes this channel an info channel";
+            this.help = "Makes a channel an info channel";
             this.options = List.of(
                     new OptionData(OptionType.STRING, "repo", "GitHub repository location of the contents", true),
                     new OptionData(OptionType.BOOLEAN, "recreate", "If updates should forcibly resend the channel contents"),
                     new OptionData(OptionType.STRING, "type", "The type of the info channel").addChoice("Normal", "NORMAL")
-                            .addChoice("Rules", "RULES")
+                            .addChoice("Rules", "RULES"),
+                    new OptionData(OptionType.CHANNEL, "channel", "The channel to make an info channel").setChannelTypes(ChannelType.TEXT)
             );
         }
 
@@ -154,7 +159,8 @@ public class InfoChannelCommand extends SlashCommand {
                 return;
             }
 
-            final InfoChannel ic = new InfoChannel(event.getChannel().getIdLong(), location, event.getOption("recreate", false, OptionMapping::getAsBoolean), null, event.getOption("type", InfoChannel.Type.NORMAL, t -> InfoChannel.Type.valueOf(t.getAsString())));
+            final InfoChannel ic = new InfoChannel(event.optMessageChannel("channel", event.getChannel()).getIdLong(), location, event.getOption("recreate", false, OptionMapping::getAsBoolean),
+                    null, event.getOption("type", InfoChannel.Type.NORMAL, t -> InfoChannel.Type.valueOf(t.getAsString())));
             Database.main().useExtension(InfoChannelsDAO.class, db -> db.insert(ic));
             event.reply("Successfully set channel as info channel!")
                     .setEphemeral(true)
@@ -170,14 +176,16 @@ public class InfoChannelCommand extends SlashCommand {
     public static final class GetWebhook extends SlashCommand {
         public GetWebhook() {
             this.name = "get-webhook";
-            this.help = "Gets the webhook URL for this channel";
+            this.help = "Gets the webhook URL for the channel";
+            this.options.add(new OptionData(OptionType.CHANNEL, "channel", "The channel whose webhook to get").setChannelTypes(ChannelType.TEXT));
         }
 
         @Override
         protected void execute(SlashCommandEvent event) {
-            final InfoChannel ch = Database.main().withExtension(InfoChannelsDAO.class, db -> db.getChannel(event.getChannel().getIdLong()));
-            if (ch == null || !(event.getChannel() instanceof IWebhookContainer web)) {
-                event.reply("This channel is not an info channel with webhook support!").setEphemeral(true).queue();
+            final MessageChannel target = event.optMessageChannel("channel", event.getChannel());
+            final InfoChannel ch = Database.main().withExtension(InfoChannelsDAO.class, db -> db.getChannel(target.getIdLong()));
+            if (ch == null || !(target instanceof IWebhookContainer web)) {
+                event.reply("The channel is not an info channel with webhook support!").setEphemeral(true).queue();
                 return;
             }
 
