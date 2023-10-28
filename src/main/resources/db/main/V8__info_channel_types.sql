@@ -1,0 +1,1 @@
+alter table info_channels add "type" int default 0;

@@ -53,11 +53,12 @@ public interface InfoChannelsDAO extends Transactional<InfoChannelsDAO> {
      * @param infoChannel the channel to insert
      */
     default void insert(InfoChannel infoChannel) {
-        getHandle().createUpdate("insert or replace into info_channels (channel, location, force_recreate, hash) values (?, ?, ?, ?)")
+        getHandle().createUpdate("insert or replace into info_channels (channel, location, force_recreate, hash, type) values (?, ?, ?, ?, ?)")
                 .bind(0, infoChannel.channel())
                 .bind(1, infoChannel.location().toString())
                 .bind(2, infoChannel.forceRecreate())
                 .bind(3, infoChannel.hash())
+                .bind(4, infoChannel.type().ordinal())
                 .execute();
     }
 }
