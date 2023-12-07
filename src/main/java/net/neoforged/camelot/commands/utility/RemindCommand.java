@@ -124,8 +124,8 @@ public class RemindCommand extends SlashCommand {
                     .setEmbeds(new EmbedBuilder()
                             .setTitle("Reminders")
                             .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()))
-                            .setDescription(data.reminders.stream()
-                                    .map(reminder -> "**%s**. *%s* - <#%s> at %s (%s)".formatted(
+                            .setDescription(data.reminders.subList(page * this.itemsPerPage, Math.min(data.reminders.size(), page * this.itemsPerPage + this.itemsPerPage)).stream()
+                                    .map(reminder -> "**%s**\\. *%s* - <#%s> at %s (%s)".formatted(
                                             reminder.id(), reminder.reminder().isBlank() ? "No content." : reminder.reminder(), reminder.channel(),
                                             TimeFormat.DATE_TIME_LONG.format(reminder.time()), TimeFormat.RELATIVE.format(reminder.time())
                                     ))

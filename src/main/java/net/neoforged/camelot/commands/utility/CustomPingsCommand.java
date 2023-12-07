@@ -138,8 +138,8 @@ public class CustomPingsCommand extends SlashCommand {
                     .setEmbeds(new EmbedBuilder()
                             .setTitle("Custom pings")
                             .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()))
-                            .setDescription(data.pings.stream()
-                                    .map(ping -> ping.id() + ". `" + ping.regex().toString() + "` | " + ping.message())
+                            .setDescription(data.pings.subList(page * this.itemsPerPage, Math.min(data.pings.size(), page * this.itemsPerPage + this.itemsPerPage)).stream()
+                                    .map(ping -> STR."\{ping.id()}\\. `\{ping.regex().toString()}` | \{ping.message()}")
                                     .collect(Collectors.joining("\n")))
                             .build())
                     .build());
