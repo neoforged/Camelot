@@ -1,6 +1,7 @@
 package net.neoforged.camelot.db.transactionals;
 
 import com.google.re2j.Pattern;
+import com.google.re2j.PatternSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.neoforged.camelot.db.api.RegisterExecutionCallbacks;
@@ -82,9 +83,13 @@ public interface PingsDAO extends Transactional<PingsDAO> {
         return getHandle().createQuery("select guild, id, user, regex, message from pings")
                 .reduceResultSet(new Long2ObjectOpenHashMap<List<Ping>>(), (previous, rs, ctx) -> {
                     final long guild = rs.getLong(1);
-                    previous.computeIfAbsent(guild, k -> new ArrayList<>()).add(new Ping(
-                            rs.getInt(2), rs.getLong(3), Pattern.compile(rs.getString(4)), rs.getString(5)
-                    ));
+                    try {
+                        previous.computeIfAbsent(guild, k -> new ArrayList<>()).add(new Ping(
+                                rs.getInt(2), rs.getLong(3), Pattern.compile(rs.getString(4)), rs.getString(5)
+                        ));
+                    } catch (PatternSyntaxException _) {
+
+                    }
                     return previous;
                 });
     }

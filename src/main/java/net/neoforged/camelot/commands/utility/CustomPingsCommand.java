@@ -1,6 +1,7 @@
 package net.neoforged.camelot.commands.utility;
 
 import com.google.re2j.Pattern;
+import com.google.re2j.PatternSyntaxException;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -60,8 +61,9 @@ public class CustomPingsCommand extends SlashCommand {
             final String regex = event.getOption("regex", "", OptionMapping::getAsString);
             try {
                 Pattern.compile(regex);
-            } catch (Exception ex) {
+            } catch (PatternSyntaxException ex) {
                 event.reply("Regex is invalid!").setEphemeral(true).queue();
+                return;
             }
 
             Database.pings().useExtension(PingsDAO.class, db -> db.insert(
