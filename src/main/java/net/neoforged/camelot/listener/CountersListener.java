@@ -17,7 +17,7 @@ public class CountersListener implements EventListener {
         if (!event.isFromGuild() || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
 
         final String content = event.getMessage().getContentRaw();
-        if (content.indexOf(' ') >= 0) return; // Counters shouldn't have spaces anywhere
+        if (content.indexOf(' ') >= 0 || content.startsWith("https://") || content.startsWith("http://")) return; // Counters shouldn't have spaces anywhere nor should they be links
 
         if (content.endsWith("==")) {
             final String value = content.substring(0, content.length() - 2);
