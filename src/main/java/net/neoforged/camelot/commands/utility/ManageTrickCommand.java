@@ -298,7 +298,7 @@ public class ManageTrickCommand extends SlashCommand {
             script.append("function execute() {")
                     .append('\n')
                     .append("\treply(`")
-                    .append(text.replace("`", "\\`").replace("\\", "\\\\").replace("$", "\\$"))
+                    .append(text.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$"))
                     .append("`")
                     .append(")")
                     .append('\n')
