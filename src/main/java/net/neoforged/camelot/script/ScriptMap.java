@@ -103,6 +103,8 @@ public record ScriptMap(Value value) {
                 obj.getString("name"), obj.getString("url"), obj.getString("iconUrl")
         ));
 
+        stringOrObject("footer", builder::setFooter, obj -> builder.setFooter(obj.getString("value"), obj.getString("iconUrl")));
+
         return builder.build();
     }
 
