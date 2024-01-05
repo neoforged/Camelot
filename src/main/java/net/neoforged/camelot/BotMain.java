@@ -162,7 +162,7 @@ public class BotMain {
         final JDABuilder botBuilder = JDABuilder
                 .create(Config.LOGIN_TOKEN, INTENTS)
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS)
-                .setActivity(Activity.listening("for your commands"))
+                .setActivity(Activity.customStatus("Listening for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener(), new DismissListener());
 
