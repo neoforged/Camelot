@@ -120,6 +120,14 @@ public abstract class ModerationCommand<T> extends SlashCommand {
      * @return a {@link RestAction} which sends the DM
      */
     protected RestAction<Message> dmUser(ModLogEntry entry, User user) {
+        return user.openPrivateChannel()
+                .flatMap(ch -> ch.sendMessageEmbeds(makeMessage(entry, user).build()));
+    }
+
+    /**
+     * {@return the message to DM to the user}
+     */
+    protected EmbedBuilder makeMessage(ModLogEntry entry, User user) {
         final Guild guild = user.getJDA().getGuildById(entry.guild());
         final EmbedBuilder builder = new EmbedBuilder()
                 .setAuthor(guild.getName(), null, guild.getIconUrl())
@@ -130,8 +138,7 @@ public abstract class ModerationCommand<T> extends SlashCommand {
         if (entry.duration() != null) {
             builder.addField("Duration", entry.formatDuration(), false);
         }
-        return user.openPrivateChannel()
-                .flatMap(ch -> ch.sendMessageEmbeds(builder.build()));
+        return builder;
     }
 
     /**

@@ -37,13 +37,22 @@ public class Database {
     /**
      * Static JDBI custom pings instance. Can be accessed via {@link #pings()}.
      */
-    public static Jdbi pings;
+    private static Jdbi pings;
 
     /**
      * {@return the static custom pings JDBI instance}
      */
     public static Jdbi pings() {
         return pings;
+    }
+
+    public static Jdbi appeals;
+
+    /**
+     * {@return the static appeals DB JDBI instance}
+     */
+    public static Jdbi appeals() {
+        return appeals;
     }
 
     /**
@@ -65,6 +74,7 @@ public class Database {
 
         main = createDatabaseConnection(mainDb, "main");
         pings = createDatabaseConnection(dir.resolve("pings.db"), "pings");
+        appeals = createDatabaseConnection(dir.resolve("appeals.db"), "appeals");
         CustomPingListener.requestRefresh();
     }
 

@@ -86,7 +86,7 @@ public class ModerationActionRecorder implements EventListener {
         }
     }
 
-    private void recordAndLog(ModLogEntry entry, JDA jda) {
+    public static void recordAndLog(ModLogEntry entry, JDA jda) {
         entry.setId(Database.main().withExtension(ModLogsDAO.class, db -> db.insert(entry)));
         log(entry, jda);
     }

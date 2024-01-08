@@ -2,6 +2,7 @@ package net.neoforged.camelot.commands.moderation;
 
 import com.google.common.base.Preconditions;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -10,7 +11,9 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.module.WebServerModule;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
@@ -81,4 +84,11 @@ public class BanCommand extends ModerationCommand<Integer> {
                 .reason("rec: " + entry.reasonOrDefault());
     }
 
+    @Override
+    protected EmbedBuilder makeMessage(ModLogEntry entry, User user) {
+        final EmbedBuilder builder = super.makeMessage(entry, user);
+        builder.appendDescription("\nYou may appeal the ban at " + BotMain.getModule(WebServerModule.class)
+                .makeLink("/ban-appeals/" + entry.guild()) + ".");
+        return builder;
+    }
 }

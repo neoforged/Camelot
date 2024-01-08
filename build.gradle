@@ -89,6 +89,12 @@ dependencies {
 
     implementation group: 'com.matyrobbrt', name: 'semver-graaljs', version: project.semver_version
     implementation group: 'org.apache.maven', name: 'maven-artifact', version: project.maven_artifact_version
+    implementation("io.javalin:javalin:${project.javalin_version}") {
+        exclude module: 'slf4j-api'
+    }
+    implementation("com.j2html:j2html:${project.j2html_version}")
+    implementation("org.eclipse.angus:angus-mail:${project.angus_mail_version}")
+    implementation "org.json:json:${project.json_version}"
 
     compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
     annotationProcessor group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'

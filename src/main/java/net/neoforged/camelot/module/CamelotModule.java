@@ -4,6 +4,8 @@ import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 
+import java.util.Set;
+
 /**
  * A camelot module is a part of the bot that can be disabled and is loaded via a {@link java.util.ServiceLoader}.
  */
@@ -36,5 +38,29 @@ public interface CamelotModule {
      * @param jda the JDA instance of the bot
      */
     default void setup(JDA jda) {
+    }
+
+    /**
+     * Accept an object from another module.
+     *
+     * @param moduleId the ID of the module sending the object
+     * @param object   the sent object
+     */
+    default void acceptFrom(String moduleId, Object object) {
+
+    }
+
+    /**
+     * {@return a set of module IDs that this module depends on}
+     */
+    default Set<String> getDependencies() {
+        return Set.of();
+    }
+
+    /**
+     * {@return whether this module should be loaded}
+     */
+    default boolean shouldLoad() {
+        return true;
     }
 }

@@ -16,6 +16,8 @@ import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.configuration.Config;
+import net.neoforged.camelot.configuration.MailConfig;
+import net.neoforged.camelot.configuration.OAuthConfig;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.DismissListener;
@@ -114,7 +116,9 @@ public class BotMain {
      * Accepts the given {@code consumer} on all loaded modules.
      */
     public static void forEachModule(Consumer<? super CamelotModule> consumer) {
-        modules.values().forEach(consumer);
+        modules.values().stream().sorted((o1, o2) ->
+                o1.getDependencies().contains(o2.id()) ? -1 : (o2.getDependencies().contains(o1.id()) ? 1 : 0))
+                .forEach(consumer);
     }
 
     /**
@@ -141,6 +145,8 @@ public class BotMain {
         // This throw shouldn't occur by any Earthly means but Java demands that i catch it.
         try {
             Config.readConfigs();
+            MailConfig.readConfig();
+            OAuthConfig.readConfig();
         } catch (Exception e) {
             LOGGER.error("Something is wrong with the universe. Error: " + e.getMessage());
             System.exit(-1);
@@ -149,12 +155,20 @@ public class BotMain {
         modules = Map.copyOf(ServiceLoader.load(CamelotModule.class)
                 .stream()
                 .map(ServiceLoader.Provider::get)
+                .filter(module -> !Config.DISABLED_MODULES.contains(module.id()) && module.shouldLoad())
                 .collect(Collectors.toMap(
                         CamelotModule::getClass,
                         Function.identity(),
-                        (a, b) -> b,
+                        (_, b) -> b,
                         IdentityHashMap::new
                 )));
+
+        modules.values().forEach(module -> module.getDependencies().forEach(dep -> {
+            if (modules.values().stream().noneMatch(m -> m.id().equals(dep))) {
+                throw new NullPointerException("Module " + module.id() + " requires module " + dep + " which is not enabled!");
+            }
+        }));
+
         LOGGER.info("Loaded {} modules: {}", modules.size(), modules.values().stream().map(CamelotModule::id).toList());
 
         MessageRequest.setDefaultMentionRepliedUser(false);

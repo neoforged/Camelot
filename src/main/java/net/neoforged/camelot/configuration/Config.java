@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Manages global configuration state.
@@ -54,6 +57,21 @@ public class Config {
     public static boolean PREFIX_TRICKS = true;
 
     /**
+     * The port of the webserver.
+     */
+    public static int SERVER_PORT = 3000;
+
+    /**
+     * The URL of the webserver.
+     */
+    public static String SERVER_URL = "http://localhost:" + SERVER_PORT;
+
+    /**
+     * The ID of the channel to send ban appeals to.
+     */
+    public static long BAN_APPEALS_CHANNEL = 0;
+
+    /**
      * If {@code true}, promoted tricks can only be invoked via the slash variant.
      */
     public static boolean PROMOTED_SLASH_ONLY = false;
@@ -67,6 +85,11 @@ public class Config {
      * A {@link GitHub} instance used for creating file preview gists.
      */
     public static GitHub FILE_PREVIEW_GISTS;
+
+    /**
+     * A list of {@link net.neoforged.camelot.module.CamelotModule} IDs to disable
+     */
+    public static Set<String> DISABLED_MODULES = Set.of("webserver", "mc-verification", "ban-appeal");
 
     /**
      * Read configs from file.
@@ -87,6 +110,14 @@ public class Config {
             PREFIX_TRICKS = Boolean.parseBoolean(properties.getProperty("tricks.prefix", properties.getProperty("prefixTricks", "true")));
             PROMOTED_SLASH_ONLY = Boolean.parseBoolean(properties.getProperty("tricks.promotedSlashOnly", "false"));
             ENCOURAGE_PROMOTED_SLASH = Boolean.parseBoolean(properties.getProperty("tricks.encouragePromotedSlash", "false"));
+
+            SERVER_PORT = Integer.parseInt(properties.getProperty("server.port", String.valueOf(SERVER_PORT)));
+            SERVER_URL = properties.getProperty("server.url", SERVER_URL);
+
+            BAN_APPEALS_CHANNEL = Long.parseLong(properties.getProperty("banAppeals.channel", "0"));
+
+            DISABLED_MODULES = Stream.of(properties.getProperty("disabledModules", String.join(",", DISABLED_MODULES)).split(","))
+                    .collect(Collectors.toSet());
         } catch (Exception e) {
             Files.writeString(Path.of("config.properties"),
                     """
@@ -120,7 +151,18 @@ public class Config {
                             githubInstallationOwner=
                             
                             # A personal token to be used for GitHub interactions. Mutually exclusive with a GitHub bot-based configuration
-                            githubPAT=""");
+                            githubPAT=
+                            
+                            # The port of the webserver
+                            server.port=3000
+                            # The URL of the webserver
+                            server.url=http://localhost:3000
+                            
+                            # The ID of the channel to send ban appeals to. Ban appeals will not be enabled if this value isn't set
+                            banAppeals.channel=0
+                            
+                            # Comma-separated list of disabled modules
+                            disabledModules=webserver, ban-appeal, mc-verification""");
 
             BotMain.LOGGER.warn("Configuration file is invalid. Resetting..");
         }
