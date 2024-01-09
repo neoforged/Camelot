@@ -44,6 +44,7 @@ import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.oauth.OAuthClient;
+import net.neoforged.camelot.util.oauth.OAuthScope;
 import net.neoforged.camelot.util.oauth.TokenResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
@@ -105,7 +106,7 @@ public class BanAppealModule implements CamelotModule {
 
     @Override
     public void setup(JDA jda) {
-        client = OAuthConfig.discord.fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/ban-appeals/discord"));
+        client = OAuthConfig.discord.fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/ban-appeals/discord"), OAuthScope.Discord.EMAIL, OAuthScope.Discord.IDENTIFY);
     }
 
     @Override

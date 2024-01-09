@@ -43,8 +43,8 @@ public class OAuthClient {
         this.httpClient = httpClient;
     }
 
-    public OAuthClient fork(Supplier<String> redirectUri) {
-        return new OAuthClient(authorizeUrl, tokenUrl, clientId, clientSecret, redirectUri, httpClient, scopes.toArray());
+    public OAuthClient fork(Supplier<String> redirectUri, Object... scopes) {
+        return new OAuthClient(authorizeUrl, tokenUrl, clientId, clientSecret, redirectUri, httpClient, scopes);
     }
 
     public TokenResponse getToken(String code) throws IOException, InterruptedException {
@@ -71,7 +71,7 @@ public class OAuthClient {
         return new TokenResponse(token, requestedAt.plusSeconds(expiresIn));
     }
 
-    public String getAuthorizationUrl(String state) {
+    public String getAuthorizationUrl(Object state) {
         final String url = authorizeUrl + "?client_id=" + clientId + "&redirect_uri=" + URLEncoder.encode(redirectUri.get(), StandardCharsets.UTF_8) + "&response_type=code&scope=" + String.join("%20", scopes);
         return state == null ? url : (url + "&state=" + state);
     }

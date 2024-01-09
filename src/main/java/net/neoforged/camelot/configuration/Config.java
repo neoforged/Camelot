@@ -117,7 +117,7 @@ public class Config {
             BAN_APPEALS_CHANNEL = Long.parseLong(properties.getProperty("banAppeals.channel", "0"));
 
             DISABLED_MODULES = Stream.of(properties.getProperty("disabledModules", String.join(",", DISABLED_MODULES)).split(","))
-                    .collect(Collectors.toSet());
+                    .map(String::trim).collect(Collectors.toSet());
         } catch (Exception e) {
             Files.writeString(Path.of("config.properties"),
                     """

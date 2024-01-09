@@ -1,6 +1,8 @@
 package net.neoforged.camelot.commands;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -73,7 +75,16 @@ public abstract class InteractiveCommand extends SlashCommand implements EventLi
      */
     protected String getComponentId(Object... arguments) {
         if (arguments.length == 0) return baseComponentId;
-        return baseComponentId + "/" + Arrays.stream(arguments).map(Object::toString).collect(Collectors.joining("/"));
+        return baseComponentId + "/" + Arrays.stream(arguments).map(InteractiveCommand::convertArgument ).collect(Collectors.joining("/"));
+    }
+
+    private static String convertArgument(Object argument) {
+        if (argument instanceof User user) {
+            return user.getId();
+        } else if (argument instanceof Member member) {
+            return member.getId();
+        }
+        return argument.toString();
     }
 
     @Override

@@ -18,6 +18,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static j2html.TagCreator.*;
 
@@ -112,6 +113,7 @@ public class WebServer implements Runnable, Closeable {
     public static class BaseRootTag {
         private final List<DomContent> head = new ArrayList<>();
         private final List<DomContent> content = new ArrayList<>();
+        private final BodyTag body = body();
         @Nullable
         private TitleTag title;
 
@@ -127,6 +129,11 @@ public class WebServer implements Runnable, Closeable {
 
         public BaseRootTag withContent(DomContent content) {
             this.content.add(content);
+            return this;
+        }
+
+        public BaseRootTag withBody(Consumer<BodyTag> bodyTagConsumer) {
+            bodyTagConsumer.accept(body);
             return this;
         }
 
@@ -147,7 +154,6 @@ public class WebServer implements Runnable, Closeable {
                     link().withRel("stylesheet").withHref("/static/style/style.css")
             );
             this.head.forEach(head::with);
-            final BodyTag body = body();
             body.condWith(withThemeDropdown, THEME_DROPDOWN);
             body.with(TagCreator.tag("main").with(this.content));
             tag.with(head, body);

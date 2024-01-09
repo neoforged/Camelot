@@ -10,6 +10,8 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.server.WebServer;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 @AutoService(CamelotModule.class)
@@ -23,6 +25,15 @@ public class WebServerModule implements CamelotModule {
 
     @Override
     public void setup(JDA jda) {
+        final Path staticDir = Path.of("static").toAbsolutePath();
+        if (Files.notExists(staticDir)) {
+            try {
+                Files.createDirectories(staticDir);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         this.webServer = new WebServer(Javalin.create(conf -> {
             conf.staticFiles.add(c -> {
                 c.directory = "/web/static";
@@ -31,7 +42,7 @@ public class WebServerModule implements CamelotModule {
             });
 
             conf.staticFiles.add(c -> {
-                c.directory = Path.of("static").toAbsolutePath().toString();
+                c.directory = staticDir.toString();
                 c.location = Location.EXTERNAL;
                 c.mimeTypes.add(ContentType.IMAGE_SVG);
             });

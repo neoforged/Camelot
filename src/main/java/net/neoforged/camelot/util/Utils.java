@@ -1,7 +1,12 @@
 package net.neoforged.camelot.util;
 
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.exceptions.ErrorHandler;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.neoforged.camelot.BotMain;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -122,5 +128,14 @@ public class Utils {
             thread.setUncaughtExceptionHandler((t, e) -> BotMain.LOGGER.error("Encountered exception on thread {}: ", t.getName(), e));
             return thread;
         };
+    }
+
+    /**
+     * Attempts to DM the {@code user}, ignoring a {@link ErrorResponse#CANNOT_SEND_TO_USER} exception.
+     */
+    public static RestAction<Void> attemptDM(final User user, final Function<PrivateChannel, RestAction<?>> action) {
+        return user.openPrivateChannel()
+                .flatMap(ch -> action.apply(ch).map(_ -> (Void) null))
+                .onErrorMap(ErrorResponse.CANNOT_SEND_TO_USER::test, _ -> null);
     }
 }
