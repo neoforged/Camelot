@@ -28,7 +28,7 @@ public interface PendingUnbansDAO extends Transactional<PendingUnbansDAO> {
      * @param guild the guild in which to unban the users
      * @return a list of user IDs to unban
      */
-    @SqlQuery("select user from pending_unbans where guild = :guild and deadline < datetime()")
+    @SqlQuery("select user from pending_unbans where guild = :guild and deadline <= unixepoch() * 1000")
     List<Long> getUsersToUnban(@Bind("guild") long guild);
 
     /**

@@ -1,8 +1,6 @@
 package net.neoforged.camelot.util;
 
-import com.google.common.base.Suppliers;
 import j2html.tags.Tag;
-import j2html.tags.specialized.HtmlTag;
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -17,12 +15,6 @@ import jakarta.mail.internet.MimeMultipart;
 
 import java.util.Properties;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-
-import static j2html.TagCreator.body;
-import static j2html.TagCreator.h1;
-import static j2html.TagCreator.html;
-import static j2html.TagCreator.pre;
 
 public class MailService {
     private final Session session;

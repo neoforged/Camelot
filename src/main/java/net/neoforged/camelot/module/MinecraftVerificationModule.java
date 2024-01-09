@@ -104,7 +104,7 @@ public class MinecraftVerificationModule implements CamelotModule {
     @Override
     public void setup(JDA jda) {
         final McVerificationDAO dao = Database.main().onDemand(McVerificationDAO.class);
-        BotMain.EXECUTOR.scheduleAtFixedRate(() -> banNotVerified(jda, dao), 0, 1, TimeUnit.MINUTES);
+        BotMain.EXECUTOR.scheduleAtFixedRate(() -> banNotVerified(jda, dao), 1, 1, TimeUnit.MINUTES);
     }
 
     private void banNotVerified(JDA jda, McVerificationDAO db) {
