@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.module.BanAppealModule;
 import net.neoforged.camelot.module.WebServerModule;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
@@ -87,8 +88,10 @@ public class BanCommand extends ModerationCommand<Integer> {
     @Override
     protected EmbedBuilder makeMessage(ModLogEntry entry, User user) {
         final EmbedBuilder builder = super.makeMessage(entry, user);
-        builder.appendDescription("\nYou may appeal the ban at " + BotMain.getModule(WebServerModule.class)
-                .makeLink("/ban-appeals/" + entry.guild()) + ".");
+        if (BotMain.getModule(BanAppealModule.class) != null) {
+            builder.appendDescription("\nYou may appeal the ban at " + BotMain.getModule(WebServerModule.class)
+                    .makeLink("/ban-appeals/" + entry.guild()) + ".");
+        }
         return builder;
     }
 }
