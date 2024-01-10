@@ -2,8 +2,11 @@ package net.neoforged.camelot.module;
 
 import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import com.jagrosh.jdautilities.command.MessageContextMenu;
+import com.jagrosh.jdautilities.command.MessageContextMenuEvent;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
@@ -45,7 +48,30 @@ public class QuotesModule implements CamelotModule {
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommand(new QuoteCommand());
+        final QuoteCommand cmd = new QuoteCommand();
+        builder.addSlashCommand(cmd);
+        // I hate this...
+        builder.addCommand(cmd);
+
+        builder.addContextMenu(new MessageContextMenu() {
+            {
+               name = "Add quote";
+            }
+
+            @Override
+            protected void execute(MessageContextMenuEvent event) {
+                final Member authorUser = event.getTarget().getMember();
+                final String authorName = authorUser.getNickname() == null ? authorUser.getEffectiveName() : authorUser.getNickname() + " (" + authorUser.getUser().getEffectiveName() + ")";
+                final int id = Database.main().withExtension(QuotesDAO.class, db -> db.insertQuote(
+                        event.getGuild().getIdLong(),
+                        db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser.getIdLong()),
+                        event.getTarget().getContentRaw(),
+                        null,
+                        event.getUser().getIdLong()
+                ));
+                event.reply(STR."Quote #\{id} added.").queue();
+            }
+        });
     }
 
     private Font usedFont;

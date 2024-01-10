@@ -1,5 +1,7 @@
 package net.neoforged.camelot.commands.information;
 
+import com.google.common.primitives.Ints;
+import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -13,6 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 
@@ -46,6 +50,36 @@ public class QuoteCommand extends SlashCommand {
                 new DeleteQuote(),
                 new QuoteImage()
         };
+    }
+
+    @Override
+    protected void execute(CommandEvent event) {
+        assert event.getGuild() != null;
+
+        final Quote quote;
+        if (event.getArgs().isBlank()) {
+            quote = Database.main().withExtension(QuotesDAO.class, db -> db.getRandomQuote(event.getGuild().getIdLong()));
+        } else {
+            final String[] spl = event.getArgs().split(" ", 2);
+            final Integer num = Ints.tryParse(spl[0]);
+            if (num == null) {
+                event.getMessage().reply("Not a valid number!").mentionRepliedUser(false).queue();
+                return;
+            }
+
+            quote = Database.main().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), num));
+        }
+
+        if (quote == null) {
+            event.getMessage().reply("Unknown quote.").mentionRepliedUser(false).queue();
+            return;
+        }
+
+        event.getMessage().reply(STR. """
+            #\{ quote.id() }
+            > \{ quote.quote() }
+            - \{ quote.createAuthor() }
+            """ .trim()).mentionRepliedUser(false).setAllowedMentions(List.of()).queue();
     }
 
     public static final class GetQuote extends SlashCommand {
@@ -133,6 +167,39 @@ public class QuoteCommand extends SlashCommand {
         }
 
         @Override
+        protected void execute(CommandEvent event) {
+            // This is cursed but it's the only command deserving the 'special' treatment
+            event.getChannel().sendTyping().queue();
+
+            final Data data;
+            if (!event.getArgs().isBlank()) {
+                final var filter = StringSearch.contains(event.getArgs().trim());
+                data = new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong(), filter, null)), filter, null, event.getGuild().getIdLong());
+            } else {
+                data = new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong())), null, null, event.getGuild().getIdLong());
+            }
+
+            if (data.itemAmount() < 1) {
+                event.getMessage().reply("No quotes found!")
+                        .mentionRepliedUser(false).queue();
+                return;
+            }
+
+            final UUID btnId = buttonManager.newButton(e -> onButton(e, data));
+            final var buttons = createButtons(btnId.toString(), 0, data.itemAmount());
+
+            createMessage(0, data, null)
+                    .thenApply(ed -> event.getMessage().reply(MessageCreateData.fromEditData(ed))
+                            .mentionRepliedUser(false))
+                    .thenAccept(action -> {
+                        if (!buttons.isEmpty()) {
+                            action.setActionRow(buttons);
+                        }
+                        action.queue();
+                    });
+        }
+
+        @Override
         public Data collectData(SlashCommandEvent event) {
             final StringSearch filter = event.getOption("filter", m -> StringSearch.contains(m.getAsString()));
             final QuotesDAO.UserSearch userFilter = event.getOption("author", m -> {
@@ -145,19 +212,21 @@ public class QuoteCommand extends SlashCommand {
             });
 
             if (filter != null || userFilter != null) {
-                return new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong(), filter, userFilter)), filter, userFilter);
+                return new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong(), filter, userFilter)), filter, userFilter, event.getGuild().getIdLong());
             }
 
-            return new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong())), null, null);
+            return new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong())), null, null, event.getGuild().getIdLong());
         }
 
+        // Crime incoming: the interaction shouldn't be nullable, but because this command is special and allows
+        // text commands, we don't have an interaction there, so resort to storing more data in the button data
         @Override
-        public CompletableFuture<MessageEditData> createMessage(int page, Data data, Interaction interaction) {
+        public CompletableFuture<MessageEditData> createMessage(int page, Data data, @Nullable Interaction interaction) {
             final var quotes = Database.main().withExtension(QuotesDAO.class, db -> {
                 if (data.contentFilter == null && data.userSearch == null) {
-                    return db.getQuotes(interaction.getGuild().getIdLong(), page * this.itemsPerPage, this.itemsPerPage);
+                    return db.getQuotes(data.guildId, page * this.itemsPerPage, this.itemsPerPage);
                 } else {
-                    return db.findQuotes(interaction.getGuild().getIdLong(), data.contentFilter, data.userSearch, page * this.itemsPerPage, this.itemsPerPage);
+                    return db.findQuotes(data.guildId, data.contentFilter, data.userSearch, page * this.itemsPerPage, this.itemsPerPage);
                 }
             });
             final EmbedBuilder embed = new EmbedBuilder();
@@ -173,7 +242,7 @@ public class QuoteCommand extends SlashCommand {
                     .build());
         }
 
-        public record Data(int itemAmount, @Nullable StringSearch contentFilter, @Nullable QuotesDAO.UserSearch userSearch) implements PaginationData {
+        public record Data(int itemAmount, @Nullable StringSearch contentFilter, @Nullable QuotesDAO.UserSearch userSearch, long guildId) implements PaginationData {
         }
     }
 

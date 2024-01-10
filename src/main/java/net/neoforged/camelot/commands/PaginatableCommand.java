@@ -31,7 +31,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
         return MessageEditData.fromContent("Encountered exception executing command: " + throwable);
     };
 
-    private final ButtonManager buttonManager;
+    protected final ButtonManager buttonManager;
     /**
      * The amount of items a page can display.
      */
@@ -106,7 +106,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
      * @param event the event that triggered the interaction
      * @param data  the button data
      */
-    protected void onButton(final ButtonInteractionEvent event, final T data) {
+    protected final void onButton(final ButtonInteractionEvent event, final T data) {
         final String[] split = event.getButton().getId().split("/");
         int currentPage = Integer.parseInt(split[1]);
         event.deferEdit().queue();
