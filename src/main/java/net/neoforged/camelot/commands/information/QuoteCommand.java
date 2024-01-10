@@ -77,7 +77,7 @@ public class QuoteCommand extends SlashCommand {
             #\{ quote.id() }
             > \{ quote.quote() }
             - \{ quote.createAuthor() }
-            """ .trim()).queue();
+            """ .trim()).setAllowedMentions(List.of()).queue();
         }
     }
 
@@ -162,7 +162,7 @@ public class QuoteCommand extends SlashCommand {
             });
             final EmbedBuilder embed = new EmbedBuilder();
             embed.setTitle("List of quotes")
-                    .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()));
+                    .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()) + " • " + data.itemAmount() + " total");
             quotes.forEach(quote -> embed.addField(
                     "Quote #" + quote.id(),
                     STR."> \{quote.quote()}\n- \{quote.createAuthor()}",
