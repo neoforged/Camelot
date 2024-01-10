@@ -1,10 +1,16 @@
 package net.neoforged.camelot;
 
 import net.neoforged.camelot.db.api.CallbackConfig;
+import net.neoforged.camelot.db.api.StringSearch;
 import net.neoforged.camelot.db.impl.PostCallbackDecorator;
 import net.neoforged.camelot.listener.CustomPingListener;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.argument.AbstractArgumentFactory;
+import org.jdbi.v3.core.argument.Argument;
+import org.jdbi.v3.core.argument.ArgumentFactory;
+import org.jdbi.v3.core.argument.Arguments;
+import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.sqlobject.HandlerDecorators;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
@@ -15,6 +21,8 @@ import net.neoforged.camelot.configuration.Common;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLType;
+import java.sql.Types;
 
 /**
  * The class where the bot databases are stored.
@@ -110,6 +118,12 @@ public class Database {
         final Jdbi jdbi = Jdbi.create(dataSource)
                 .installPlugin(new SqlObjectPlugin());
         jdbi.getConfig(HandlerDecorators.class).register(new PostCallbackDecorator(jdbi.getConfig(CallbackConfig.class)));
+        jdbi.getConfig(Arguments.class).register(new AbstractArgumentFactory<StringSearch>(Types.VARCHAR) {
+            @Override
+            protected Argument build(StringSearch value, ConfigRegistry config) {
+                return (position, statement, _) -> statement.setString(position, value.asQuery());
+            }
+        });
         return jdbi;
     }
 
