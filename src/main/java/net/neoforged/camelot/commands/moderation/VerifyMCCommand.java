@@ -92,6 +92,7 @@ public class VerifyMCCommand extends InteractiveCommand {
                     .flatMap(_ -> event.getMessage().editMessage("Request canceled."))
                     .flatMap(_ -> event.getGuild().removeTimeout(UserSnowflake.fromId(userId))
                             .reason("rec: MC Verification canceled"))
+                    .onSuccess(_ -> Database.main().useExtension(McVerificationDAO.class, db -> db.delete(event.getGuild().getIdLong(), userId)))
                     .onSuccess(_ -> ModerationActionRecorder.recordAndLog(
                             ModLogEntry.unmute(userId, event.getGuild().getIdLong(), event.getUser().getIdLong(), "MC verification canceled"),
                             event.getJDA()
