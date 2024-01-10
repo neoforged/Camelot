@@ -55,7 +55,7 @@ public class VerifyMCCommand extends InteractiveCommand {
         }
 
         if (!event.getGuild().getSelfMember().canInteract(target)) {
-            event.reply("I interact with that user!").setEphemeral(true).queue();
+            event.reply("I cannot interact with that user!").setEphemeral(true).queue();
             return;
         }
 
@@ -64,7 +64,7 @@ public class VerifyMCCommand extends InteractiveCommand {
             return;
         }
 
-        event.reply(STR. "\{ target.getAsMention() }, please verify that you own a Minecraft account. Failure to do so within 24 hours will result in a ban.\n[Verification link](<\{BotMain.getModule(WebServerModule.class).makeLink("/minecraft/" + event.getGuild().getId() + "/verify")}>)" )
+        event.reply(STR. "\{ target.getAsMention() }, please verify that you own a Minecraft account. Failure to do so within 24 hours will result in a ban.\n\nYou can verify by accessing [this form](<\{BotMain.getModule(WebServerModule.class).makeLink("/minecraft/" + event.getGuild().getId() + "/verify")}>)." )
                 .addActionRow(Button.danger(getComponentId("cancel", target), "Cancel"))
                 .flatMap(InteractionHook::retrieveOriginal)
                 .onSuccess(msg -> Database.main().useExtension(McVerificationDAO.class, db -> db.insert(

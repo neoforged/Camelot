@@ -57,12 +57,12 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
 
         event.deferReply().setEphemeral(ephemeral).queue();
         final UUID btnId = buttonManager.newButton(e -> onButton(e, data));
-        final var buttons = createButtons(btnId.toString(), 0, data.itemAmount());
         final int page = event.getOption("page", 1, OptionMapping::getAsInt);
         if (page > 1 && pageAmount(data.itemAmount()) < page) {
             event.reply("Invalid page").setEphemeral(true).queue();
             return;
         }
+        final var buttons = createButtons(btnId.toString(), page - 1, data.itemAmount());
 
         createMessage(page - 1, data, event)
                 .thenApply(ed -> event.getHook().sendMessage(MessageCreateData.fromEditData(ed)))
