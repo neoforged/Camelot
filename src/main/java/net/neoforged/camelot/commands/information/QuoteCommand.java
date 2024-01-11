@@ -78,7 +78,7 @@ public class QuoteCommand extends SlashCommand {
         event.getMessage().reply(STR. """
             #\{ quote.id() }
             > \{ quote.quote() }
-            - \{ quote.createAuthor() }
+            \- \{ quote.createAuthor() }
             """ .trim()).mentionRepliedUser(false).setAllowedMentions(List.of()).queue();
     }
 
@@ -110,7 +110,7 @@ public class QuoteCommand extends SlashCommand {
             event.reply(STR. """
             #\{ quote.id() }
             > \{ quote.quote() }
-            - \{ quote.createAuthor() }
+            \- \{ quote.createAuthor() }
             """ .trim()).setAllowedMentions(List.of()).queue();
         }
     }
