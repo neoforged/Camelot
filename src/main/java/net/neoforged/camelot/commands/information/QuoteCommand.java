@@ -351,7 +351,7 @@ public class QuoteCommand extends SlashCommand {
                 event.getGuild().retrieveMemberById(quote.author().userId())
                         .map(mem -> new QuotesModule.MemberLike(mem.getEffectiveName(), mem.getEffectiveAvatarUrl(), mem.getColor()))
                         .onErrorFlatMap(ErrorResponse.UNKNOWN_MEMBER::test, _ -> event.getJDA().retrieveUserById(quote.author().userId())
-                                .map(user -> new QuotesModule.MemberLike(user.getEffectiveName(), user.getEffectiveAvatarUrl(), Color.WHITE))
+                                .map(user -> new QuotesModule.MemberLike(user.getEffectiveName(), user.getEffectiveAvatarUrl(), new Color(0xA55200)))
                                 .onErrorMap(ErrorResponse.UNKNOWN_USER::test, _ -> null))
                         .queue(memberLike::complete);
             } else {

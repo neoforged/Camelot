@@ -144,7 +144,7 @@ public class QuotesModule implements CamelotModule {
             final var outBuf = new BufferedImage(outline.getWidth(), outline.getHeight(),
                     BufferedImage.TYPE_INT_ARGB);
             final var outGraphics = outBuf.createGraphics();
-            outGraphics.setColor(member == null ? Color.WHITE : member.color());
+            outGraphics.setColor(member == null ? new Color(0xA55200) : member.color());
             outGraphics.fillRect(0, 0, outline.getWidth(), outline.getHeight());
             outGraphics.dispose();
             BufferedImage outlineImg = outBuf;
