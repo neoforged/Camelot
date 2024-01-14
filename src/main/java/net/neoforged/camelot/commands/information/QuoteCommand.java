@@ -28,6 +28,7 @@ import net.neoforged.camelot.module.QuotesModule;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -348,9 +349,9 @@ public class QuoteCommand extends SlashCommand {
             final CompletableFuture<QuotesModule.MemberLike> memberLike = new CompletableFuture<>();
             if (quote.author().userId() != 0) {
                 event.getGuild().retrieveMemberById(quote.author().userId())
-                        .map(mem -> new QuotesModule.MemberLike(mem.getEffectiveName(), mem.getEffectiveAvatarUrl()))
+                        .map(mem -> new QuotesModule.MemberLike(mem.getEffectiveName(), mem.getEffectiveAvatarUrl(), mem.getColor()))
                         .onErrorFlatMap(ErrorResponse.UNKNOWN_MEMBER::test, _ -> event.getJDA().retrieveUserById(quote.author().userId())
-                                .map(user -> new QuotesModule.MemberLike(user.getEffectiveName(), user.getEffectiveAvatarUrl()))
+                                .map(user -> new QuotesModule.MemberLike(user.getEffectiveName(), user.getEffectiveAvatarUrl(), Color.WHITE))
                                 .onErrorMap(ErrorResponse.UNKNOWN_USER::test, _ -> null))
                         .queue(memberLike::complete);
             } else {
