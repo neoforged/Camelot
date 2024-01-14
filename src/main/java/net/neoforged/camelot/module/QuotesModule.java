@@ -109,7 +109,7 @@ public class QuotesModule implements CamelotModule {
         }));
     }
 
-    public record MemberLike(String name, String avatar) {}
+    public record MemberLike(String name, String avatar, Color color) {}
 
     public byte[] makeQuoteImage(final Guild guild, final @Nullable MemberLike member, final Quote quote) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -144,7 +144,7 @@ public class QuotesModule implements CamelotModule {
             final var outBuf = new BufferedImage(outline.getWidth(), outline.getHeight(),
                     BufferedImage.TYPE_INT_ARGB);
             final var outGraphics = outBuf.createGraphics();
-            outGraphics.setColor(new Color(0xA55200));
+            outGraphics.setColor(member == null ? new Color(0xA55200) : member.color());
             outGraphics.fillRect(0, 0, outline.getWidth(), outline.getHeight());
             outGraphics.dispose();
             BufferedImage outlineImg = outBuf;
