@@ -499,7 +499,7 @@ public class ManageTrickCommand extends SlashCommand {
             this.name = "set-privileged";
             this.help = "Mark a trick as privileged";
             this.options = List.of(
-                    new OptionData(OptionType.STRING, "trick", "The trick whose owner to change", true).setAutoComplete(true),
+                    new OptionData(OptionType.STRING, "trick", "The trick whose privileged status to change", true).setAutoComplete(true),
                     new OptionData(OptionType.BOOLEAN, "privileged", "Whether the trick should be privileged", true)
             );
         }
