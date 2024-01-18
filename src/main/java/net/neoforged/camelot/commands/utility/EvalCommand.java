@@ -75,7 +75,7 @@ public class EvalCommand extends Command {
                             protected RestAction<?> doSend(MessageCreateData createData) {
                                 return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
                             }
-                        });
+                        }, false);
 
                         ScriptUtils.submitExecution(context, script, Optional.ofNullable(event.getValue("args")).map(ModalMapping::getAsString).orElse(""));
                     });

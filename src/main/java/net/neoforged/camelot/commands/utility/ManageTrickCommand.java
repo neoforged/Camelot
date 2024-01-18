@@ -68,6 +68,7 @@ public class ManageTrickCommand extends SlashCommand {
                 new Update(),
                 new Info(),
                 new SetOwner(),
+                new SetPrivileged(),
                 new ListCmd(BotMain.BUTTON_MANAGER),
 
                 new AliasAdd(),
@@ -392,8 +393,17 @@ public class ManageTrickCommand extends SlashCommand {
             final String script = event.getValue("script").getAsString();
             final int id = Integer.parseInt(arguments[0]);
 
-            Database.main().useExtension(TricksDAO.class, db -> db.updateScript(id, script));
-            event.reply("Trick updated!").queue();
+            final boolean wasPrivileged = Database.main().withExtension(TricksDAO.class, db -> db.getTrick(id).privileged());
+            final boolean isManager = isManager(event.getMember());
+            Database.main().useExtension(TricksDAO.class, db -> {
+                if (!isManager && wasPrivileged) {
+                    db.setPrivileged(id, false);
+                }
+
+                db.updateScript(id, script);
+            });
+
+            event.reply("Trick updated" + (wasPrivileged && !isManager ? " and removed privileged status" : "") + "!").queue();
         }
 
     }
@@ -473,6 +483,41 @@ public class ManageTrickCommand extends SlashCommand {
 
             Database.main().useExtension(TricksDAO.class, db -> db.updateOwner(trick.id(), event.getOption("owner", OptionMapping::getAsUser).getIdLong()));
             event.reply("Owner changed!").queue();
+        }
+
+        @Override
+        public void onAutoComplete(CommandAutoCompleteInteractionEvent event) {
+            suggestTrickAutocomplete(event, "trick");
+        }
+    }
+
+    /**
+     * The command used to mark a trick as privileged.
+     */
+    public static final class SetPrivileged extends SlashCommand {
+        public SetPrivileged() {
+            this.name = "set-privileged";
+            this.help = "Mark a trick as privileged";
+            this.options = List.of(
+                    new OptionData(OptionType.STRING, "trick", "The trick whose owner to change", true).setAutoComplete(true),
+                    new OptionData(OptionType.BOOLEAN, "privileged", "Whether the trick should be privileged", true)
+            );
+        }
+
+        @Override
+        protected void execute(SlashCommandEvent event) {
+            final Trick trick = event.getOption("trick", ManageTrickCommand::getTrick);
+            if (trick == null) {
+                event.reply("Unknown trick!").setEphemeral(true).queue();
+                return;
+            }
+            if (!isManager(event.getMember())) {
+                event.reply("You cannot mark a trick as privileged!").setEphemeral(true).queue();
+                return;
+            }
+
+            Database.main().useExtension(TricksDAO.class, db -> db.setPrivileged(trick.id(), event.getOption("privileged", OptionMapping::getAsBoolean)));
+            event.reply("Trick changed!").queue();
         }
 
         @Override

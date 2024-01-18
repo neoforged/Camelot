@@ -9,11 +9,12 @@ import java.sql.SQLException;
 /**
  * A database trick.
  *
- * @param id     the ID of the trick
- * @param script the JavaScript script of the trick
- * @param owner  the ID of the trick owner
+ * @param id         the ID of the trick
+ * @param script     the JavaScript script of the trick
+ * @param owner      the ID of the trick owner
+ * @param privileged whether the trick is privileged. A privileged trick receives more access
  */
-public record Trick(int id, String script, long owner) {
+public record Trick(int id, String script, long owner, boolean privileged) {
     public static final class Mapper implements RowMapper<Trick> {
 
         @Override
@@ -21,7 +22,8 @@ public record Trick(int id, String script, long owner) {
             return new Trick(
                     rs.getInt(1),
                     rs.getString(2),
-                    rs.getLong(3)
+                    rs.getLong(3),
+                    rs.getBoolean(4)
             );
         }
     }

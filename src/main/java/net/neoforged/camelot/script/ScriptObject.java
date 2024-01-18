@@ -11,6 +11,7 @@ import org.graalvm.polyglot.proxy.ProxyObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -41,6 +42,13 @@ public class ScriptObject implements ProxyObject {
 
     public ScriptObject put(String key, Object value) {
         values.put(key, value);
+        return this;
+    }
+
+    public ScriptObject putIf(BooleanSupplier condition, String key, Supplier<Object> value) {
+        if (condition.getAsBoolean()) {
+            values.put(key, value.get());
+        }
         return this;
     }
 

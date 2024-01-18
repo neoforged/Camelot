@@ -94,7 +94,7 @@ public record TrickListener(String prefix) implements EventListener {
                         }
                     }
                 }
-            });
+            }, trick.privileged());
 
             ScriptUtils.submitExecution(context, trick.script(), args);
         }

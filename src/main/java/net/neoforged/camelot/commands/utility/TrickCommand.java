@@ -46,7 +46,7 @@ public class TrickCommand extends SlashCommand {
             protected RestAction<?> doSend(MessageCreateData createData) {
                 return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
             }
-        });
+        }, trick.privileged());
 
         ScriptUtils.submitExecution(context, trick.script(), args);
     }

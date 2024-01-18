@@ -110,10 +110,10 @@ public interface TricksDAO extends Transactional<TricksDAO> {
      * @return the ID of the newly-created trick
      */
     default int insertTrick(String script, long owner) {
-        return getHandle().createUpdate("insert into tricks(script, owner) values (?, ?) returning id;")
+        return getHandle().createUpdate("insert into tricks(script, owner, privileged) values (?, ?, false) returning id;")
                 .bind(0, script)
                 .bind(1, owner)
-                .execute((rs, $) -> rs.get().getResultSet().getInt("id"));
+                .execute((rs, _) -> rs.get().getResultSet().getInt("id"));
     }
 
     /**
@@ -146,4 +146,7 @@ public interface TricksDAO extends Transactional<TricksDAO> {
      */
     @SqlUpdate("delete from tricks where id = :id")
     void delete(@Bind("id") int trickId);
+
+    @SqlUpdate("update tricks set privileged = :privileged where id = :id")
+    void setPrivileged(@Bind("id") int trickId, @Bind("privileged") boolean privileged);
 }

@@ -10,11 +10,16 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.CountersDAO;
 import net.neoforged.camelot.util.Utils;
 import org.graalvm.polyglot.proxy.ProxyInstant;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -28,7 +33,7 @@ import java.util.stream.Collectors;
  * @param reply a consumer used to send a message to the user
  */
 public record ScriptContext(
-        JDA jda, Guild guild, Member member, MessageChannel channel, ScriptReplier reply
+        JDA jda, Guild guild, Member member, MessageChannel channel, ScriptReplier reply, boolean priviliged
 ) {
     private static final Map<Class<?>, ScriptTransformer<?>> TRANSFORMERS = new IdentityHashMap<>();
 
@@ -79,12 +84,31 @@ public record ScriptContext(
                 .put("user", createUser(member.getUser()))
                 .put("jda", createJDA(jda))
 
+                .putIf(this::priviliged, "privileged", this::privilegedCompile)
+
                 // Methods used for replying
                 .putVoidMethod("reply", args -> reply.accept(MessageCreateData.fromContent(args.argString(0, true))))
                 .put("console", ScriptObject.of("console")
                         .putVoidMethod("log", args -> reply.accept(MessageCreateData.fromContent(Arrays.stream(args.getArguments())
                                 .map(ScriptUtils::toString).collect(Collectors.joining())))))
                 .putVoidMethod("replyEmbed", args -> reply.accept(MessageCreateData.fromEmbeds(args.argList(0, true, val -> new ScriptMap(val).asEmbed()))));
+    }
+
+    public ScriptObject privilegedCompile() {
+        return ScriptObject.of("Privileged access")
+                .putMethod("httpGetJson", arguments -> {
+                    final String url = arguments.argString(0, true);
+                    try {
+                        return BotMain.HTTP_CLIENT.send(
+                                HttpRequest.newBuilder()
+                                        .uri(URI.create(url))
+                                        .header("Content-Type", "application/json").build(),
+                                HttpResponse.BodyHandlers.ofString()
+                        ).body();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     public List<Object> transformList(List<?> other) {

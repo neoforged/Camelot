@@ -171,7 +171,7 @@ public class ScriptUtils {
                 execution.cancel(true);
                 context.reply().accept(MessageCreateData.fromContent("Script execution timed out!"));
             }
-        }, 5, TimeUnit.SECONDS);
+        }, context.priviliged() ? 10 : 5, TimeUnit.SECONDS);
     }
 
     /**

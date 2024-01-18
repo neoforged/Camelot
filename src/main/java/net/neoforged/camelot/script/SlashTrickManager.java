@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.db.schemas.SlashTrick;
+import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.module.TricksModule;
@@ -129,6 +130,8 @@ public class SlashTrickManager implements EventListener {
                     }
                 });
 
+                final Trick trick = tricksDAO.getTrick(info.id);
+
                 event.deferReply().queue();
                 final ScriptContext context = new ScriptContext(event.getJDA(), event.getGuild(), event.getMember(),
                         event.getChannel(), new ScriptReplier() {
@@ -136,9 +139,9 @@ public class SlashTrickManager implements EventListener {
                     protected RestAction<?> doSend(MessageCreateData createData) {
                         return event.getHook().editOriginal(MessageEditData.fromCreateData(createData));
                     }
-                });
+                }, trick.privileged());
 
-                ScriptUtils.submitExecution(context, tricksDAO.getTrick(info.id).script(), options);
+                ScriptUtils.submitExecution(context, trick.script(), options);
             }
             default -> {}
         }

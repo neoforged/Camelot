@@ -106,6 +106,16 @@ export function replyEmbed(embed: ListOrOne<Embeds.Embed>);
 export type ListOrOne<T> = T | T[];
 export function catchUndefined<T>(f: () => T): T | null;
 
+
+/**
+ * If a trick is privileged, this property gives it access to less 'safe' operations.
+ */
+export const privileged: Privileged | null;
+
+export interface Privileged {
+    httpGetJson(url: string): string
+}
+
 declare namespace Embeds {
     export type Title = {
         value: string | null;
