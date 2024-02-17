@@ -151,8 +151,6 @@ public abstract class ModerationCommand<T> extends SlashCommand {
     protected void logAndExecute(ModerationAction<T> action, InteractionHook interaction, boolean dmedUser) {
         interaction.getJDA().retrieveUserById(action.entry.user())
                 .flatMap(user -> {
-                    ModerationActionRecorder.log(action.entry, user);
-
                     final EmbedBuilder builder = new EmbedBuilder()
                             .setDescription("%s has been %s. | **%s**".formatted(Utils.getName(user), action.entry.type().getAction(), action.entry.reasonOrDefault()))
                             .setTimestamp(action.entry.timestamp())
@@ -160,13 +158,14 @@ public abstract class ModerationCommand<T> extends SlashCommand {
                     if (!dmedUser && shouldDMUser) {
                         builder.setFooter("User could not be DMed");
                     }
-                    final var edit = interaction.editOriginal(MessageEditData.fromEmbeds(builder.build()));
+                    final var edit = interaction.editOriginal(MessageEditData.fromEmbeds(builder.build()))
+                            .onSuccess(_ -> ModerationActionRecorder.log(action.entry, user));
 
                     final var handle = handle(user, action);
                     if (handle == null) {
                         return edit;
                     }
-                    return handle.flatMap(it -> edit);
+                    return handle.flatMap(_ -> edit);
                 })
                 .queue();
     }

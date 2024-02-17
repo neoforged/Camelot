@@ -46,7 +46,7 @@ public class KickCommand extends ModerationCommand<Void> {
         final ModLogEntry entry = action.entry();
         return user.getJDA().getGuildById(entry.guild())
                 .retrieveMemberById(entry.user())
-                .map(mem -> mem.kick().reason("rec: " + entry.reasonOrDefault()));
+                .flatMap(mem -> mem.kick().reason("rec: " + entry.reasonOrDefault()));
     }
 
 }
