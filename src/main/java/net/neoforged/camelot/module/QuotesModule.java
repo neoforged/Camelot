@@ -69,7 +69,7 @@ public class QuotesModule implements CamelotModule {
                         null,
                         event.getUser().getIdLong()
                 ));
-                event.reply(STR."Quote #\{id} added.").queue();
+                event.reply(STR."Quote #\{id} added: \{event.getTarget().getJumpUrl()}").queue();
             }
         });
     }
