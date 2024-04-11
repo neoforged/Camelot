@@ -8,10 +8,11 @@ import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.RestAction;
-import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The command used to unban a user.
@@ -40,6 +41,15 @@ public class UnbanCommand extends ModerationCommand<Void> {
                 ModLogEntry.unban(target.getIdLong(), event.getGuild().getIdLong(), event.getUser().getIdLong(), event.optString("reason")),
                 null
         );
+    }
+
+    @Override
+    protected CompletableFuture<Boolean> canExecute(SlashCommandEvent event, ModerationAction<Void> action) {
+        return event.getGuild().retrieveBan(UserSnowflake.fromId(action.entry().user()))
+                .submit()
+                .thenApply(_ -> true)
+                .exceptionallyCompose(_ -> event.getHook().editOriginal("User is not banned.")
+                        .submit().thenApply(_ -> false));
     }
 
     @Override
