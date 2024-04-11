@@ -2,6 +2,7 @@ package net.neoforged.camelot.configuration;
 
 import net.dv8tion.jda.api.JDA;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.log.ChannelLogging;
 import net.neoforged.camelot.util.AuthUtil;
 import org.jetbrains.annotations.Nullable;
@@ -139,9 +140,6 @@ public class Config {
                             # If true, prefix command invocations of promoted tricks tell the user they should prefer the slash variant.
                             tricks.encouragePromotedSlash=false
                             
-                            # The channel in which to send moderation logs.
-                            moderationLogs=0
-                            
                             # A GitHub PAT used for creating file preview gists.
                             filePreview.gistToken=
                             
@@ -221,7 +219,7 @@ public class Config {
      * Populates all the remaining config values that might need the JDA instance.
      */
     public static void populate(JDA jda) {
-        MODERATION_LOGS = new ChannelLogging(jda, Long.parseLong(properties.getProperty("moderationLogs", "0")));
+        MODERATION_LOGS = new ChannelLogging(jda, LoggingChannelsDAO.Type.MODERATION);
     }
 
 }

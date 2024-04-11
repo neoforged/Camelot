@@ -4,6 +4,7 @@ import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.commands.information.ConfigurationCommand;
 import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
 import net.neoforged.camelot.commands.information.McAgeCommand;
@@ -61,7 +62,7 @@ public class Commands {
                 )
 
                 // Information commands
-                .addSlashCommands(new InfoChannelCommand(), RuleCommand.INSTANCE, new McAgeCommand(), new VersioningCommand())
+                .addSlashCommands(new InfoChannelCommand(), RuleCommand.INSTANCE, new McAgeCommand(), new VersioningCommand(), new ConfigurationCommand())
 
                 .addCommand(RuleCommand.INSTANCE)
 

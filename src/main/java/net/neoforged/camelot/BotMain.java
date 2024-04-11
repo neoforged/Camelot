@@ -22,6 +22,7 @@ import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
+import net.neoforged.camelot.log.JoinsLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.CamelotModule;
 import net.neoforged.camelot.util.Utils;
@@ -178,7 +179,8 @@ public class BotMain {
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS)
                 .setActivity(Activity.customStatus("Listening for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .addEventListeners(BUTTON_MANAGER, new ModerationActionRecorder(), InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener(), new DismissListener());
+                .addEventListeners(new ModerationActionRecorder())
+                .addEventListeners(BUTTON_MANAGER, InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener(), new DismissListener());
 
         try {
             Database.init();
@@ -193,6 +195,7 @@ public class BotMain {
 
         Config.populate(instance);
 
+        instance.addEventListener(new JoinsLogging(instance));
         instance.addEventListener(Commands.get().getSlashCommands().stream()
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)
