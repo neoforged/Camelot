@@ -23,6 +23,7 @@ import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.log.JoinsLogging;
+import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.CamelotModule;
 import net.neoforged.camelot.util.Utils;
@@ -195,7 +196,7 @@ public class BotMain {
 
         Config.populate(instance);
 
-        instance.addEventListener(new JoinsLogging(instance));
+        instance.addEventListener(new JoinsLogging(instance), new MessageLogging(instance));
         instance.addEventListener(Commands.get().getSlashCommands().stream()
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)

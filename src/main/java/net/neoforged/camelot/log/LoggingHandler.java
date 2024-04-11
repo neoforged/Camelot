@@ -9,7 +9,7 @@ import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
  * An {@link EventListener} used for logging events.
  */
 public abstract class LoggingHandler implements EventListener {
-    private final ChannelLogging logging;
+    protected final ChannelLogging logging;
 
     protected LoggingHandler(JDA jda, LoggingChannelsDAO.Type type) {
         this.logging = new ChannelLogging(jda, type);

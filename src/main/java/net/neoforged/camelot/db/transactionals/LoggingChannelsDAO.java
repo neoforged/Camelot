@@ -31,7 +31,8 @@ public interface LoggingChannelsDAO extends Transactional<LoggingChannelsDAO> {
 
     enum Type {
         MODERATION("Moderation", "Moderation events, such as bans and warnings", "🔨"),
-        JOINS("Joins", "Join and leave events", "🚪");
+        JOINS("Joins", "Join and leave events", "🚪"),
+        MESSAGES("Messages", "Message events (edit, delete)", "💬");
 
         public final String displayName, description;
         public final Emoji emoji;
