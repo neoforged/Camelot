@@ -33,7 +33,7 @@ public class JoinsLogging extends LoggingHandler {
                     .setTitle("User Joined")
                     .addField("User", event.getMember().getUser().getName() + " (" + event.getMember().getAsMention() + ")", true)
                     .addField("Account age", "**" + Duration.ofSeconds(OffsetDateTime.now().toEpochSecond() - event.getUser().getTimeCreated().toEpochSecond()).toDays() + " days**", true)
-                    .addField("Member count", String.valueOf(event.getGuild().getMemberCount()), true)
+                    .addField("Joined Discord", TimeFormat.RELATIVE.format(event.getUser().getTimeCreated()), true)
                     .setFooter("User ID: " + event.getMember().getId(), event.getMember().getEffectiveAvatarUrl())
                     .setTimestamp(Instant.now()));
 
@@ -42,7 +42,8 @@ public class JoinsLogging extends LoggingHandler {
                     .setTitle("User Left")
                     .addField("User", event.getUser().getName(), true)
                     .addField("Account created", TimeFormat.DATE_LONG.format(event.getUser().getTimeCreated()), true)
-                    .addField("Joined", TimeFormat.RELATIVE.format(event.getMember().getTimeJoined()), true)
+                    .addField("Joined Server", TimeFormat.RELATIVE.format(event.getMember().getTimeJoined()), true)
+                    .addField("Joined Discord", TimeFormat.RELATIVE.format(event.getUser().getTimeCreated()), true)
                     .addField("Roles", mentionsOrEmpty(event.getMember().getRoles()), false)
                     .setFooter("User ID: " + event.getMember().getId(), event.getMember().getEffectiveAvatarUrl())
                     .setTimestamp(Instant.now()));
