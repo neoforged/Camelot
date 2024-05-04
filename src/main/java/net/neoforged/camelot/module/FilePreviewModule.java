@@ -23,7 +23,8 @@ public class FilePreviewModule implements CamelotModule {
     private static final Set<String> ACCEPTED_EXTENSIONS = Collections.unmodifiableSet(Sets.newHashSet(
             "txt", "gradle", "log", "java", "clj", "go",
             "kt", "groovy", "js", "json", "kts", "toml", "md", "cpp", "rs",
-            "properties", "lang", "diff", "patch", "cfg", "accesswidener"
+            "properties", "lang", "diff", "patch", "cfg", "accesswidener",
+            "pom", "xml", "module"
     ));
     private static final UnicodeEmoji EMOJI = Emoji.fromUnicode("🗒️");
     private static final Pattern CODEBLOCK_PATTERN = Pattern.compile("`{3}(?<lang>\\w*)\\n(?<content>[\\s\\S]*?)\\n`{3}", Pattern.MULTILINE);
