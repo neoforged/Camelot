@@ -80,7 +80,7 @@ public class FilePreviewModule implements CamelotModule {
 
                             // Only set the description to the contents if there's no codeblocks inside the message
                             if (matchFindingStart == 0) {
-                                gist.description(it.getContentRaw());
+                                gist.description(Utils.truncate(it.getContentRaw(), 256));
                             }
 
                             final var url = gist.create().getHtmlUrl().toString();
