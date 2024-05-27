@@ -188,7 +188,7 @@ public class BotMain {
         ));
         loadConfig();
 
-        modules = Map.copyOf(modules.values().stream()
+        modules = Map.copyOf(allModules.values().stream()
                 .filter(module -> module.config().isEnabled() && module.shouldLoad())
                 .collect(Collectors.toMap(
                         CamelotModule::getClass,
@@ -285,7 +285,7 @@ public class BotMain {
                 .addCompilationCustomizers(new ImportCustomizer()
                         .addStarImports("net.neoforged.camelot.config", "net.neoforged.camelot.config.module")));
         try {
-            shell.parse(config.toFile());
+            shell.evaluate(config.toFile());
             CamelotConfig.getInstance().validate();
         } catch (Exception exception) {
             LOGGER.error("Failed to load configuration: ", exception);

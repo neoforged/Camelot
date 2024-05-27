@@ -16,6 +16,8 @@ class ModuleConfiguration {
     @CompileDynamic
     void validate() {
         properties.forEach { key, it ->
+            if (it === null) return
+
             try {
                 it.validate()
             } catch (MissingMethodException ignored) {
