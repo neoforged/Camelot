@@ -1,3 +1,5 @@
+import net.neoforged.gradleutils.PomUtilsExtension
+
 plugins {
     id 'groovy'
     id 'java-library'
@@ -42,6 +44,13 @@ publishing {
             from components.java
             artifact(tasks.groovydocJar)
             artifactId = 'camelot-config'
+            pom {
+                name = 'Camelot configuration'
+                description = 'Configuration for the Camelot Discord bot'
+                rootProject.pomUtils.githubRepo(it, 'Camelot')
+                rootProject.pomUtils.neoForgedDeveloper(it)
+                rootProject.pomUtils.license(it, PomUtilsExtension.License.MIT)
+            }
         }
     }
 }
