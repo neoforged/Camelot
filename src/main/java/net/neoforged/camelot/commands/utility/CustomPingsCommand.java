@@ -18,6 +18,7 @@ import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.db.schemas.Ping;
 import net.neoforged.camelot.db.transactionals.PingsDAO;
+import net.neoforged.camelot.module.CustomPingsModule;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -63,6 +64,16 @@ public class CustomPingsCommand extends SlashCommand {
                 Pattern.compile(regex);
             } catch (PatternSyntaxException ex) {
                 event.reply("Regex is invalid!").setEphemeral(true).queue();
+                return;
+            }
+
+            final var pingAmount = Database.pings().withExtension(PingsDAO.class,
+                    db -> db.getAllPingsOf(event.getUser().getIdLong(), event.getGuild().getIdLong()))
+                    .size();
+
+            final var config = BotMain.getModule(CustomPingsModule.class).config();
+            if (config.getLimit() >= 0 && pingAmount >= config.getLimit()) {
+                event.reply(STR."You have already reached your limit of **\{config.getLimit()}** custom pings.").setEphemeral(true).queue();
                 return;
             }
 
