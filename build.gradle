@@ -2,15 +2,12 @@ import java.nio.file.Files
 
 plugins {
     id 'java'
-    id 'net.neoforged.gradleutils' version '2.+'
+    id 'net.neoforged.gradleutils' version '3.0.0-alpha.13'
     id 'com.github.johnrengelman.shadow' version '7.+'
 }
 
-group 'net.neoforged'
-println("Version: ${version = gradleutils.getTagOffsetVersion()}")
-changelog {
-    fromTag '1.0'
-}
+group 'net.neoforged.camelot'
+println("Version: ${version = gradleutils.version}")
 
 tasks.register('run', JavaExec).configure {
     classpath(sourceSets.main.runtimeClasspath)

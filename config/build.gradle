@@ -1,14 +1,47 @@
 plugins {
     id 'groovy'
     id 'java-library'
+    id 'maven-publish'
+}
+
+group = rootProject.group
+version = rootProject.version
+
+rootProject.gradleutils {
+    setupCentralPublishing()
+    setupSigning(project: this.project, signAllPublications: true)
 }
 
 repositories {
     mavenCentral()
 }
 
+java.withSourcesJar()
+
+groovydoc {
+    use = true
+}
+
+tasks.register('groovydocJar', Jar) {
+    dependsOn tasks.groovydoc
+    archiveClassifier = 'javadoc'
+    from groovydoc.destinationDir
+}
+
 dependencies {
     api "org.apache.groovy:groovy:${project.groovy_version}"
     api "org.apache.groovy:groovy-contracts:${project.groovy_version}"
     implementation group: 'org.kohsuke', name: 'github-api', version: project.ghapi_version
+}
+
+tasks.groovydoc
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact(tasks.groovydocJar)
+            artifactId = 'camelot-config'
+        }
+    }
 }
