@@ -16,11 +16,7 @@ import java.time.Instant;
  * @param time     the time to send the reminder at
  * @param reminder the text of the reminder
  */
-public record Reminder(int id, long user, long channel, Instant time, String reminder) implements Runnable {
-    @Override
-    public void run() {
-
-    }
+public record Reminder(int id, long user, long channel, Instant time, String reminder) {
 
     public static final class Mapper implements RowMapper<Reminder> {
 

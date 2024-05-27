@@ -60,7 +60,7 @@ public final class DismissListener implements EventListener {
 
     private static RestAction<?> deleteIf(final String targetId, final ButtonInteractionEvent event) {
         if (canDelete(targetId, event)) {
-            return event.getMessage().delete().reason("User dismissed the message");
+            return event.deferEdit().flatMap(_ -> event.getMessage().delete().reason("User dismissed the message"));
         } else {
             return event.deferEdit();
         }
