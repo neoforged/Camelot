@@ -43,7 +43,8 @@ public class ConfigurationCommand extends SlashCommand {
         protected void execute(SlashCommandEvent event) {
             var types = Database.main().withExtension(LoggingChannelsDAO.class, db -> db.getTypesForChannel(event.getChannel().getIdLong()));
             var builder = StringSelectMenu.create(getComponentId())
-                    .setMaxValues(LoggingChannelsDAO.Type.values().length);
+                    .setMaxValues(LoggingChannelsDAO.Type.values().length)
+                    .setMinValues(0);
 
             builder.addOptions(Stream.of(LoggingChannelsDAO.Type.values())
                     .map(type -> SelectOption.of(type.displayName, type.name())
