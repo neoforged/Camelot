@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.information.QuoteCommand;
+import net.neoforged.camelot.config.module.Quotes;
 import net.neoforged.camelot.db.schemas.Quote;
 import net.neoforged.camelot.db.transactionals.QuotesDAO;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,11 @@ import static net.neoforged.camelot.util.ImageUtils.drawUserAvatar;
  * The module that handles quotes.
  */
 @AutoService(CamelotModule.class)
-public class QuotesModule implements CamelotModule {
+public class QuotesModule extends CamelotModule.Base<Quotes> {
+    public QuotesModule() {
+        super(Quotes.class);
+    }
+
     @Override
     public String id() {
         return "quotes";

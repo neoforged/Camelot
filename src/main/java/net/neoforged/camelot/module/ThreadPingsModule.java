@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDABuilder;
 import net.neoforged.camelot.commands.utility.ThreadPingsCommand;
+import net.neoforged.camelot.config.module.ThreadPings;
 import net.neoforged.camelot.listener.ThreadPingsListener;
 
 /**
@@ -15,7 +16,11 @@ import net.neoforged.camelot.listener.ThreadPingsListener;
  * @see net.neoforged.camelot.db.transactionals.ThreadPingsDAO
  */
 @AutoService(CamelotModule.class)
-public class ThreadPingsModule implements CamelotModule {
+public class ThreadPingsModule extends CamelotModule.Base<ThreadPings> {
+    public ThreadPingsModule() {
+        super(ThreadPings.class);
+    }
+
     @Override
     public String id() {
         return "threadPings";

@@ -24,6 +24,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.utility.RemindCommand;
+import net.neoforged.camelot.config.module.Reminders;
 import net.neoforged.camelot.db.schemas.Reminder;
 import net.neoforged.camelot.db.transactionals.RemindersDAO;
 import net.neoforged.camelot.listener.DismissListener;
@@ -44,9 +45,13 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @AutoService(CamelotModule.class)
-public class RemindersModule implements CamelotModule {
+public class RemindersModule extends CamelotModule.Base<Reminders> {
     public static final Supplier<ScheduledExecutorService> EXECUTOR = Suppliers.memoize(() ->
             Executors.newScheduledThreadPool(1, Utils.daemonGroup("Reminders")));
+
+    public RemindersModule() {
+        super(Reminders.class);
+    }
 
     private static final String SNOOZE_BUTTON_ID = "snooze_reminder";
     private static final String SNOOZE_EMOJI = String.valueOf('⏱');

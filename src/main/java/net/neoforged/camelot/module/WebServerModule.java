@@ -4,10 +4,8 @@ import com.google.auto.service.AutoService;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import io.javalin.http.staticfiles.Location;
-import io.javalin.http.staticfiles.MimeTypesConfig;
 import net.dv8tion.jda.api.JDA;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.server.WebServer;
 
 import java.io.IOException;
@@ -15,8 +13,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @AutoService(CamelotModule.class)
-public class WebServerModule implements CamelotModule {
+public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.config.module.WebServer> {
     private WebServer webServer;
+
+    public WebServerModule() {
+        super(net.neoforged.camelot.config.module.WebServer.class);
+    }
 
     @Override
     public String id() {
@@ -46,7 +48,7 @@ public class WebServerModule implements CamelotModule {
                 c.location = Location.EXTERNAL;
                 c.mimeTypes.add(ContentType.IMAGE_SVG);
             });
-        }), Config.SERVER_PORT);
+        }), config().getPort());
 
         BotMain.forEachModule(module -> module.acceptFrom(id(), webServer.javalin));
 
@@ -54,6 +56,6 @@ public class WebServerModule implements CamelotModule {
     }
 
     public String makeLink(String path) {
-        return Config.SERVER_URL + path;
+        return config().getServerUrl() + path;
     }
 }

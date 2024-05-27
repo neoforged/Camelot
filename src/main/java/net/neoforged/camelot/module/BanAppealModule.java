@@ -32,9 +32,8 @@ import net.dv8tion.jda.api.utils.Result;
 import net.dv8tion.jda.internal.entities.UserImpl;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
-import net.neoforged.camelot.configuration.Config;
-import net.neoforged.camelot.configuration.MailConfig;
-import net.neoforged.camelot.configuration.OAuthConfig;
+import net.neoforged.camelot.config.module.BanAppeals;
+import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.BanAppeal;
 import net.neoforged.camelot.db.schemas.BanAppealBlock;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
@@ -43,6 +42,7 @@ import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.util.MailService;
 import net.neoforged.camelot.util.oauth.OAuthClient;
 import net.neoforged.camelot.util.oauth.OAuthScope;
 import net.neoforged.camelot.util.oauth.TokenResponse;
@@ -69,7 +69,7 @@ import java.util.concurrent.TimeUnit;
 import static j2html.TagCreator.*;
 
 /**
- * Module responsible for ban appeals. Can only be enabled if {@link Config#BAN_APPEALS_CHANNEL} is set.
+ * Module responsible for ban appeals. Can only be enabled if {@link BanAppeals#getAppealsChannels()} is not empty.
  * <p>
  * OAuth tokes are stored in a {@code discord_token} cookie.
  * <p>
@@ -86,17 +86,22 @@ import static j2html.TagCreator.*;
  * </ul>
  */
 @AutoService(CamelotModule.class)
-public class BanAppealModule implements CamelotModule {
-    private OAuthClient client;
-
-    @Override
-    public boolean shouldLoad() {
-        return Config.BAN_APPEALS_CHANNEL != 0;
+public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
+    public BanAppealModule() {
+        super(BanAppeals.class);
     }
+
+    private OAuthClient client;
+    private MailService mail;
 
     @Override
     public String id() {
         return "ban-appeal";
+    }
+
+    @Override
+    public boolean shouldLoad() {
+        return !config().getAppealsChannels().isEmpty();
     }
 
     @Override
@@ -106,7 +111,8 @@ public class BanAppealModule implements CamelotModule {
 
     @Override
     public void setup(JDA jda) {
-        client = OAuthConfig.discord.fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/ban-appeals/discord"), OAuthScope.Discord.EMAIL, OAuthScope.Discord.IDENTIFY);
+        client = OAuthUtils.discord(config().getDiscordAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/ban-appeals/discord"), OAuthScope.Discord.EMAIL, OAuthScope.Discord.IDENTIFY);
+        mail = MailService.from(config().getMail());
     }
 
     @Override
@@ -140,7 +146,7 @@ public class BanAppealModule implements CamelotModule {
 
         final String guildId = context.pathParam("serverId");
         final Guild guild = BotMain.get().getGuildById(guildId);
-        if (guild == null) {
+        if (guild == null || config().getAppealsChannels().get(guild.getIdLong()) == null) {
             context.result(new JSONObject().put("error", "Unknown server").toString())
                     .status(HttpStatus.NOT_FOUND);
             return null;
@@ -199,7 +205,7 @@ public class BanAppealModule implements CamelotModule {
                 .setDescription(payload.getString("response"))
                 .setColor(Color.CYAN);
 
-        guild.getChannelById(MessageChannel.class, Config.BAN_APPEALS_CHANNEL).retrieveMessageById(existing.threadId())
+        guild.getChannelById(MessageChannel.class, config().getAppealsChannels().get(guild.getIdLong())).retrieveMessageById(existing.threadId())
                 .map(Message::getStartedThread)
                 .flatMap(thread -> thread.sendMessageEmbeds(embed.build()))
                 .queue();
@@ -239,7 +245,7 @@ public class BanAppealModule implements CamelotModule {
             body.with(kr);
         }
         try {
-            MailConfig.mailService.sendHtml(MailConfig.from, email, subject, html(body));
+            mail.sendHtml(config().getMail().getSendAs(), email, subject, html(body));
         } catch (MessagingException e) {
             BotMain.LOGGER.error("Failed to send mail to {}: ", email, e);
         }
@@ -308,7 +314,7 @@ public class BanAppealModule implements CamelotModule {
             embed.addField("Feedback", payload.getString("feedback"), false);
         }
 
-        final ThreadChannel thread = BotMain.get().getChannelById(MessageChannel.class, Config.BAN_APPEALS_CHANNEL)
+        final ThreadChannel thread = BotMain.get().getChannelById(MessageChannel.class, config().getAppealsChannels().get(guild.getIdLong()))
                 .sendMessageEmbeds(embed.build())
                 .addActionRow(
                         Button.success("ban-appeals/approve/" + selfId, "Approve"),
@@ -496,7 +502,7 @@ public class BanAppealModule implements CamelotModule {
 
         final String guildId = context.pathParam("serverId");
         final Guild guild = BotMain.get().getGuildById(guildId);
-        if (guild == null) {
+        if (guild == null || config().getAppealsChannels().get(guild.getIdLong()) == null) {
             context.html(WebServer.tag()
                     .withTitle(title("Unknown server"))
                     .withContent(div(h2("Unknown server!")).withClass("px-4 py-5 my-5 text-center"))

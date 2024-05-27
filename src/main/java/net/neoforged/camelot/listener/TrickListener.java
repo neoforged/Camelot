@@ -13,7 +13,6 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
-import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.module.TricksModule;
@@ -30,7 +29,7 @@ import java.util.EnumSet;
  * A listener listening for {@link MessageReceivedEvent} and seeing if they match a trick alias, which if found,
  * will be executed with the arguments.
  */
-public record TrickListener(String prefix) implements EventListener {
+public record TrickListener(String prefix, TricksModule module) implements EventListener {
     private static final EnumSet<Message.MentionType> ALLOWED_MENTIONS = EnumSet.of(
             Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND
     );
@@ -47,7 +46,7 @@ public record TrickListener(String prefix) implements EventListener {
 
             if (trick == null) return;
 
-            if (Config.PROMOTED_SLASH_ONLY) {
+            if (module.config().isEnforcePromotions()) {
                 final SlashTrick promotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
                 if (promotion != null) {
                     final Command.Subcommand asSlash = BotMain.getModule(TricksModule.class)
@@ -69,7 +68,7 @@ public record TrickListener(String prefix) implements EventListener {
                 @Override
                 protected RestAction<?> doSend(MessageCreateData createData) {
                     synchronized (this) {
-                        if (Config.ENCOURAGE_PROMOTED_SLASH) {
+                        if (module.config().getEncouragePromotedTricks()) {
                             final SlashTrick promotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
                             if (promotion != null) {
                                 final Command.Subcommand asSlash = BotMain.getModule(TricksModule.class)

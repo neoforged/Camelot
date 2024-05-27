@@ -1,5 +1,6 @@
 package net.neoforged.camelot;
 
+import groovy.lang.GroovyShell;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -13,31 +14,40 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.dv8tion.jda.api.utils.messages.MessageRequest;
 import net.neoforged.camelot.commands.Commands;
-import net.neoforged.camelot.commands.information.InfoChannelCommand;
+import net.neoforged.camelot.config.CamelotConfig;
+import net.neoforged.camelot.config.module.GHAuth;
+import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.configuration.Common;
-import net.neoforged.camelot.configuration.Config;
-import net.neoforged.camelot.configuration.MailConfig;
-import net.neoforged.camelot.configuration.OAuthConfig;
+import net.neoforged.camelot.configuration.ConfigMigrator;
+import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
+import net.neoforged.camelot.log.ChannelLogging;
 import net.neoforged.camelot.log.JoinsLogging;
 import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.CamelotModule;
+import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.ButtonManager;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.jetbrains.annotations.NotNull;
+import org.kohsuke.github.GitHubBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -95,6 +105,8 @@ public class BotMain {
      * Logger instance for the whole bot. Perhaps overkill.
      */
     public static final Logger LOGGER = LoggerFactory.getLogger(Common.NAME);
+    /** The channel in which moderation logs will be sent. */
+    public static ChannelLogging MODERATION_LOGS;
 
     /**
      * Static instance of the bot. Can be accessed by any class with {@link #get()}
@@ -144,20 +156,40 @@ public class BotMain {
     }
 
     public static void main(String[] args) {
-        // This throw shouldn't occur by any Earthly means but Java demands that i catch it.
-        try {
-            Config.readConfigs();
-            MailConfig.readConfig();
-            OAuthConfig.readConfig();
-        } catch (Exception e) {
-            LOGGER.error("Something is wrong with the universe. Error: " + e.getMessage());
-            System.exit(-1);
-        }
+        GHAuth.AppAuthBuilder.setAppProvider(builder -> {
+            try {
+                return new GitHubBuilder()
+                        .withAuthorizationProvider(AuthUtil.githubApp(
+                                builder.getAppId(), AuthUtil.parsePKCS8(builder.getPrivateKey()), builder.build()
+                        ))
+                        .build();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to read GitHub API configuration", e);
+            }
+        });
 
-        modules = Map.copyOf(ServiceLoader.load(CamelotModule.class)
+        final var allModules = ServiceLoader.load(CamelotModule.class)
                 .stream()
                 .map(ServiceLoader.Provider::get)
-                .filter(module -> !Config.DISABLED_MODULES.contains(module.id()) && module.shouldLoad())
+                .collect(Collectors.toMap(
+                        CamelotModule::id,
+                        Function.identity(),
+                        (a, b) -> b,
+                        IdentityHashMap::new
+                ));
+
+        CamelotConfig.setInstance(new CamelotConfig(
+                allModules.values().stream()
+                        .map(module -> (ModuleConfiguration) newInstance(module.configType()))
+                        .collect(Collectors.toMap(
+                                ModuleConfiguration::getClass,
+                                Function.identity()
+                        ))
+        ));
+        loadConfig();
+
+        modules = Map.copyOf(modules.values().stream()
+                .filter(module -> module.config().isEnabled() && module.shouldLoad())
                 .collect(Collectors.toMap(
                         CamelotModule::getClass,
                         Function.identity(),
@@ -176,12 +208,12 @@ public class BotMain {
         MessageRequest.setDefaultMentionRepliedUser(false);
 
         final JDABuilder botBuilder = JDABuilder
-                .create(Config.LOGIN_TOKEN, INTENTS)
+                .create(CamelotConfig.getInstance().getToken(), INTENTS)
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS)
                 .setActivity(Activity.customStatus("Listening for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(new ModerationActionRecorder())
-                .addEventListeners(BUTTON_MANAGER, InfoChannelCommand.EVENT_LISTENER, new CountersListener(), new ReferencingListener(), new DismissListener());
+                .addEventListeners(BUTTON_MANAGER, new CountersListener(), new ReferencingListener(), new DismissListener());
 
         try {
             Database.init();
@@ -194,7 +226,7 @@ public class BotMain {
         botBuilder.addEventListeners(Commands.get());
         instance = botBuilder.build();
 
-        Config.populate(instance);
+        MODERATION_LOGS = new ChannelLogging(instance, LoggingChannelsDAO.Type.MODERATION);
 
         instance.addEventListener(new JoinsLogging(instance), new MessageLogging(instance));
         instance.addEventListener(Commands.get().getSlashCommands().stream()
@@ -218,8 +250,54 @@ public class BotMain {
                 }
             }
         }, 1, 1, TimeUnit.MINUTES);
+    }
 
-        // Update info channels every couple of minutes
-        EXECUTOR.scheduleAtFixedRate(InfoChannelCommand::run, 1, 2, TimeUnit.MINUTES);
+    private static void loadConfig() {
+        final var config = Path.of(System.getProperty("camelot.config", "camelot.groovy"));
+        if (!Files.isRegularFile(config)) {
+            LOGGER.warn("No camelot configuration found at {}", config.toAbsolutePath());
+            final var oldConfigs = Path.of("config.properties");
+            if (Files.isRegularFile(oldConfigs)) {
+                LOGGER.warn("Found existing configuration with old format at {}. Migrating...", oldConfigs);
+                var migrator = new ConfigMigrator();
+                var props = new Properties();
+                try {
+                    props.load(Files.newInputStream(oldConfigs));
+                } catch (Exception exception) {
+                    LOGGER.error("Failed to load old configuration", exception);
+                    System.exit(1);
+                }
+
+                try {
+                    Files.writeString(config, migrator.migrate(props));
+                } catch (Exception exception) {
+                    LOGGER.error("Failed to migrate configuration", exception);
+                    System.exit(1);
+                }
+
+                LOGGER.warn("Migration complete. Please fix TODOs and check that the configuration is correct before restarting the bot.");
+            }
+
+            System.exit(1);
+        }
+
+        final var shell = new GroovyShell(new CompilerConfiguration()
+                .addCompilationCustomizers(new ImportCustomizer()
+                        .addStarImports("net.neoforged.camelot.config", "net.neoforged.camelot.config.module")));
+        try {
+            shell.parse(config.toFile());
+            CamelotConfig.getInstance().validate();
+        } catch (Exception exception) {
+            LOGGER.error("Failed to load configuration: ", exception);
+            throw new RuntimeException("Failed to load config: ", exception);
+        }
+    }
+
+    private static <T> T newInstance(Class<T> type) {
+        try {
+            return type.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -4,10 +4,15 @@ import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDABuilder;
 import net.neoforged.camelot.commands.utility.CustomPingsCommand;
+import net.neoforged.camelot.config.module.CustomPings;
 import net.neoforged.camelot.listener.CustomPingListener;
 
 @AutoService(CamelotModule.class)
-public class CustomPingsModule implements CamelotModule {
+public class CustomPingsModule extends CamelotModule.Base<CustomPings> {
+    public CustomPingsModule() {
+        super(CustomPings.class);
+    }
+
     @Override
     public String id() {
         return "customPings";

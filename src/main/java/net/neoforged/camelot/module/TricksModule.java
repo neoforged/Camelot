@@ -15,7 +15,7 @@ import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.utility.EvalCommand;
 import net.neoforged.camelot.commands.utility.ManageTrickCommand;
 import net.neoforged.camelot.commands.utility.TrickCommand;
-import net.neoforged.camelot.configuration.Config;
+import net.neoforged.camelot.config.module.Tricks;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.listener.TrickListener;
@@ -25,7 +25,11 @@ import net.neoforged.camelot.script.SlashTrickManager;
  * The module for tricks.
  */
 @AutoService(CamelotModule.class)
-public class TricksModule implements CamelotModule {
+public class TricksModule extends CamelotModule.Base<Tricks> {
+    public TricksModule() {
+        super(Tricks.class);
+    }
+
     /**
      * A map mapping a guild ID to its own {@link SlashTrickManager}. <br>
      * New managers are added to this map during {@link GuildReadyEvent}.
@@ -74,8 +78,8 @@ public class TricksModule implements CamelotModule {
 
     @Override
     public void setup(JDA jda) {
-        if (Config.PREFIX_TRICKS) {
-            jda.addEventListener(new TrickListener(Commands.get().getPrefix()));
+        if (config().isPrefixEnabled()) {
+            jda.addEventListener(new TrickListener(Commands.get().getPrefix(), this));
         }
     }
 }

@@ -17,8 +17,8 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.moderation.VerifyMCCommand;
-import net.neoforged.camelot.configuration.Config;
-import net.neoforged.camelot.configuration.OAuthConfig;
+import net.neoforged.camelot.config.module.MinecraftVerification;
+import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.McVerificationDAO;
 import net.neoforged.camelot.listener.ReferencingListener;
@@ -59,15 +59,16 @@ import static j2html.TagCreator.p;
 import static j2html.TagCreator.pre;
 import static j2html.TagCreator.script;
 import static j2html.TagCreator.span;
+import static j2html.TagCreator.sub;
 import static j2html.TagCreator.text;
 import static j2html.TagCreator.title;
 
 @AutoService(CamelotModule.class)
-public class MinecraftVerificationModule implements CamelotModule {
-    private final OAuthClient microsoft, discord;
+public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVerification> {
+    private OAuthClient microsoft, discord;
+
     public MinecraftVerificationModule() {
-        microsoft = OAuthConfig.microsoft.fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/microsoft"), OAuthScope.Microsoft.XBOX_LIVE);
-        discord = OAuthConfig.discord.fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/discord"), OAuthScope.Discord.IDENTIFY);
+        super(MinecraftVerification.class);
     }
 
     @Override
@@ -103,6 +104,9 @@ public class MinecraftVerificationModule implements CamelotModule {
 
     @Override
     public void setup(JDA jda) {
+        discord = OAuthUtils.discord(config().getDiscordAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/discord"), OAuthScope.Discord.IDENTIFY);
+        microsoft = OAuthUtils.microsoft(config().getMicrosoftAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/microsoft"));
+
         final McVerificationDAO dao = Database.main().onDemand(McVerificationDAO.class);
         BotMain.EXECUTOR.scheduleAtFixedRate(() -> banNotVerified(jda, dao), 1, 1, TimeUnit.MINUTES);
     }
@@ -224,7 +228,7 @@ public class MinecraftVerificationModule implements CamelotModule {
                                 .setColor(ModLogEntry.Type.UNMUTE.getColor())
                                 .setTimestamp(Instant.now())
                                 .build())))
-                        .onSuccess(_ -> Config.MODERATION_LOGS.log(new EmbedBuilder()
+                        .onSuccess(_ -> BotMain.MODERATION_LOGS.log(new EmbedBuilder()
                                 .setTitle("Verify Minecraft")
                                 .setColor(Color.GREEN)
                                 .setDescription(STR."<@\{userId}> has verified that they own a Minecraft Account")

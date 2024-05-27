@@ -12,6 +12,7 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
+import net.neoforged.camelot.config.MailConfiguration;
 
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -31,6 +32,11 @@ public class MailService {
                 return new PasswordAuthentication(user, pass);
             }
         }));
+    }
+
+    public static MailService from(MailConfiguration configuration) {
+        return withConfig(properties -> configuration.getMailProperties().forEach((k, v) -> properties.put("mail." + k, v.toString())),
+                configuration.getUsername(), configuration.getPassword());
     }
 
     public void send(

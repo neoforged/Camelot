@@ -3,13 +3,23 @@ package net.neoforged.camelot.module;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.neoforged.camelot.config.CamelotConfig;
+import net.neoforged.camelot.config.module.GHAuth;
+import net.neoforged.camelot.config.module.ModuleConfiguration;
+import net.neoforged.camelot.util.AuthUtil;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Set;
 
 /**
  * A camelot module is a part of the bot that can be disabled and is loaded via a {@link java.util.ServiceLoader}.
  */
-public interface CamelotModule {
+public interface CamelotModule<C extends ModuleConfiguration> {
     /**
      * {@return the ID of the module}
      * This ID is used to disable the module in the config.
@@ -62,5 +72,37 @@ public interface CamelotModule {
      */
     default boolean shouldLoad() {
         return true;
+    }
+
+    /**
+     * {@return the configuration of this module}
+     */
+    C config();
+
+    /**
+     * {@return the type of the module's config}
+     */
+    Class<C> configType();
+
+    /**
+     * Base class for {@link CamelotModule camelot modules}.
+     * @param <C> the configuration type
+     */
+    abstract class Base<C extends ModuleConfiguration> implements CamelotModule<C> {
+        private final Class<C> configType;
+
+        protected Base(Class<C> configType) {
+            this.configType = configType;
+        }
+
+        @Override
+        public C config() {
+            return CamelotConfig.getInstance().module(configType);
+        }
+
+        @Override
+        public Class<C> configType() {
+            return configType;
+        }
     }
 }

@@ -20,7 +20,7 @@ import net.neoforged.camelot.commands.moderation.UnbanCommand;
 import net.neoforged.camelot.commands.moderation.UnmuteCommand;
 import net.neoforged.camelot.commands.moderation.WarnCommand;
 import net.neoforged.camelot.commands.utility.PingCommand;
-import net.neoforged.camelot.configuration.Config;
+import net.neoforged.camelot.config.CamelotConfig;
 
 /**
  * The place where all control flow for commands converges.
@@ -44,8 +44,8 @@ public class Commands {
      */
     public static void init() {
         final var builder = new CommandClientBuilder()
-                .setOwnerId(String.valueOf(Config.OWNER_SNOWFLAKE))
-                .setPrefix(Config.PREFIX)
+                .setOwnerId(String.valueOf(CamelotConfig.getInstance().getOwner()))
+                .setPrefix(CamelotConfig.getInstance().getPrefix())
                 .setActivity(null)
                 .useHelpBuilder(false) // We use the slash command instead
 
@@ -62,7 +62,7 @@ public class Commands {
                 )
 
                 // Information commands
-                .addSlashCommands(new InfoChannelCommand(), RuleCommand.INSTANCE, new McAgeCommand(), new VersioningCommand(), new ConfigurationCommand())
+                .addSlashCommands(RuleCommand.INSTANCE, new McAgeCommand(), new VersioningCommand(), new ConfigurationCommand())
 
                 .addCommand(RuleCommand.INSTANCE)
 

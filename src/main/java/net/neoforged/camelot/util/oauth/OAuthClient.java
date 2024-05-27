@@ -1,5 +1,6 @@
 package net.neoforged.camelot.util.oauth;
 
+import net.neoforged.camelot.config.OAuthConfiguration;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -31,6 +32,10 @@ public class OAuthClient {
         this(authorizeUrl, tokenUrl, clientId, clientSecret, () -> {
             throw new UnsupportedOperationException("Client has no redirect URI");
         }, httpClient, scopes);
+    }
+
+    public OAuthClient(String authorizeUrl, String tokenUrl, OAuthConfiguration config, HttpClient httpClient, Object... scopes) {
+        this(authorizeUrl, tokenUrl, config.getClientId(), config.getClientSecret(), httpClient, scopes);
     }
 
     public OAuthClient(String authorizeUrl, String tokenUrl, String clientId, String clientSecret, Supplier<String> redirectUri, HttpClient httpClient, Object... scopes) {

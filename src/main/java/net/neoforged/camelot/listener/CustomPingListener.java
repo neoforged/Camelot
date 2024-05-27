@@ -22,10 +22,11 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.module.CustomPingsModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.Database;
-import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.db.schemas.Ping;
 import net.neoforged.camelot.db.transactionals.PingsDAO;
 import net.neoforged.camelot.util.Utils;
@@ -133,7 +134,7 @@ public class CustomPingListener implements EventListener {
     }
 
     private static RestAction<ThreadChannel> createNewThread(JDA jda, long memberId) {
-        return Objects.requireNonNull(jda.getChannelById(IThreadContainer.class, Config.PINGS_THREADS_CHANNEL))
+        return Objects.requireNonNull(jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).config().getPingThreadsChannel()))
                 .createThreadChannel("Custom ping notifications of " + memberId, true)
                 .setInvitable(false)
                 .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)

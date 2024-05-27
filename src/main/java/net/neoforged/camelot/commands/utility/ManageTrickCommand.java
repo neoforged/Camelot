@@ -28,7 +28,6 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.InteractiveCommand;
 import net.neoforged.camelot.commands.PaginatableCommand;
-import net.neoforged.camelot.configuration.Config;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
@@ -957,7 +956,7 @@ public class ManageTrickCommand extends SlashCommand {
      */
     private static boolean isManager(Member member) {
         return member.hasPermission(Permission.MODERATE_MEMBERS) ||
-                member.getRoles().stream().anyMatch(role -> role.getIdLong() == Config.TRICK_MASTER_ROLE);
+                member.getRoles().stream().anyMatch(role -> role.getIdLong() == BotMain.getModule(TricksModule.class).config().getTrickMasterRole());
     }
 
     /**

@@ -3,7 +3,6 @@ package net.neoforged.camelot.commands.information;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,17 +46,17 @@ import net.dv8tion.jda.api.utils.data.DataObject;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
-import net.neoforged.camelot.Database;
-import org.jetbrains.annotations.Nullable;
-import org.kohsuke.github.GHContent;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.configuration.Config;
+import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.schemas.GithubLocation;
 import net.neoforged.camelot.db.schemas.InfoChannel;
 import net.neoforged.camelot.db.transactionals.InfoChannelsDAO;
+import net.neoforged.camelot.module.InfoChannelsModule;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.WebhookCache;
 import net.neoforged.camelot.util.jda.WebhookManager;
+import org.jetbrains.annotations.Nullable;
+import org.kohsuke.github.GHContent;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -291,12 +290,10 @@ public class InfoChannelCommand extends SlashCommand {
      * Update the info channels to make sure they're not outdated.
      */
     public static void run() {
+        var app = BotMain.getModule(InfoChannelsModule.class).config().getAuth();
+
         final List<InfoChannel> channels = Database.main().withExtension(InfoChannelsDAO.class, InfoChannelsDAO::getChannels);
         for (final InfoChannel ch : channels) {
-            if (Config.GITHUB == null) {
-                BotMain.LOGGER.error("Info channels are set up, but a GitHub connection is not configured!");
-                return;
-            }
             if (UPDATING_CHANNELS.contains(ch.channel())) return;
 
             final MessageChannel messageChannel = BotMain.get().getChannelById(MessageChannel.class, ch.channel());
@@ -306,7 +303,7 @@ public class InfoChannelCommand extends SlashCommand {
             }
 
             try {
-                final GHContent content = ch.location().resolveAsDirectory(Config.GITHUB, ch.channel() + ".yml");
+                final GHContent content = ch.location().resolveAsDirectory(app, ch.channel() + ".yml");
                 try (final InputStream is = content.read()) {
                     final byte[] ct = is.readAllBytes();
                     final String hash = Hashing.sha256()
@@ -447,8 +444,9 @@ public class InfoChannelCommand extends SlashCommand {
 
         // If the channel isn't an info channel or is being updated, early-exit
         final InfoChannel infoChannel = Database.main().withExtension(InfoChannelsDAO.class, db -> db.getChannel(channel.getIdLong()));
-        if (infoChannel == null || Config.GITHUB == null || UPDATING_CHANNELS.contains(infoChannel.channel())) return;
+        if (infoChannel == null|| UPDATING_CHANNELS.contains(infoChannel.channel())) return;
 
+        var app = BotMain.getModule(InfoChannelsModule.class).config().getAuth();
         // Now let's dump the channel
         channel.getIterableHistory()
                 .takeWhileAsync(_ -> true) // Retrieve all messages
@@ -461,7 +459,7 @@ public class InfoChannelCommand extends SlashCommand {
                             Collections.reverse(msg); // We receive newest to oldest
                             final String dump = infoChannel.type().write(msg, MAPPER, infoChannel.channel()); // Format the messages
                             infoChannel.location().updateInDirectory(
-                                    Config.GITHUB, infoChannel.channel() + ".yml",
+                                    app, infoChannel.channel() + ".yml",
                                     "Updated info channel content: " + infoChannel.channel(),
                                     dump
                             ); // Finally, update the messages on VCS

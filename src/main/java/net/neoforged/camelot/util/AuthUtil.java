@@ -8,6 +8,8 @@ import org.bouncycastle.asn1.DERNull;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.kohsuke.github.GHApp;
+import org.kohsuke.github.GHAppInstallation;
 import org.kohsuke.github.GHAppInstallationToken;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
@@ -23,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.function.Function;
 
 /**
  * Class containing a few helper methods for creating {@link AuthorizationProvider} for GitHub connections.
@@ -61,7 +64,7 @@ public class AuthUtil {
      * @param owner the application installation owner
      * @return the authorization provider
      */
-    public static AuthorizationProvider githubApp(String appId, byte[] key, String owner) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static AuthorizationProvider githubApp(String appId, byte[] key, Function<GHApp, GHAppInstallation> owner) throws NoSuchAlgorithmException, InvalidKeySpecException {
         final PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(key));
         return new AuthorizationProvider() {
             @Override
@@ -86,8 +89,7 @@ public class AuthUtil {
                         .withJwtToken(refreshJWT(appId, privateKey))
                         .build();
 
-                final GHAppInstallationToken token = (owner.startsWith("user:") ? gitHub.getApp().getInstallationByUser(owner.substring("user:".length())) :
-                        gitHub.getApp().getInstallationByOrganization(owner)).createToken().create();
+                final GHAppInstallationToken token = owner.apply(gitHub.getApp()).createToken().create();
                 return new Jwt(token.getExpiresAt().toInstant(), token.getToken());
             }
         };

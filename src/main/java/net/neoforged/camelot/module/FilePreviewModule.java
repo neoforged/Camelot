@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import net.neoforged.camelot.configuration.Config;
+import net.neoforged.camelot.config.module.FilePreview;
 import net.neoforged.camelot.util.Utils;
 
 import java.net.URI;
@@ -19,7 +19,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @AutoService(CamelotModule.class)
-public class FilePreviewModule implements CamelotModule {
+public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
+    public FilePreviewModule() {
+        super(FilePreview.class);
+    }
+
     private static final Set<String> ACCEPTED_EXTENSIONS = Collections.unmodifiableSet(Sets.newHashSet(
             "txt", "gradle", "log", "java", "clj", "go",
             "kt", "groovy", "js", "json", "kts", "toml", "md", "cpp", "rs",
@@ -36,9 +40,12 @@ public class FilePreviewModule implements CamelotModule {
     }
 
     @Override
-    public void registerListeners(JDABuilder builder) {
-        if (Config.FILE_PREVIEW_GISTS == null) return;
+    public boolean shouldLoad() {
+        return config().getAuth() != null;
+    }
 
+    @Override
+    public void registerListeners(JDABuilder builder) {
         builder.addEventListeners(Utils.listenerFor(MessageReceivedEvent.class, event -> {
             if (
                     event.getMessage().getAttachments().stream().anyMatch(it -> ACCEPTED_EXTENSIONS.contains(it.getFileExtension()))
@@ -52,7 +59,7 @@ public class FilePreviewModule implements CamelotModule {
                 event.retrieveMessage().queue(it -> {
                     try {
                         if (it.getReaction(EMOJI).isSelf()) { // We could check if the message is valid for gisting here, but it's not really needed since the only way we'd have reacted is if the message is gistable
-                            final var gist = Config.FILE_PREVIEW_GISTS.createGist();
+                            final var gist = config().getAuth().createGist();
                             for (final var attach : it.getAttachments()) {
                                 if (ACCEPTED_EXTENSIONS.contains(attach.getFileExtension())) {
                                     try (final var is = URI.create(attach.getProxy().getUrl()).toURL().openStream()) {

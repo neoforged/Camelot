@@ -1,0 +1,4 @@
+moduleName=Camelot Config
+moduleVersion=1.0.0
+extensionClasses=net.neoforged.camelot.config.Extensions
+staticExtensionClasses=

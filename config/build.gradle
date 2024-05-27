@@ -1,0 +1,14 @@
+plugins {
+    id 'groovy'
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api "org.apache.groovy:groovy:${project.groovy_version}"
+    api "org.apache.groovy:groovy-contracts:${project.groovy_version}"
+    implementation group: 'org.kohsuke', name: 'github-api', version: project.ghapi_version
+}
