@@ -397,7 +397,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                         .flatMap(_ -> closeAppeal(thread, true))
                         .flatMap(_ -> retrieveUser)
                         .onSuccess(user -> sendMailFromServer(appeal.email(), user, guild, "Ban appeal rejected",
-                                pre(text("You appeal has been "), b(text("rejected")), text(".")),
+                                pre(text("Your appeal has been "), b(text("rejected")), text(".")),
                                 pre(text("You may appeal again in "), b(text(blockDaysStr)), text(" days.")),
                                 hr(),
                                 h5("Reason"),
@@ -453,7 +453,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                                 .setMaxUses(1).setMaxAge((long) 7, TimeUnit.DAYS)
                                 .reason("Un-ban invite for " + userId)
                                 .onSuccess(invite -> sendMailFromServer(appeal.email(), user, event.getGuild(), "Ban appeal approved",
-                                        pre(text("You appeal has been "), b(text("approved")), text(".")),
+                                        pre(text("Your appeal has been "), b(text("approved")), text(".")),
                                         pre(text("You may join the server again using "), a("this invite link").withHref(invite.getUrl()), text(" which expires in 7 days."))
                                 )))
                         .onSuccess(_ -> Database.appeals().useExtension(BanAppealsDAO.class, db -> db.deleteAppeal(appeal.guildId(), appeal.userId())))

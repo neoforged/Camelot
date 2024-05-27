@@ -52,22 +52,8 @@ public class Commands {
                 .addSlashCommand(new PingCommand())
                 .addSlashCommand(new HelpCommand(BotMain.BUTTON_MANAGER))
 
-                // Moderation commands
-                .addSlashCommands(
-                        new ModLogsCommand(BotMain.BUTTON_MANAGER),
-                        new NoteCommand(), new WarnCommand(),
-                        new MuteCommand(), new UnmuteCommand(),
-                        new KickCommand(), new PurgeCommand(),
-                        new BanCommand(), new UnbanCommand()
-                )
-
                 // Information commands
-                .addSlashCommands(RuleCommand.INSTANCE, new McAgeCommand(), new VersioningCommand(), new ConfigurationCommand())
-
-                .addCommand(RuleCommand.INSTANCE)
-
-                // Message context menus
-                .addContextMenus(new InfoChannelCommand.UploadToDiscohookContextMenu());
+                .addSlashCommands(new McAgeCommand(), new VersioningCommand(), new ConfigurationCommand());
 
         BotMain.forEachModule(module -> module.registerCommands(builder));
 

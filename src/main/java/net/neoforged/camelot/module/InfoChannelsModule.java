@@ -5,6 +5,7 @@ import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
+import net.neoforged.camelot.commands.information.RuleCommand;
 import net.neoforged.camelot.config.module.InfoChannels;
 
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,10 @@ public class InfoChannelsModule extends CamelotModule.Base<InfoChannels> {
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommand(new InfoChannelCommand());
+        builder.addSlashCommand(new InfoChannelCommand())
+                .addSlashCommand(RuleCommand.INSTANCE)
+                .addCommand(RuleCommand.INSTANCE)
+                .addContextMenu(new InfoChannelCommand.UploadToDiscohookContextMenu());
     }
 
     @Override

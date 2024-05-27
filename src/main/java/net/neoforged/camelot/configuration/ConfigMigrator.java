@@ -56,7 +56,7 @@ public class ConfigMigrator {
                 script.appendLine("auth = appAuthentication {").indent();
                 script.appendProperty("appId", properties.getProperty("githubAppId"));
                 script.appendLine("privateKey = secret(readFile('github.pem'))");
-                script.appendLine("installation = organization(" + escape(properties.getProperty("githubInstallationOwner", "")) + ")");
+                script.appendLine("installation = organization('" + escape(properties.getProperty("githubInstallationOwner", "")) + "')");
                 script.indentEnd().appendLine("}");
             } else {
                 if (!properties.getProperty("githubPAT", "").isBlank()) {
