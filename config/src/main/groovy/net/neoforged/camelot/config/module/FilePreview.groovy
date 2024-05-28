@@ -11,8 +11,20 @@ import org.kohsuke.github.GitHub
  */
 @CompileStatic
 class FilePreview extends ModuleConfiguration implements GHAuth {
+    static final Set<String> DEFAULT_EXTENSIONS = Collections.unmodifiableSet([
+            "txt", "gradle", "log", "java", "clj", "go",
+            "kt", "groovy", "js", "json", "kts", "toml", "md", "cpp", "rs",
+            "properties", "lang", "diff", "patch", "cfg", "accesswidener",
+            "pom", "xml", "module"
+    ] as Set)
+
     /**
-     * The GitHub instance used to authenticate to create gists
+     * The GitHub instance used to authenticate to create gists.
      */
     GitHub auth
+
+    /**
+     * The file extensions that can be gisted.
+     */
+    Set<String> extensions = DEFAULT_EXTENSIONS
 }

@@ -1,7 +1,6 @@
 package net.neoforged.camelot.module;
 
 import com.google.auto.service.AutoService;
-import com.google.common.collect.Sets;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
@@ -11,10 +10,8 @@ import net.neoforged.camelot.config.module.FilePreview;
 import net.neoforged.camelot.util.Utils;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,12 +21,6 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
         super(FilePreview.class);
     }
 
-    private static final Set<String> ACCEPTED_EXTENSIONS = Collections.unmodifiableSet(Sets.newHashSet(
-            "txt", "gradle", "log", "java", "clj", "go",
-            "kt", "groovy", "js", "json", "kts", "toml", "md", "cpp", "rs",
-            "properties", "lang", "diff", "patch", "cfg", "accesswidener",
-            "pom", "xml", "module"
-    ));
     private static final UnicodeEmoji EMOJI = Emoji.fromUnicode("🗒️");
     private static final Pattern CODEBLOCK_PATTERN = Pattern.compile("`{3}(?<lang>\\w*)\\n(?<content>[\\s\\S]*?)\\n`{3}", Pattern.MULTILINE);
     private static final Random RANDOM = new Random();
@@ -48,7 +39,7 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
     public void registerListeners(JDABuilder builder) {
         builder.addEventListeners(Utils.listenerFor(MessageReceivedEvent.class, event -> {
             if (
-                    event.getMessage().getAttachments().stream().anyMatch(it -> ACCEPTED_EXTENSIONS.contains(it.getFileExtension()))
+                    event.getMessage().getAttachments().stream().anyMatch(it -> config().getExtensions().contains(it.getFileExtension()))
                     || hasCodeBlock(event.getMessage().getContentRaw())
             ) {
                 event.getMessage().addReaction(EMOJI).queue();
@@ -61,7 +52,7 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
                         if (it.getReaction(EMOJI).isSelf()) { // We could check if the message is valid for gisting here, but it's not really needed since the only way we'd have reacted is if the message is gistable
                             final var gist = config().getAuth().createGist();
                             for (final var attach : it.getAttachments()) {
-                                if (ACCEPTED_EXTENSIONS.contains(attach.getFileExtension())) {
+                                if (config().getExtensions().contains(attach.getFileExtension())) {
                                     try (final var is = URI.create(attach.getProxy().getUrl()).toURL().openStream()) {
                                         gist.file(attach.getFileName(), new String(is.readAllBytes()));
                                     }
