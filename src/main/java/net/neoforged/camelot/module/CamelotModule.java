@@ -90,6 +90,7 @@ public interface CamelotModule<C extends ModuleConfiguration> {
      */
     abstract class Base<C extends ModuleConfiguration> implements CamelotModule<C> {
         private final Class<C> configType;
+        private C config;
 
         protected Base(Class<C> configType) {
             this.configType = configType;
@@ -97,7 +98,10 @@ public interface CamelotModule<C extends ModuleConfiguration> {
 
         @Override
         public C config() {
-            return CamelotConfig.getInstance().module(configType);
+            if (config == null) {
+                config = CamelotConfig.getInstance().module(configType);
+            }
+            return config;
         }
 
         @Override
