@@ -68,7 +68,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
                 .thenApply(ed -> event.getHook().sendMessage(MessageCreateData.fromEditData(ed)))
                 .thenAccept(action -> {
                     if (!buttons.isEmpty()) {
-                        action.setActionRow(buttons);
+                        action.addActionRow(buttons);
                     }
                     action.queue();
                 });

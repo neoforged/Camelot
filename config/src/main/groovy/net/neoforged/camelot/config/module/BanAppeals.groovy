@@ -53,4 +53,9 @@ class BanAppeals extends ModuleConfiguration {
     void mail(@DelegatesTo(value = MailConfiguration, strategy = Closure.DELEGATE_FIRST) Closure config) {
         ConfigUtils.configure(mail, config)
     }
+
+    /**
+     * The amount of days in which the user is expected to get a response to their appeal.
+     */
+    int responseTime = 7
 }

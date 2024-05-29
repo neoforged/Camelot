@@ -216,7 +216,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         sendMailFromServer(existing.email(), user, guild, "Ban appeal follow-up",
                 pre("We have received your follow-up."),
-                pre("You should be informed of our decision within 7 days."),
+                pre("You should be informed of our decision within " + config().getResponseTime() + " days."),
                 hr(),
                 h4("Follow-up content"),
                 h5("Our question"),
@@ -330,7 +330,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         sendMailFromServer(payload.getString("email"), user, guild, "Ban appeal",
                 pre("We have received your ban appeal and we will send updates to this email going forward. Please do not reply to this email or any further ones."),
-                pre("You should be informed of our decision within 7 days."),
+                pre("You should be informed of our decision within " + config().getResponseTime() + " days."),
                 hr(),
                 h4("Appeal content"),
                 h5("Your explanation"),

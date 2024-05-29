@@ -2,6 +2,9 @@ package net.neoforged.camelot.script;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.config.module.Tricks;
+import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.util.Utils;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -161,6 +164,7 @@ public class ScriptUtils {
      */
     public static void submitExecution(ScriptContext context, String script, Object args) {
         final Future<Void> execution = ScriptUtils.SERVICE.submit(() -> ScriptUtils.execute(context, script, args instanceof List<?> ? (List<String>) args : ScriptUtils.toArgs(args.toString())), null);
+        final Tricks config = BotMain.getModule(TricksModule.class).config();
 
         ScriptUtils.SERVICE.schedule(() -> {
             if (execution.isDone()) {
@@ -171,7 +175,7 @@ public class ScriptUtils {
                 execution.cancel(true);
                 context.reply().accept(MessageCreateData.fromContent("Script execution timed out!"));
             }
-        }, context.priviliged() ? 10 : 5, TimeUnit.SECONDS);
+        }, context.priviliged() ? config.getPrivilegedExecutionTimeout() : config.getExecutionTimeout(), TimeUnit.SECONDS);
     }
 
     /**
@@ -286,17 +290,24 @@ public class ScriptUtils {
     }
 
     private static Context buildContext() {
-        final Context context = Context.newBuilder("js", "regex")
+        final Context.Builder builder = Context.newBuilder("js", "regex")
                 .allowNativeAccess(false)
-                .allowIO(true) // Allow IO but install a custom file system with the other tricks
-                .fileSystem(GRAAL_FS)
                 .allowCreateProcess(false)
                 .allowEnvironmentAccess(EnvironmentAccess.NONE)
                 .allowHostClassLoading(false)
                 .allowValueSharing(true)
                 .allowHostAccess(HOST_ACCESS)
-                .engine(ENGINE)
-                .build();
+                .engine(ENGINE);
+
+        if (BotMain.getModule(TricksModule.class).config().isModuleExportsEnabled()) {
+            builder.allowIO(true) // Allow IO but install a custom file system with the other tricks
+                    .fileSystem(GRAAL_FS);
+        } else {
+            builder.allowIO(false);
+        }
+
+        final Context context = builder.build();
+
         final Value bindings = context.getBindings("js");
         bindings.removeMember("load");
         bindings.removeMember("loadWithNewGlobal");
