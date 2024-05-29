@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -56,10 +57,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
     private static final String SNOOZE_BUTTON_ID = "snooze_reminder";
     private static final String SNOOZE_EMOJI = String.valueOf('⏱');
 
-    public static final ActionRow SNOOZE_BUTTONS = ActionRow.of(Stream.of(
-            Duration.ofHours(1), Duration.ofHours(6), Duration.ofDays(1)
-    ).map(duration -> Button.secondary(SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), SNOOZE_EMOJI + " " + DateUtils.formatDuration(duration)))
-            .toArray(ItemComponent[]::new));
+    private List<ActionRow> snoozeButtons = List.of();
 
     private final Cache<Long, Reminder> snoozable = Caffeine.newBuilder()
             .initialCapacity(10)
@@ -79,6 +77,9 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
 
     @Override
     public void setup(JDA jda) {
+        snoozeButtons = ActionRow.partitionOf(config().getSnoozeDurations().stream().map(duration -> Button.secondary(SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), SNOOZE_EMOJI + " " + DateUtils.formatDuration(duration)))
+                .toArray(ItemComponent[]::new));
+
         Database.main().useExtension(RemindersDAO.class, db -> db.getAllReminders()
                 .forEach(reminder -> {
                     final Instant now = Instant.now();
@@ -202,7 +203,8 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
                                 .build()
                 )
                 .setAllowedMentions(ALLOWED_MENTIONS)
-                .setComponents(SNOOZE_BUTTONS, ActionRow.of(DismissListener.createDismissButton(user)))
+                .addComponents(snoozeButtons)
+                .addActionRow(DismissListener.createDismissButton(user))
                 .setSuppressedNotifications(false)
                 .build();
     }

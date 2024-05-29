@@ -21,8 +21,8 @@ public class DateUtils {
     public static String formatDuration(Duration duration) {
         final StringBuilder str = new StringBuilder();
 
-        final long years = duration.getSeconds() / ChronoUnit.YEARS.getDuration().getSeconds();
-        duration = duration.minus(of(years, ChronoUnit.YEARS));
+        final long years = duration.getSeconds() / (ChronoUnit.DAYS.getDuration().getSeconds() * 365);
+        duration = duration.minus(of(years * 365, ChronoUnit.DAYS));
         if (years > 0) appendMaybePlural(str, years, "year");
 
         final long months = duration.getSeconds() / ChronoUnit.MONTHS.getDuration().getSeconds();
