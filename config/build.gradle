@@ -10,7 +10,6 @@ group = rootProject.group
 version = rootProject.version
 
 rootProject.gradleutils {
-    setupCentralPublishing()
     setupSigning(project: this.project, signAllPublications: true)
 }
 
@@ -35,8 +34,6 @@ dependencies {
     api "org.apache.groovy:groovy-contracts:${project.groovy_version}"
     implementation group: 'org.kohsuke', name: 'github-api', version: project.ghapi_version
 }
-
-tasks.groovydoc
 
 publishing {
     publications {

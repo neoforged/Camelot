@@ -1,13 +1,21 @@
+import net.neoforged.gradleutils.PomUtilsExtension
+
 import java.nio.file.Files
 
 plugins {
     id 'java'
+    id 'maven-publish'
     id 'net.neoforged.gradleutils' version '3.0.0-alpha.13'
     id 'com.github.johnrengelman.shadow' version '7.+'
 }
 
 group 'net.neoforged.camelot'
 println("Version: ${version = gradleutils.version}")
+
+gradleutils {
+    setupCentralPublishing()
+    setupSigning(signAllPublications: true)
+}
 
 tasks.register('run', JavaExec).configure {
     classpath(sourceSets.main.runtimeClasspath)
@@ -26,6 +34,11 @@ tasks.register('run', JavaExec).configure {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 java.toolchain.vendor = JvmVendorSpec.GRAAL_VM
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
 
 repositories {
     mavenCentral()
@@ -46,6 +59,12 @@ repositories {
 compileJava {
     options.encoding = 'UTF-8'
     options.compilerArgs.add('--enable-preview')
+}
+
+javadoc {
+    final opt = options as CoreJavadocOptions
+    opt.addStringOption('-release', '21')
+    opt.addBooleanOption('-enable-preview', true)
 }
 
 evaluationDependsOn(':config')
@@ -130,5 +149,22 @@ tasks.register('outputVersion') {
 
 shadowJar {
     mergeServiceFiles()
+    archiveClassifier = 'all'
     archiveFile.set(project.file("$buildDir/libs/camelot-all.jar"))
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'camelot'
+            pom {
+                name = 'Camelot'
+                description = 'The Camelot Discord bot'
+                rootProject.pomUtils.githubRepo(it, 'Camelot')
+                rootProject.pomUtils.neoForgedDeveloper(it)
+                rootProject.pomUtils.license(it, PomUtilsExtension.License.MIT)
+            }
+        }
+    }
 }
