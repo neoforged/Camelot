@@ -30,6 +30,7 @@ import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.CamelotModule;
 import net.neoforged.camelot.module.StatsModule;
+import net.neoforged.camelot.script.ScriptOptions;
 import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.ButtonManager;
@@ -37,10 +38,16 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.jdbi.v3.core.extension.ExtensionConsumer;
 import org.jetbrains.annotations.NotNull;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.ExampleMode;
+import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.ParserProperties;
 import org.kohsuke.github.GitHubBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.file.Files;
@@ -158,6 +165,27 @@ public class BotMain {
     }
 
     public static void main(String[] args) {
+        final var cliConfig = new CliConfig();
+        final var parser = new CmdLineParser(cliConfig, ParserProperties.defaults()
+                .withUsageWidth(100));
+
+        try {
+            parser.parseArgument(args);
+        } catch (CmdLineException e) {
+            System.err.println(Common.NAME_WITH_VERSION);
+            System.err.println(e.getMessage());
+            System.err.println("java -jar camelot.jar [options...]");
+            parser.printUsage(System.err);
+            return;
+        }
+
+        if (cliConfig.help) {
+            System.err.println(Common.NAME_WITH_VERSION);
+            System.err.println("java -jar camelot.jar [options...]");
+            parser.printUsage(System.err);
+            return;
+        }
+
         LOGGER.info("Starting {}", Common.NAME_WITH_VERSION);
 
         GHAuth.AppAuthBuilder.setAppProvider(builder -> {
@@ -178,7 +206,7 @@ public class BotMain {
                 .collect(Collectors.toMap(
                         CamelotModule::id,
                         Function.identity(),
-                        (a, b) -> b,
+                        (_, b) -> b,
                         IdentityHashMap::new
                 ));
 
@@ -190,7 +218,8 @@ public class BotMain {
                                 Function.identity()
                         ))
         ));
-        loadConfig();
+
+        loadConfig(cliConfig.config.toPath());
 
         modules = Map.copyOf(allModules.values().stream()
                 .filter(module -> module.config().isEnabled() && module.shouldLoad())
@@ -256,8 +285,7 @@ public class BotMain {
         }, 1, 1, TimeUnit.MINUTES);
     }
 
-    private static void loadConfig() {
-        final var config = Path.of(System.getProperty("camelot.config", "camelot.groovy"));
+    private static void loadConfig(Path config) {
         if (!Files.isRegularFile(config)) {
             LOGGER.warn("No camelot configuration found at {}", config.toAbsolutePath());
             final var oldConfigs = Path.of("config.properties");
@@ -313,5 +341,13 @@ public class BotMain {
         if (module != null) {
             module.use(type, dao);
         }
+    }
+
+    public static class CliConfig {
+        @Option(name = "--config", aliases = "-c", usage = "the path to the config file")
+        private File config = new File("camelot.groovy");
+
+        @Option(name = "--help", aliases = "-h", usage = "print help options", help = true, hidden = true)
+        private boolean help = false;
     }
 }
