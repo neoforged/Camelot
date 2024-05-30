@@ -32,6 +32,26 @@ tasks.register('run', JavaExec).configure {
     })
 }
 
+abstract class Log extends DefaultTask {
+    @OutputFile
+    abstract RegularFileProperty getOutput()
+
+    Log() {
+        outputs.upToDateWhen { false }
+    }
+
+    @TaskAction
+    void exec() {
+        new ProcessBuilder('git', 'log', '-5', '--pretty=oneline')
+            .redirectOutput(getOutput().asFile.get())
+            .start().waitFor()
+    }
+}
+
+tasks.register('gitLog', Log) {
+    it.output.set(new File(project.buildDir, 'gitlog'))
+}
+
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 java.toolchain.vendor = JvmVendorSpec.GRAAL_VM
 
@@ -151,6 +171,8 @@ shadowJar {
     mergeServiceFiles()
     archiveClassifier = 'all'
     archiveFile.set(project.file("$buildDir/libs/camelot-all.jar"))
+    dependsOn(tasks.gitLog)
+    from(tasks.gitLog.output)
 }
 
 publishing {

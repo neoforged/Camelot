@@ -22,7 +22,7 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
         super(buttonManager);
         this.name = "help";
         this.help = "Show information about the bot's commands";
-        this.itemsPerPage = 25;
+        this.itemsPerPage = 15;
     }
 
     @Override
@@ -45,7 +45,20 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
     public EmbedBuilder getHelpStartingAt(int index) {
         EmbedBuilder embed = new EmbedBuilder();
         embed.setAuthor(Common.NAME_WITH_VERSION, Common.REPO, BotMain.get().getSelfUser().getAvatarUrl());
-        embed.setDescription("All registered commands:");
+        embed.setDescription("## Latest commits:\n");
+
+        appendCommits: try (var is = HelpCommand.class.getResourceAsStream("/gitlog")) {
+            if (is == null) break appendCommits;
+            var lines = new String(is.readAllBytes()).split("\n");
+            for (String line : lines) {
+                var split = line.split(" ", 2);
+                embed.appendDescription(STR."- [\{split[1]}](\{Common.REPO}/commit/\{split[0]})\n");
+            }
+        } catch (Exception ex) {
+            embed.appendDescription("Failed to read git log.\n");
+        }
+
+        embed.appendDescription("\n## Registered commands:");
 
         List<Command> commandList = Commands.get().getCommands();
         commandList.addAll(Commands.get().getSlashCommands());
