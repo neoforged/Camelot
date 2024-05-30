@@ -47,7 +47,11 @@ public class VerifyMCCommand extends InteractiveCommand {
     @Override
     protected void execute(SlashCommandEvent event) {
         final Member target = event.getOption("user", OptionMapping::getAsMember);
-        assert target != null && event.getGuild() != null && event.getMember() != null;
+        assert event.getGuild() != null && event.getMember() != null;
+        if (target == null) {
+            event.reply("Unknown member!").setEphemeral(true).queue();
+            return;
+        }
 
         if (!event.getMember().canInteract(target)) {
             event.reply("You cannot interact with that user!").setEphemeral(true).queue();
