@@ -33,7 +33,7 @@ public class Database {
     /**
      * Static JDBI main instance. Can be accessed via {@link #main()}.
      */
-    public static Jdbi main;
+    private static Jdbi main;
 
     /**
      * {@return the static main JDBI instance}
@@ -54,13 +54,22 @@ public class Database {
         return pings;
     }
 
-    public static Jdbi appeals;
+    private static Jdbi appeals;
 
     /**
      * {@return the static appeals DB JDBI instance}
      */
     public static Jdbi appeals() {
         return appeals;
+    }
+
+    private static Jdbi stats;
+
+    /**
+     * {@return the stats DB JDBI instance}
+     */
+    public static Jdbi stats() {
+        return stats;
     }
 
     /**
@@ -83,6 +92,7 @@ public class Database {
         main = createDatabaseConnection(mainDb, "main");
         pings = createDatabaseConnection(dir.resolve("pings.db"), "pings");
         appeals = createDatabaseConnection(dir.resolve("appeals.db"), "appeals");
+        stats = createDatabaseConnection(dir.resolve("stats.db"), "stats");
         CustomPingListener.requestRefresh();
     }
 

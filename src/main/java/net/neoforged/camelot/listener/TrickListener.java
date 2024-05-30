@@ -15,6 +15,7 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
+import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.script.ScriptContext;
 import net.neoforged.camelot.script.ScriptReplier;
@@ -96,6 +97,8 @@ public record TrickListener(String prefix, TricksModule module) implements Event
             }, trick.privileged());
 
             ScriptUtils.submitExecution(context, trick.script(), args);
+
+            BotMain.stats(StatsDAO.Tricks.class, extension -> extension.incrementPrefixUses(trick.id()));
         }
     }
 }

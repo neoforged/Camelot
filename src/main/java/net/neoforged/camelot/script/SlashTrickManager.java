@@ -20,9 +20,11 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
+import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.script.option.EnumOptionHandler;
@@ -142,6 +144,8 @@ public class SlashTrickManager implements EventListener {
                 }, trick.privileged());
 
                 ScriptUtils.submitExecution(context, trick.script(), options);
+
+                BotMain.stats(StatsDAO.Tricks.class, extension -> extension.incrementSlashUses(trick.id()));
             }
             default -> {}
         }

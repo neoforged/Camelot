@@ -9,7 +9,9 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.db.schemas.Trick;
+import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.script.ScriptContext;
 import net.neoforged.camelot.script.ScriptReplier;
 import net.neoforged.camelot.script.ScriptUtils;
@@ -49,6 +51,8 @@ public class TrickCommand extends SlashCommand {
         }, trick.privileged());
 
         ScriptUtils.submitExecution(context, trick.script(), args);
+
+        BotMain.stats(StatsDAO.Tricks.class, extension -> extension.incrementSlashUses(trick.id()));
     }
 
     @Override

@@ -21,6 +21,7 @@ import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.configuration.ConfigMigrator;
 import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
+import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
@@ -29,11 +30,13 @@ import net.neoforged.camelot.log.JoinsLogging;
 import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.CamelotModule;
+import net.neoforged.camelot.module.StatsModule;
 import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.jdbi.v3.core.extension.ExtensionConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GitHubBuilder;
 import org.slf4j.Logger;
@@ -300,6 +303,16 @@ public class BotMain {
             return type.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Use the stats extension of the given {@code type}.
+     */
+    public static <T extends StatsDAO> void stats(Class<T> type, ExtensionConsumer<T, RuntimeException> dao) {
+        var module = getModule(StatsModule.class);
+        if (module != null) {
+            module.use(type, dao);
         }
     }
 }

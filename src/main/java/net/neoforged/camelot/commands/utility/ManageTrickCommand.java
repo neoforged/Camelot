@@ -31,6 +31,7 @@ import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.db.schemas.SlashTrick;
 import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
+import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.module.TricksModule;
@@ -440,11 +441,17 @@ public class ManageTrickCommand extends SlashCommand {
 
             try {
                 embed.addField("Description", ScriptUtils.getInformation(trick.script()).description(), false);
-            } catch (CannotRetrieveInformationException ignored) {
+            } catch (CannotRetrieveInformationException _) {
 
             }
 
             embed.addField("Owner", "<@" + trick.owner() + "> (" + trick.owner() + ")", false);
+
+            BotMain.stats(StatsDAO.Tricks.class, extension -> {
+                final int prefix = extension.getPrefixUses(trick.id());
+                final int slash = extension.getSlashUses(trick.id());
+                embed.addField("Stats", "Uses: **" + (prefix + slash) + "** total: **" + prefix + "** prefix, **" + slash + "** slash", false);
+            });
 
             event.getHook().editOriginalEmbeds(embed.build()).queue();
         }
