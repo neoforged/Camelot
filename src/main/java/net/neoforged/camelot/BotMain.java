@@ -156,6 +156,8 @@ public class BotMain {
     }
 
     public static void main(String[] args) {
+        LOGGER.info("Starting {}", Common.NAME_WITH_VERSION);
+
         GHAuth.AppAuthBuilder.setAppProvider(builder -> {
             try {
                 return new GitHubBuilder()
