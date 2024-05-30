@@ -45,10 +45,10 @@ public class AuthUtil {
      */
     public static byte[] parsePKCS8(String input) throws IOException {
         if (input.startsWith(PKCS8_KEY_START)) {
-            input = input.replace(PKCS8_KEY_START, "").replace(PKCS8_KEY_END, "").replaceAll("\\s", "");
+            input = input.replace(PKCS8_KEY_START, "").replace(PKCS8_KEY_END, "").trim();
             return Base64.getDecoder().decode(input);
         } else {
-            input = input.replace(PKCS1_KEY_START, "").replace(PKCS1_KEY_END, "").replaceAll("\\s", "");
+            input = input.replace(PKCS1_KEY_START, "").replace(PKCS1_KEY_END, "").trim();
             final byte[] pkcs1Encoded = Base64.getDecoder().decode(input);
             final AlgorithmIdentifier algId = new AlgorithmIdentifier(PKCSObjectIdentifiers.rsaEncryption, DERNull.INSTANCE);
             final PrivateKeyInfo privateKeyInfo = new PrivateKeyInfo(algId, ASN1Sequence.getInstance(pkcs1Encoded));
