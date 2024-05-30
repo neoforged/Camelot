@@ -44,7 +44,7 @@ public class AuthUtil {
      * @throws IOException if the key could not be converted
      */
     public static byte[] parsePKCS8(String input) throws IOException {
-        input = input.trim();
+        input = input.trim().replace("\r\n", "\n");
         if (input.startsWith(PKCS8_KEY_START)) {
             input = input.replace(PKCS8_KEY_START, "").replace(PKCS8_KEY_END, "").replaceAll("\\s", "");
             return Base64.getDecoder().decode(input);
