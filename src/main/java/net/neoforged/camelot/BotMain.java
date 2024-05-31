@@ -30,7 +30,6 @@ import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.CamelotModule;
 import net.neoforged.camelot.module.StatsModule;
-import net.neoforged.camelot.script.ScriptOptions;
 import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.ButtonManager;
@@ -40,7 +39,6 @@ import org.jdbi.v3.core.extension.ExtensionConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.ExampleMode;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.ParserProperties;
 import org.kohsuke.github.GitHubBuilder;
@@ -125,12 +123,12 @@ public class BotMain {
     /**
      * The loaded and enabled modules of the bot.
      */
-    private static Map<Class<?>, CamelotModule> modules;
+    private static Map<Class<?>, CamelotModule<?>> modules;
 
     /**
      * Gets the loaded module of the given {@code type}, or {@code null} if the module is not enabled.
      */
-    public static <T extends CamelotModule> T getModule(Class<T> type) {
+    public static <T extends CamelotModule<?>> T getModule(Class<T> type) {
         //noinspection unchecked
         return (T) modules.get(type);
     }
@@ -138,7 +136,7 @@ public class BotMain {
     /**
      * Accepts the given {@code consumer} on all loaded modules.
      */
-    public static void forEachModule(Consumer<? super CamelotModule> consumer) {
+    public static void forEachModule(Consumer<? super CamelotModule<?>> consumer) {
         modules.values().stream().sorted((o1, o2) ->
                 o1.getDependencies().contains(o2.id()) ? -1 : (o2.getDependencies().contains(o1.id()) ? 1 : 0))
                 .forEach(consumer);
@@ -164,6 +162,7 @@ public class BotMain {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static void main(String[] args) {
         final var cliConfig = new CliConfig();
         final var parser = new CmdLineParser(cliConfig, ParserProperties.defaults()
@@ -203,6 +202,7 @@ public class BotMain {
         final var allModules = ServiceLoader.load(CamelotModule.class)
                 .stream()
                 .map(ServiceLoader.Provider::get)
+                .peek(BotMain::validateID)
                 .collect(Collectors.toMap(
                         CamelotModule::id,
                         Function.identity(),
@@ -215,7 +215,9 @@ public class BotMain {
                         .map(module -> (ModuleConfiguration) newInstance(module.configType()))
                         .collect(Collectors.toMap(
                                 ModuleConfiguration::getClass,
-                                Function.identity()
+                                Function.identity(),
+                                (_, b) -> b,
+                                IdentityHashMap::new
                         ))
         ));
 
@@ -225,7 +227,7 @@ public class BotMain {
                 .filter(module -> module.config().isEnabled() && module.shouldLoad())
                 .collect(Collectors.toMap(
                         CamelotModule::getClass,
-                        Function.identity(),
+                        camelotModule -> (CamelotModule<?>) camelotModule,
                         (_, b) -> b,
                         IdentityHashMap::new
                 )));
@@ -343,6 +345,18 @@ public class BotMain {
         }
     }
 
+    /**
+     * Ensures that the given {@code module} has a valid ID.
+     */
+    private static void validateID(CamelotModule<?> module) {
+        if (module.id() == null) {
+            throw new NullPointerException("Module " + module + " has no ID!");
+        } else if (!module.id().matches("[a-z0-9-]+")) {
+            throw new IllegalArgumentException("Module " + module + " has invalid ID " + module.id());
+        }
+    }
+
+    @SuppressWarnings("FieldMayBeFinal")
     public static class CliConfig {
         @Option(name = "--config", aliases = "-c", usage = "the path to the config file")
         private File config = new File("camelot.groovy");

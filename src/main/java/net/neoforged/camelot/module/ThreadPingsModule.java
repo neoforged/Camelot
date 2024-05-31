@@ -23,7 +23,7 @@ public class ThreadPingsModule extends CamelotModule.Base<ThreadPings> {
 
     @Override
     public String id() {
-        return "threadPings";
+        return "thread-pings";
     }
 
     @Override

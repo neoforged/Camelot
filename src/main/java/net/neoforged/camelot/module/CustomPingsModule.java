@@ -15,7 +15,7 @@ public class CustomPingsModule extends CamelotModule.Base<CustomPings> {
 
     @Override
     public String id() {
-        return "customPings";
+        return "custom-pings";
     }
 
     @Override

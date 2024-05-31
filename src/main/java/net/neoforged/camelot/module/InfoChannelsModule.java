@@ -21,7 +21,7 @@ public class InfoChannelsModule extends CamelotModule.Base<InfoChannels> {
 
     @Override
     public String id() {
-        return "infoChannels";
+        return "info-channels";
     }
 
     @Override

@@ -27,7 +27,7 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
 
     @Override
     public String id() {
-        return "filePreview";
+        return "file-preview";
     }
 
     @Override
