@@ -5,6 +5,9 @@ import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 import net.neoforged.camelot.config.module.ModuleConfiguration
 
+import java.nio.file.Files
+import java.nio.file.Path
+
 /**
  * The class holding Camelot's configuration, that is represented in a Groovy DSL.
  */
@@ -88,5 +91,20 @@ class CamelotConfig {
             throw new IllegalArgumentException("Environment variable ${key} not found!")
         }
         return value
+    }
+
+    /**
+     * Load a properties file from the given {@code path}.
+     * @param path the path of the properties file
+     * @return the loaded properties
+     */
+    static Properties loadProperties(String path) {
+        final props = new Properties()
+        try (final reader = Files.newBufferedReader(Path.of(path))) {
+            props.load(reader)
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to read properties file at $path", ex)
+        }
+        return props
     }
 }

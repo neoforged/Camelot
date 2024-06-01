@@ -1,6 +1,8 @@
 import net.neoforged.camelot.config.module.*
 
 camelot {
+    final secrets = loadProperties('secrets.properties')
+
     token = secret(env('BOT_TOKEN'))
     prefix = '!'
 
@@ -23,7 +25,7 @@ camelot {
     }
 
     module(FilePreview) {
-        auth = patAuthentication(secret(env('GIST_PAT')))
+        auth = patAuthentication(secret(secrets.GIST_PAT))
     }
 
     module(WebServer) {
