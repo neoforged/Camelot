@@ -22,7 +22,6 @@ import net.neoforged.camelot.configuration.ConfigMigrator;
 import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.db.transactionals.StatsDAO;
-import net.neoforged.camelot.listener.CountersListener;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.log.ChannelLogging;
 import net.neoforged.camelot.log.JoinsLogging;
@@ -248,7 +247,7 @@ public class BotMain {
                 .setActivity(Activity.customStatus("Listening for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(new ModerationActionRecorder())
-                .addEventListeners(BUTTON_MANAGER, new CountersListener(), new DismissListener());
+                .addEventListeners(BUTTON_MANAGER, new DismissListener());
 
         try {
             Database.init();

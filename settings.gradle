@@ -12,4 +12,3 @@ plugins {
 rootProject.name = 'Camelot'
 
 include ':config'
-include ':sample-config'
