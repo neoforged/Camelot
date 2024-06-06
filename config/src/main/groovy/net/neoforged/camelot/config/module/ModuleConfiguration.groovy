@@ -25,4 +25,11 @@ class ModuleConfiguration {
             }
         }
     }
+
+    /**
+     * A module that cannot be configured or disabled.
+     */
+    static class BuiltIn extends ModuleConfiguration {
+
+    }
 }

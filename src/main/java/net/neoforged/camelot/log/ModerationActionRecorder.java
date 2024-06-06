@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
+import net.neoforged.camelot.module.LoggingModule;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,7 @@ public class ModerationActionRecorder implements EventListener {
     }
 
     /**
-     * Log the given mod log entry in the {@link BotMain#MODERATION_LOGS logging channel}.
+     * Log the given mod log entry in the {@link LoggingModule#MODERATION_LOGS logging channel}.
      *
      * @param entry the entry to log
      * @param jda   the JDA instance to be used for querying users
@@ -102,14 +103,14 @@ public class ModerationActionRecorder implements EventListener {
     }
 
     /**
-     * Log the given mod log entry in the {@link BotMain#MODERATION_LOGS logging channel}.
+     * Log the given mod log entry in the {@link LoggingModule#MODERATION_LOGS logging channel}.
      *
      * @param entry the entry to log
      * @param user  the affected user
      */
     public static void log(ModLogEntry entry, User user) {
         entry.format(user.getJDA())
-                .thenAccept(caseData -> BotMain.MODERATION_LOGS.log(new EmbedBuilder()
+                .thenAccept(caseData -> LoggingModule.MODERATION_LOGS.log(new EmbedBuilder()
                         .setTitle("%s has been %s".formatted(Utils.getName(user), entry.type().getAction()))
                         .setDescription("Case information below:")
                         .addField(caseData)

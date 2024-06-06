@@ -4,21 +4,9 @@ import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.commands.information.ConfigurationCommand;
 import net.neoforged.camelot.commands.information.HelpCommand;
-import net.neoforged.camelot.commands.information.InfoChannelCommand;
 import net.neoforged.camelot.commands.information.McAgeCommand;
-import net.neoforged.camelot.commands.information.RuleCommand;
 import net.neoforged.camelot.commands.information.VersioningCommand;
-import net.neoforged.camelot.commands.moderation.BanCommand;
-import net.neoforged.camelot.commands.moderation.KickCommand;
-import net.neoforged.camelot.commands.moderation.ModLogsCommand;
-import net.neoforged.camelot.commands.moderation.MuteCommand;
-import net.neoforged.camelot.commands.moderation.NoteCommand;
-import net.neoforged.camelot.commands.moderation.PurgeCommand;
-import net.neoforged.camelot.commands.moderation.UnbanCommand;
-import net.neoforged.camelot.commands.moderation.UnmuteCommand;
-import net.neoforged.camelot.commands.moderation.WarnCommand;
 import net.neoforged.camelot.commands.utility.PingCommand;
 import net.neoforged.camelot.config.CamelotConfig;
 
@@ -53,7 +41,7 @@ public class Commands {
                 .addSlashCommand(new HelpCommand(BotMain.BUTTON_MANAGER))
 
                 // Information commands
-                .addSlashCommands(new McAgeCommand(), new VersioningCommand(), new ConfigurationCommand());
+                .addSlashCommands(new McAgeCommand(), new VersioningCommand());
 
         BotMain.forEachModule(module -> module.registerCommands(builder));
 

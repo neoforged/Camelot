@@ -19,16 +19,13 @@ import net.neoforged.camelot.config.module.GHAuth;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.configuration.ConfigMigrator;
-import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.listener.DismissListener;
-import net.neoforged.camelot.log.ChannelLogging;
-import net.neoforged.camelot.log.JoinsLogging;
-import net.neoforged.camelot.log.MessageLogging;
-import net.neoforged.camelot.log.ModerationActionRecorder;
-import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.StatsModule;
+import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.ButtonManager;
@@ -49,6 +46,7 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -111,8 +109,6 @@ public class BotMain {
      * Logger instance for the whole bot. Perhaps overkill.
      */
     public static final Logger LOGGER = LoggerFactory.getLogger(Common.NAME);
-    /** The channel in which moderation logs will be sent. */
-    public static ChannelLogging MODERATION_LOGS;
 
     /**
      * Static instance of the bot. Can be accessed by any class with {@link #get()}
@@ -139,6 +135,13 @@ public class BotMain {
         modules.values().stream().sorted((o1, o2) ->
                 o1.getDependencies().contains(o2.id()) ? -1 : (o2.getDependencies().contains(o1.id()) ? 1 : 0))
                 .forEach(consumer);
+    }
+
+    /**
+     * Propagate the given {@code object} to all loaded modules.
+     */
+    public static <T> void propagateParameter(ParameterType<T> type, T object) {
+        forEachModule(module -> module.acceptParameter(type, object));
     }
 
     /**
@@ -198,10 +201,18 @@ public class BotMain {
             }
         });
 
+        final List<CamelotModule<?>> builtIn = new ArrayList<>();
         final var allModules = ServiceLoader.load(CamelotModule.class)
                 .stream()
                 .map(ServiceLoader.Provider::get)
                 .peek(BotMain::validateID)
+                .filter(module -> {
+                    if (module.configType() == ModuleConfiguration.BuiltIn.class) {
+                        builtIn.add(module);
+                        return false;
+                    }
+                    return true;
+                })
                 .collect(Collectors.toMap(
                         CamelotModule::id,
                         Function.identity(),
@@ -222,11 +233,13 @@ public class BotMain {
 
         loadConfig(cliConfig.config.toPath());
 
-        modules = Map.copyOf(allModules.values().stream()
-                .filter(module -> module.config().isEnabled() && module.shouldLoad())
+        modules = Map.copyOf(Stream.concat(
+                        builtIn.stream(),
+                        allModules.values().stream().filter(module -> module.config().isEnabled() && module.shouldLoad())
+                )
                 .collect(Collectors.toMap(
                         CamelotModule::getClass,
-                        camelotModule -> (CamelotModule<?>) camelotModule,
+                        camelotModule -> (CamelotModule<?>)camelotModule,
                         (_, b) -> b,
                         IdentityHashMap::new
                 )));
@@ -245,9 +258,7 @@ public class BotMain {
                 .create(CamelotConfig.getInstance().getToken(), INTENTS)
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS)
                 .setActivity(Activity.customStatus("Listening for your commands"))
-                .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .addEventListeners(new ModerationActionRecorder())
-                .addEventListeners(BUTTON_MANAGER, new DismissListener());
+                .setMemberCachePolicy(MemberCachePolicy.ALL);
 
         try {
             Database.init();
@@ -260,9 +271,6 @@ public class BotMain {
         botBuilder.addEventListeners(Commands.get());
         instance = botBuilder.build();
 
-        MODERATION_LOGS = new ChannelLogging(instance, LoggingChannelsDAO.Type.MODERATION);
-
-        instance.addEventListener(new JoinsLogging(instance), new MessageLogging(instance));
         instance.addEventListener(Commands.get().getSlashCommands().stream()
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)

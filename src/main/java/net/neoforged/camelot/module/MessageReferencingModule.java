@@ -9,7 +9,7 @@ import net.neoforged.camelot.module.api.CamelotModule;
 /**
  * Module for message referencing using {@code .} replies.
  */
-@AutoService(MessageReferencing.class)
+@AutoService(CamelotModule.class)
 public class MessageReferencingModule extends CamelotModule.Base<MessageReferencing> {
     public MessageReferencingModule() {
         super(MessageReferencing.class);
