@@ -30,7 +30,7 @@ public class Commands {
      * Register and setup every valid command.
      * To remove a command from the bot, simply comment the line where it is added.
      */
-    public static void init() {
+    public static CommandClient init() {
         final var builder = new CommandClientBuilder()
                 .setOwnerId(String.valueOf(CamelotConfig.getInstance().getOwner()))
                 .setPrefix(CamelotConfig.getInstance().getPrefix())
@@ -73,6 +73,8 @@ public class Commands {
                 }
             }
         }
+
+        return commands;
     }
 
 }

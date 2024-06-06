@@ -4,11 +4,7 @@ import groovy.lang.GroovyShell;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.UserSnowflake;
-import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -19,10 +15,7 @@ import net.neoforged.camelot.config.module.GHAuth;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.configuration.ConfigMigrator;
-import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.db.transactionals.StatsDAO;
-import net.neoforged.camelot.listener.DismissListener;
-import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.StatsModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
@@ -55,7 +48,6 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -271,31 +263,15 @@ public class BotMain {
         }
 
         forEachModule(module -> module.registerListeners(botBuilder));
-        Commands.init();
-        botBuilder.addEventListeners(Commands.get());
-        instance = botBuilder.build();
-
-        instance.addEventListener(Commands.get().getSlashCommands().stream()
+        botBuilder.addEventListeners(Commands.init());
+        botBuilder.addEventListeners(Commands.get().getSlashCommands().stream()
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)
                 .toArray()); // A command implementing EventListener shall be treated as a listener
 
-        forEachModule(module -> module.setup(instance));
+        instance = botBuilder.build();
 
-        EXECUTOR.scheduleAtFixedRate(() -> {
-            final PendingUnbansDAO db = Database.main().onDemand(PendingUnbansDAO.class);
-            for (final Guild guild : instance.getGuilds()) {
-                final List<Long> users = db.getUsersToUnban(guild.getIdLong());
-                if (!users.isEmpty()) {
-                    for (final long toUnban : users) {
-                        // We do not use allOf because we do not want a deleted user to cause all unbans to fail
-                        guild.unban(UserSnowflake.fromId(toUnban)).reason("rec: Ban expired")
-                                .queue(_ -> {} /* don't remove the entry here, the ModerationActionRecorder should, and if it doesn't, the unban failed so it should be reattempted next minute */, new ErrorHandler()
-                                        .handle(ErrorResponse.UNKNOWN_USER, _ -> db.delete(toUnban, guild.getIdLong()))); // User doesn't exist, so don't care about the unban anymore
-                    }
-                }
-            }
-        }, 1, 1, TimeUnit.MINUTES);
+        forEachModule(module -> module.setup(instance));
     }
 
     private static void loadConfig(Path config) {
