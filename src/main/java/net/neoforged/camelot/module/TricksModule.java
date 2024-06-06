@@ -19,6 +19,7 @@ import net.neoforged.camelot.config.module.Tricks;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.listener.TrickListener;
+import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.script.SlashTrickManager;
 
 /**

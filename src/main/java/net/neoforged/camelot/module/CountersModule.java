@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import net.dv8tion.jda.api.JDABuilder;
 import net.neoforged.camelot.config.module.Counters;
 import net.neoforged.camelot.listener.CountersListener;
+import net.neoforged.camelot.module.api.CamelotModule;
 
 /**
  * The module for counters.

@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.neoforged.camelot.config.module.FilePreview;
+import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.util.Utils;
 
 import java.net.URI;

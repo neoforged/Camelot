@@ -1,20 +1,15 @@
-package net.neoforged.camelot.module;
+package net.neoforged.camelot.module.api;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.neoforged.camelot.config.CamelotConfig;
-import net.neoforged.camelot.config.module.GHAuth;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
-import net.neoforged.camelot.util.AuthUtil;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * A camelot module is a part of the bot that can be disabled and is loaded via a {@link java.util.ServiceLoader}.
@@ -53,10 +48,10 @@ public interface CamelotModule<C extends ModuleConfiguration> {
     /**
      * Accept an object from another module.
      *
-     * @param moduleId the ID of the module sending the object
-     * @param object   the sent object
+     * @param type   the type of the object
+     * @param object the sent object
      */
-    default void acceptFrom(String moduleId, Object object) {
+    default <T> void acceptParameter(ParameterType<T> type, T object) {
 
     }
 
@@ -86,14 +81,20 @@ public interface CamelotModule<C extends ModuleConfiguration> {
 
     /**
      * Base class for {@link CamelotModule camelot modules}.
+     *
      * @param <C> the configuration type
      */
     abstract class Base<C extends ModuleConfiguration> implements CamelotModule<C> {
         private final Class<C> configType;
+        private final Map<ParameterType<?>, Consumer<?>> parameters = new IdentityHashMap<>();
         private C config;
 
         protected Base(Class<C> configType) {
             this.configType = configType;
+        }
+
+        protected <T> void accept(ParameterType<T> type, Consumer<T> acceptor) {
+            parameters.put(type, acceptor);
         }
 
         @Override
@@ -102,6 +103,13 @@ public interface CamelotModule<C extends ModuleConfiguration> {
                 config = CamelotConfig.getInstance().module(configType);
             }
             return config;
+        }
+
+        @Override
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        public <T> void acceptParameter(ParameterType<T> type, T object) {
+            Consumer accept = parameters.get(type);
+            if (accept != null) accept.accept(object);
         }
 
         @Override

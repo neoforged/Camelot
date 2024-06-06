@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.config.module.Statistics;
 import net.neoforged.camelot.db.transactionals.StatsDAO;
+import net.neoforged.camelot.module.api.CamelotModule;
 import org.jdbi.v3.core.extension.ExtensionConsumer;
 
 /**

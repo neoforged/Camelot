@@ -9,7 +9,7 @@ import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.config.module.Tricks;
 import net.neoforged.camelot.config.module.WebServer;
-import net.neoforged.camelot.module.CamelotModule;
+import net.neoforged.camelot.module.api.CamelotModule;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

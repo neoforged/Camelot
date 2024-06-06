@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.neoforged.camelot.commands.utility.ThreadPingsCommand;
 import net.neoforged.camelot.config.module.ThreadPings;
 import net.neoforged.camelot.listener.ThreadPingsListener;
+import net.neoforged.camelot.module.api.CamelotModule;
 
 /**
  * Module for thread pings, for automatically mentioning a role in public threads created under a channel and

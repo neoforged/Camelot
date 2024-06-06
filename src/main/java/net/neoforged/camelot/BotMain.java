@@ -27,7 +27,7 @@ import net.neoforged.camelot.log.ChannelLogging;
 import net.neoforged.camelot.log.JoinsLogging;
 import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
-import net.neoforged.camelot.module.CamelotModule;
+import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.StatsModule;
 import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;

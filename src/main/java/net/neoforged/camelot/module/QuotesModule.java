@@ -15,6 +15,7 @@ import net.neoforged.camelot.commands.information.QuoteCommand;
 import net.neoforged.camelot.config.module.Quotes;
 import net.neoforged.camelot.db.schemas.Quote;
 import net.neoforged.camelot.db.transactionals.QuotesDAO;
+import net.neoforged.camelot.module.api.CamelotModule;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;

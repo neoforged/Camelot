@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.neoforged.camelot.commands.utility.CustomPingsCommand;
 import net.neoforged.camelot.config.module.CustomPings;
 import net.neoforged.camelot.listener.CustomPingListener;
+import net.neoforged.camelot.module.api.CamelotModule;
 
 @AutoService(CamelotModule.class)
 public class CustomPingsModule extends CamelotModule.Base<CustomPings> {

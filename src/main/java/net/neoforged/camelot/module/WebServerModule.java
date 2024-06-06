@@ -6,6 +6,8 @@ import io.javalin.http.ContentType;
 import io.javalin.http.staticfiles.Location;
 import net.dv8tion.jda.api.JDA;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.server.WebServer;
 
 import java.io.IOException;
@@ -14,6 +16,8 @@ import java.nio.file.Path;
 
 @AutoService(CamelotModule.class)
 public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.config.module.WebServer> {
+    public static final ParameterType<Javalin> SERVER = ParameterType.get("server", Javalin.class);
+
     private WebServer webServer;
 
     public WebServerModule() {
@@ -50,7 +54,7 @@ public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.co
             });
         }), config().getPort());
 
-        BotMain.forEachModule(module -> module.acceptFrom(id(), webServer.javalin));
+        BotMain.forEachModule(module -> module.acceptParameter(SERVER, webServer.javalin));
 
         this.webServer.run();
     }

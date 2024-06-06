@@ -2,7 +2,6 @@ package net.neoforged.camelot.module;
 
 import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import io.javalin.Javalin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.Cookie;
@@ -23,6 +22,7 @@ import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.McVerificationDAO;
 import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.log.ModerationActionRecorder;
+import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.oauth.OAuthClient;
@@ -48,18 +48,14 @@ import static j2html.TagCreator.a;
 import static j2html.TagCreator.br;
 import static j2html.TagCreator.button;
 import static j2html.TagCreator.div;
-import static j2html.TagCreator.footer;
 import static j2html.TagCreator.h1;
 import static j2html.TagCreator.h2;
-import static j2html.TagCreator.h3;
 import static j2html.TagCreator.h5;
 import static j2html.TagCreator.hr;
 import static j2html.TagCreator.i;
 import static j2html.TagCreator.p;
-import static j2html.TagCreator.pre;
 import static j2html.TagCreator.script;
 import static j2html.TagCreator.span;
-import static j2html.TagCreator.sub;
 import static j2html.TagCreator.text;
 import static j2html.TagCreator.title;
 
@@ -69,21 +65,7 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
 
     public MinecraftVerificationModule() {
         super(MinecraftVerification.class);
-    }
-
-    @Override
-    public String id() {
-        return "mc-verification";
-    }
-
-    @Override
-    public Set<String> getDependencies() {
-        return Set.of("webserver");
-    }
-
-    @Override
-    public void acceptFrom(String moduleId, Object object) {
-        if (moduleId.equals("webserver") && object instanceof Javalin javalin) {
+        accept(WebServerModule.SERVER, javalin -> {
             javalin.get("/minecraft/<serverId>/verify", this::onVerifyRoot);
             javalin.post("/minecraft/<serverId>/verify", this::onVerifyPost);
             javalin.get("/minecraft/verify/discord", ctx -> verifyOauth(ctx, "discord_token", discord));
@@ -94,7 +76,17 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
                 ctx.removeCookie("discord_token", path);
                 ctx.removeCookie("xbox_token", path);
             });
-        }
+        });
+    }
+
+    @Override
+    public String id() {
+        return "mc-verification";
+    }
+
+    @Override
+    public Set<String> getDependencies() {
+        return Set.of("webserver");
     }
 
     @Override

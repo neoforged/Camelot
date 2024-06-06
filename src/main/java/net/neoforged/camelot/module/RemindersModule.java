@@ -17,7 +17,6 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.utils.Result;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
@@ -29,11 +28,11 @@ import net.neoforged.camelot.db.schemas.Reminder;
 import net.neoforged.camelot.db.transactionals.RemindersDAO;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
+import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Utils;
 
 import java.awt.*;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -43,7 +42,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 @AutoService(CamelotModule.class)
 public class RemindersModule extends CamelotModule.Base<Reminders> {

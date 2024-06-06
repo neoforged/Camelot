@@ -7,6 +7,7 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.information.InfoChannelCommand;
 import net.neoforged.camelot.commands.information.RuleCommand;
 import net.neoforged.camelot.config.module.InfoChannels;
+import net.neoforged.camelot.module.api.CamelotModule;
 
 import java.util.concurrent.TimeUnit;
 

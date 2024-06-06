@@ -13,6 +13,7 @@ import net.neoforged.camelot.commands.moderation.UnbanCommand;
 import net.neoforged.camelot.commands.moderation.UnmuteCommand;
 import net.neoforged.camelot.commands.moderation.WarnCommand;
 import net.neoforged.camelot.config.module.Moderation;
+import net.neoforged.camelot.module.api.CamelotModule;
 
 /**
  * The module that provides moderation commands.

@@ -2,7 +2,6 @@ package net.neoforged.camelot.module;
 
 import com.google.auto.service.AutoService;
 import com.google.common.primitives.Ints;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.Cookie;
 import io.javalin.http.HttpStatus;
@@ -40,6 +39,7 @@ import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.BanAppealsDAO;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.log.ModerationActionRecorder;
+import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.MailService;
@@ -89,6 +89,12 @@ import static j2html.TagCreator.*;
 public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
     public BanAppealModule() {
         super(BanAppeals.class);
+        accept(WebServerModule.SERVER, javalin -> {
+            javalin.get("/ban-appeals/discord", this::verifyOauth);
+            javalin.get("/ban-appeals/<serverId>", this::onAccess);
+            javalin.post("/ban-appeals/followup/<serverId>", this::onSubmitFollowup);
+            javalin.post("/ban-appeals/<serverId>", this::onSubmitAppeal);
+        });
     }
 
     private OAuthClient client;
@@ -113,16 +119,6 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
     public void setup(JDA jda) {
         client = OAuthUtils.discord(config().getDiscordAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/ban-appeals/discord"), OAuthScope.Discord.EMAIL, OAuthScope.Discord.IDENTIFY);
         mail = MailService.from(config().getMail());
-    }
-
-    @Override
-    public void acceptFrom(String moduleId, Object object) {
-        if (moduleId.equals("webserver") && object instanceof Javalin javalin) {
-            javalin.get("/ban-appeals/discord", this::verifyOauth);
-            javalin.get("/ban-appeals/<serverId>", this::onAccess);
-            javalin.post("/ban-appeals/followup/<serverId>", this::onSubmitFollowup);
-            javalin.post("/ban-appeals/<serverId>", this::onSubmitAppeal);
-        }
     }
 
     @Override
