@@ -55,7 +55,7 @@ public final class ParameterType<T> {
 
     /**
      * {@return an interned parameter}
-     * @apiNote must be called from within a module class
+     * <b>Note:</b> must be called from within a module class
      */
     public static <T> ParameterType<T> get(String name, Class<T> type) {
         var caller = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)

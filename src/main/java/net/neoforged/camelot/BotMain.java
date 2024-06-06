@@ -222,7 +222,11 @@ public class BotMain {
 
         CamelotConfig.setInstance(new CamelotConfig(
                 allModules.values().stream()
-                        .map(module -> (ModuleConfiguration) newInstance(module.configType()))
+                        .map(module -> {
+                            var conf = (ModuleConfiguration) newInstance(module.configType());
+                            conf.updateModuleId(module.id());
+                            return conf;
+                        })
                         .collect(Collectors.toMap(
                                 ModuleConfiguration::getClass,
                                 Function.identity(),

@@ -8,10 +8,19 @@ import groovy.transform.CompileStatic
  */
 @CompileStatic
 class ModuleConfiguration {
+    private String moduleId
+
     /**
      * Whether this module should be enabled.
      */
     boolean enabled = true
+
+    /**
+     * The ID of the module this configuration is for.
+     */
+    String getModuleId() {
+        return moduleId
+    }
 
     @CompileDynamic
     void validate() {
@@ -24,6 +33,13 @@ class ModuleConfiguration {
 
             }
         }
+    }
+
+    void updateModuleId(String moduleId) {
+        if (this.@moduleId !== null) {
+            throw new IllegalStateException()
+        }
+        this.@moduleId = moduleId
     }
 
     /**

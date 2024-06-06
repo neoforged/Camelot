@@ -3,6 +3,7 @@ package net.neoforged.camelot.config
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
+import groovy.transform.stc.SimpleType
 import net.neoforged.camelot.config.module.ModuleConfiguration
 
 import java.nio.file.Files
@@ -46,6 +47,15 @@ class CamelotConfig {
     }
 
     /**
+     * Configure a module.
+     * @param id the ID of the module
+     * @param configurator the closure that configures the module
+     */
+    void module(String id, @DelegatesTo(value = ModuleConfiguration, strategy = Closure.DELEGATE_FIRST) @ClosureParams(value = SimpleType, options = 'net.neoforged.camelot.config.module.ModuleConfiguration') Closure configurator) {
+        ConfigUtils.configure(module(id), configurator)
+    }
+
+    /**
      * Get the module of the given type.
      * @param type the type of the module
      * @return the module configuration
@@ -56,6 +66,19 @@ class CamelotConfig {
             throw new IllegalArgumentException("Unknown module of type $type")
         }
         return (T)conf
+    }
+
+    /**
+     * Get the module with the given ID.
+     * @param id the ID of the module
+     * @return the module configuration
+     */
+    ModuleConfiguration module(String id) {
+        final conf = modules.values().find { it.moduleId == id }
+        if (conf === null) {
+            throw new IllegalArgumentException("Unknown module with ID $id")
+        }
+        return conf
     }
 
     void validate() {
