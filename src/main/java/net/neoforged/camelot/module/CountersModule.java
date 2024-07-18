@@ -9,7 +9,7 @@ import net.neoforged.camelot.module.api.CamelotModule;
 /**
  * The module for counters.
  */
-@AutoService(Counters.class)
+@AutoService(CamelotModule.class)
 public class CountersModule extends CamelotModule.Base<Counters> {
     public CountersModule() {
         super(Counters.class);

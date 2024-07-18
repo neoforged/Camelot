@@ -9,6 +9,10 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.neoforged.camelot.config.module.FilePreview;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.util.Utils;
+import org.jetbrains.annotations.NotNull;
+import org.kohsuke.github.GHGist;
+import org.kohsuke.github.GHGistBuilder;
+import org.kohsuke.github.GitHub;
 
 import java.net.URI;
 import java.util.List;
@@ -48,10 +52,14 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
         }));
         builder.addEventListeners(Utils.listenerFor(MessageReactionAddEvent.class, event -> {
             if (event.getEmoji().equals(EMOJI) && event.getUserIdLong() != event.getJDA().getSelfUser().getIdLong()) {
-                event.retrieveMessage().queue(it -> {
-                    try {
-                        if (it.getReaction(EMOJI).isSelf()) { // We could check if the message is valid for gisting here, but it's not really needed since the only way we'd have reacted is if the message is gistable
-                            final var gist = config().getAuth().createGist();
+                // Make sure that threads don't fight trying to create gists
+                synchronized (FilePreviewModule.class) {
+                    event.retrieveMessage().queue(it -> {
+                        var reaction = it.getReaction(EMOJI);
+                        if (reaction == null || !reaction.isSelf()) return;
+                        try {
+                            // We could check if the message is valid for gisting, but it's not really needed since the only way we'd have reacted is if the message is gistable
+                            final var gist = new GistBuilder(config().getAuth());
                             for (final var attach : it.getAttachments()) {
                                 if (config().getExtensions().contains(attach.getFileExtension())) {
                                     try (final var is = URI.create(attach.getProxy().getUrl()).toURL().openStream()) {
@@ -82,16 +90,22 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
                                 gist.description(Utils.truncate(it.getContentRaw(), 256));
                             }
 
+                            // If we end up with no valid targets we shall quit and remove our reaction
+                            if (!gist.hasFiles) {
+                                event.getReaction().clearReactions().queue();
+                                return;
+                            }
+
                             final var url = gist.create().getHtmlUrl().toString();
                             it.reply(STR."Created Gist at the request of <@\{event.getUserIdLong()}>: <\{url}>")
-                                .setAllowedMentions(List.of())
-                                .flatMap(_ -> event.getReaction().clearReactions())
-                                .queue();
+                                    .setAllowedMentions(List.of())
+                                    .flatMap(_ -> event.getReaction().clearReactions())
+                                    .queue();
+                        } catch (Exception e) {
+                            it.reply("Failed to create gist due to an exception: " + e.getMessage()).queue();
                         }
-                    } catch (Exception e) {
-                        it.reply("Failed to create gist due to an exception: " + e.getMessage()).queue();
-                    }
-                });
+                    });
+                }
             }
         }));
     }
@@ -122,5 +136,19 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
         return RANDOM.ints(leftLimit, rightLimit + 1).filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
                 .limit(length).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
+    }
+
+    private static class GistBuilder extends GHGistBuilder {
+        boolean hasFiles = false;
+
+        public GistBuilder(GitHub root) {
+            super(root);
+        }
+
+        @Override
+        public GHGistBuilder file(@NotNull String fileName, @NotNull String content) {
+            hasFiles = true;
+            return super.file(fileName, content);
+        }
     }
 }
