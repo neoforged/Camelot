@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
@@ -118,7 +118,7 @@ public final class ReferencingListener implements EventListener {
     public record MessageLinkInformation(long guildId, long channelId, long messageId) {
         public Optional<RestAction<Message>> retrieve(JDA bot) {
             return Optional.ofNullable(bot.getGuildById(guildId))
-                    .flatMap(guild -> Optional.ofNullable(guild.getChannelById(MessageChannel.class, channelId)))
+                    .flatMap(guild -> Optional.ofNullable(guild.getChannelById(GuildMessageChannel.class, channelId)))
                     .map(channel -> channel.retrieveMessageById(messageId));
         }
     }

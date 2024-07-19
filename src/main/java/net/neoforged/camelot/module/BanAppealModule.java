@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -201,7 +202,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                 .setDescription(payload.getString("response"))
                 .setColor(Color.CYAN);
 
-        guild.getChannelById(MessageChannel.class, config().getAppealsChannels().get(guild.getIdLong())).retrieveMessageById(existing.threadId())
+        guild.getChannelById(GuildMessageChannel.class, config().getAppealsChannels().get(guild.getIdLong())).retrieveMessageById(existing.threadId())
                 .map(Message::getStartedThread)
                 .flatMap(thread -> thread.sendMessageEmbeds(embed.build()))
                 .queue();
