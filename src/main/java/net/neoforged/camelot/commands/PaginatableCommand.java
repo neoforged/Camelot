@@ -55,7 +55,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
         final T data = collectData(event);
         if (data == null) return;
         if (data.itemAmount() < 1) {
-            event.reply("No data found!").setEphemeral(true).queue();
+            event.reply(Emojis.NO_RESULTS.getFormatted() + " No data found!").setEphemeral(true).queue();
             return;
         }
 

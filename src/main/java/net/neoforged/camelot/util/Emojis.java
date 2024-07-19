@@ -15,4 +15,5 @@ public class Emojis {
     public static final Emoji ADMIN_ABOOZ = MANAGER.getLazyEmoji("adminabooz");
     public static final Emoji CMDLINE = MANAGER.getLazyEmoji("cmdline");
     public static final Emoji ADD = MANAGER.getLazyEmoji("add");
+    public static final Emoji NO_RESULTS = MANAGER.getLazyEmoji("noresults");
 }
