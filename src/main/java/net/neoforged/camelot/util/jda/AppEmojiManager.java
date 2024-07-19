@@ -263,5 +263,15 @@ public class AppEmojiManager implements EventListener {
         public CustomEmoji asCustom() {
             return this;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            return Objects.equals(obj, emoji);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(emoji);
+        }
     }
 }
