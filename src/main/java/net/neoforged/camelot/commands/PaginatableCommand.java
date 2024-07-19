@@ -26,6 +26,9 @@ import java.util.function.Function;
  * @param <T> the pagination data
  */
 public abstract class PaginatableCommand<T extends PaginatableCommand.PaginationData> extends SlashCommand {
+    private static final Emoji PREV_EMOJI = BotMain.EMOJI_MANAGER.getLazyEmoji("prevpage");
+    private static final Emoji NEXT_EMOJI = BotMain.EMOJI_MANAGER.getLazyEmoji("nextpage");
+
     protected final Function<Throwable, MessageEditData> exceptionally = throwable -> {
         BotMain.LOGGER.error("Encountered exception paginating command {}: ", this.name, throwable);
         return MessageEditData.fromContent("Encountered exception executing command: " + throwable);
@@ -131,12 +134,10 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
     protected List<ItemComponent> createButtons(String id, int currentPage, int itemAmount) {
         final List<ItemComponent> components = new ArrayList<>();
         if (currentPage != 0) {
-            components.add(Button.secondary(id + "/" + currentPage + "/prev",
-                    Emoji.fromUnicode("◀️")));
+            components.add(Button.secondary(id + "/" + currentPage + "/prev", PREV_EMOJI));
         }
         if ((currentPage + 1) * itemsPerPage < itemAmount) {
-            components.add(Button.primary(id + "/" + currentPage + "/next",
-                    Emoji.fromUnicode("▶️")));
+            components.add(Button.primary(id + "/" + currentPage + "/next", NEXT_EMOJI));
         }
         return components;
     }
