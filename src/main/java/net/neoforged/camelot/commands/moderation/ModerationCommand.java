@@ -76,8 +76,7 @@ public abstract class ModerationCommand<T> extends SlashCommand {
         try {
             action = createEntry(event);
         } catch (IllegalArgumentException exception) {
-            event.reply("Failed to validate arguments: " + exception.getMessage())
-                    .setEphemeral(true).queue();
+            event.reply(exception.getMessage()).setEphemeral(true).queue();
             return;
         }
 

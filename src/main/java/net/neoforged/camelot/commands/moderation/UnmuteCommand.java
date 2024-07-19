@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.neoforged.camelot.util.Emojis;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 
@@ -36,7 +37,7 @@ public class UnmuteCommand extends ModerationCommand<Void> {
     @SuppressWarnings("DataFlowIssue")
     protected ModerationAction<Void> createEntry(SlashCommandEvent event) {
         final Member target = event.optMember("user");
-        Preconditions.checkArgument(canModerate(target, event.getMember()), "Cannot moderate user!");
+        Preconditions.checkArgument(canModerate(target, event.getMember()), Emojis.ADMIN_ABOOZ.getFormatted() + " Cannot moderate user!");
         Preconditions.checkArgument(target.getTimeOutEnd() != null && target.getTimeOutEnd().isAfter(OffsetDateTime.now()), "User is not timed out!");
         return new ModerationAction<>(
                 ModLogEntry.unmute(target.getIdLong(), event.getGuild().getIdLong(), event.getUser().getIdLong(), event.optString("reason")),

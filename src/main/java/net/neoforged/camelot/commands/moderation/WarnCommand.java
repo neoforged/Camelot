@@ -72,7 +72,7 @@ public class WarnCommand extends SlashCommand {
             this.help = "Delete a warning from an user";
             this.options = List.of(
                     new OptionData(OptionType.USER, "user", "The user to delete a warn from", true),
-                    new OptionData(OptionType.INTEGER, "warn", "The number of the note to remove", true)
+                    new OptionData(OptionType.INTEGER, "warn", "The number of the warning (case) to remove", true)
             );
         }
 

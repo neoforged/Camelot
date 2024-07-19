@@ -15,6 +15,7 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.module.BanAppealModule;
 import net.neoforged.camelot.module.WebServerModule;
+import net.neoforged.camelot.util.Emojis;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
@@ -59,7 +60,7 @@ public class BanCommand extends ModerationCommand<Integer> {
             }
             targetId = usr.getIdLong();
         } else {
-            Preconditions.checkArgument(canModerate(target, event.getMember()), "Cannot moderate user!");
+            Preconditions.checkArgument(canModerate(target, event.getMember()), Emojis.ADMIN_ABOOZ.getFormatted() + " Cannot moderate user!");
             targetId = target.getIdLong();
         }
 

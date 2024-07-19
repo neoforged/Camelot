@@ -11,6 +11,7 @@ import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
+import net.neoforged.camelot.util.Emojis;
 
 import java.util.ArrayList;
 
@@ -50,7 +51,7 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
 
     @Override
     public void registerListeners(JDABuilder builder) {
-        builder.addEventListeners(BotMain.BUTTON_MANAGER, BotMain.EMOJI_MANAGER, new DismissListener());
+        builder.addEventListeners(BotMain.BUTTON_MANAGER, Emojis.MANAGER, new DismissListener());
     }
 
     @Override

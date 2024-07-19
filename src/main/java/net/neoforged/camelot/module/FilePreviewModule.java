@@ -5,9 +5,9 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.config.module.FilePreview;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GHGistBuilder;
@@ -25,7 +25,7 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
         super(FilePreview.class);
     }
 
-    private static final Emoji EMOJI = BotMain.EMOJI_MANAGER.getLazyEmoji("gist");
+    private static final Emoji EMOJI = Emojis.MANAGER.getLazyEmoji("gist");
     private static final Pattern CODEBLOCK_PATTERN = Pattern.compile("`{3}(?<lang>\\w*)\\n(?<content>[\\s\\S]*?)\\n`{3}", Pattern.MULTILINE);
     private static final Random RANDOM = new Random();
 

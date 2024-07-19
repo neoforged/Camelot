@@ -32,6 +32,7 @@ import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.Utils;
 
 import java.awt.*;
@@ -55,7 +56,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
     }
 
     private static final String SNOOZE_BUTTON_ID = "snooze_reminder";
-    private static final Emoji SNOOZE_EMOJI = BotMain.EMOJI_MANAGER.getLazyEmoji("snooze");
+    private static final Emoji SNOOZE_EMOJI = Emojis.MANAGER.getLazyEmoji("snooze");
 
     private List<ActionRow> snoozeButtons = List.of();
 

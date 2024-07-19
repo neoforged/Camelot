@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.neoforged.camelot.util.Emojis;
 import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.util.DateUtils;
@@ -40,7 +41,7 @@ public class MuteCommand extends ModerationCommand<Void> {
     @SuppressWarnings("DataFlowIssue")
     protected ModerationAction<Void> createEntry(SlashCommandEvent event) {
         final Member target = event.optMember("user");
-        Preconditions.checkArgument(canModerate(target, event.getMember()), "Cannot moderate user!");
+        Preconditions.checkArgument(canModerate(target, event.getMember()), Emojis.ADMIN_ABOOZ.getFormatted() + " Cannot moderate user!");
         Preconditions.checkArgument(target.getTimeOutEnd() == null || target.getTimeOutEnd().isBefore(OffsetDateTime.now()), "User is already muted!");
 
         final Duration time = event.getOption("duration", MAX_DURATION, it -> DateUtils.getDurationFromInput(it.getAsString()));

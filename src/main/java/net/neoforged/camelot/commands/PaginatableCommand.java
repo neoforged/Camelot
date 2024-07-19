@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +27,8 @@ import java.util.function.Function;
  * @param <T> the pagination data
  */
 public abstract class PaginatableCommand<T extends PaginatableCommand.PaginationData> extends SlashCommand {
-    private static final Emoji PREV_EMOJI = BotMain.EMOJI_MANAGER.getLazyEmoji("prevpage");
-    private static final Emoji NEXT_EMOJI = BotMain.EMOJI_MANAGER.getLazyEmoji("nextpage");
+    private static final Emoji PREV_EMOJI = Emojis.MANAGER.getLazyEmoji("prevpage");
+    private static final Emoji NEXT_EMOJI = Emojis.MANAGER.getLazyEmoji("nextpage");
 
     protected final Function<Throwable, MessageEditData> exceptionally = throwable -> {
         BotMain.LOGGER.error("Encountered exception paginating command {}: ", this.name, throwable);
