@@ -21,6 +21,7 @@ import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;
+import net.neoforged.camelot.util.jda.AppEmojiManager;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
@@ -86,6 +87,11 @@ public class BotMain {
      * The static button manager, used for easy button handling.
      */
     public static final ButtonManager BUTTON_MANAGER = new ButtonManager();
+
+    /**
+     * The static application emoji manager
+     */
+    public static final AppEmojiManager EMOJI_MANAGER = new AppEmojiManager(AppEmojiManager.EmojiBundle.fromClasspath("emojis"));
 
     /**
      * The static {@link ScheduledExecutorService} for scheduling tasks.

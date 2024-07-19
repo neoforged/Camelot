@@ -50,7 +50,7 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
 
     @Override
     public void registerListeners(JDABuilder builder) {
-        builder.addEventListeners(BotMain.BUTTON_MANAGER, new DismissListener());
+        builder.addEventListeners(BotMain.BUTTON_MANAGER, BotMain.EMOJI_MANAGER, new DismissListener());
     }
 
     @Override

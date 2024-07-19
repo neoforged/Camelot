@@ -44,7 +44,7 @@ public class RemindCommand extends SlashCommand {
             this.help = "Adds a reminder relative to the current time";
             options = List.of(
                     new OptionData(OptionType.STRING, "time", "The relative time of the reminder. The format is: <time><unit>. Example: 12h15m", true),
-                    new OptionData(OptionType.STRING, "content", "The content of the reminder.")
+                    new OptionData(OptionType.STRING, "content", "The content of the reminder.", true)
             );
             cooldown = 20;
             cooldownScope = CooldownScope.USER;

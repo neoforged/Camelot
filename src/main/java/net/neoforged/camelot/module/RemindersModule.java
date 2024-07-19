@@ -11,11 +11,13 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
@@ -53,7 +55,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
     }
 
     private static final String SNOOZE_BUTTON_ID = "snooze_reminder";
-    private static final String SNOOZE_EMOJI = String.valueOf('⏱');
+    private static final Emoji SNOOZE_EMOJI = BotMain.EMOJI_MANAGER.getLazyEmoji("snooze");
 
     private List<ActionRow> snoozeButtons = List.of();
 
@@ -75,7 +77,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
 
     @Override
     public void setup(JDA jda) {
-        snoozeButtons = ActionRow.partitionOf(config().getSnoozeDurations().stream().map(duration -> Button.secondary(SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), SNOOZE_EMOJI + " " + DateUtils.formatDuration(duration)))
+        snoozeButtons = ActionRow.partitionOf(config().getSnoozeDurations().stream().map(duration -> Button.of(ButtonStyle.SECONDARY, SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), DateUtils.formatDuration(duration), SNOOZE_EMOJI))
                 .toArray(ItemComponent[]::new));
 
         Database.main().useExtension(RemindersDAO.class, db -> db.getAllReminders()
