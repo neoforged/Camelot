@@ -5,6 +5,7 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -20,9 +21,12 @@ import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.script.ScriptContext;
 import net.neoforged.camelot.script.ScriptReplier;
 import net.neoforged.camelot.script.ScriptUtils;
+import net.neoforged.camelot.util.Emojis;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * A command used for evaluating scripts.
@@ -43,23 +47,36 @@ public class EvalCommand extends Command {
     protected void execute(CommandEvent commandEvent) {
         commandEvent.getMessage().reply(new MessageCreateBuilder().setContent(commandEvent.getMember().getAsMention() + ", use the buttons below:")
                 .setActionRow(
-                        Button.of(ButtonStyle.PRIMARY, BotMain.BUTTON_MANAGER.newButton(event -> event.replyModal(Modal.create(EVAL_ID + commandEvent.getMessage().getId(), "Evaluate script")
+                        Button.of(ButtonStyle.PRIMARY, checkUser(commandEvent, event -> event.replyModal(Modal.create(EVAL_ID + commandEvent.getMessage().getId(), "Evaluate script")
                                     .addActionRow(TextInput.create("args", "Arguments", TextInputStyle.SHORT)
                                             .setRequired(false)
                                             .setPlaceholder("The arguments to evaluate the script with")
                                             .build())
                                 .build())
-                                .queue()).toString(), "Evaluate"),
-                        Button.of(ButtonStyle.SECONDARY, BotMain.BUTTON_MANAGER.newButton(event -> event.replyModal(Modal.create(ADD_TRICK_ID + commandEvent.getMessage().getId(), "Add trick")
+                                .queue()).toString(), "Evaluate", Emojis.CMDLINE),
+                        Button.of(ButtonStyle.SECONDARY, checkUser(commandEvent, event -> event.replyModal(Modal.create(ADD_TRICK_ID + commandEvent.getMessage().getId(), "Add trick")
                                         .addActionRow(TextInput.create("names", "Trick names", TextInputStyle.SHORT)
                                                 .setRequired(true)
+                                                .setPlaceholder("Space-separated names of the trick")
                                                 .setMinLength(1)
                                                 .build())
                                         .build())
-                                .queue()).toString(), "Add trick")
+                                .queue()).toString(), "Add trick", Emojis.ADD)
                 )
                 .build())
                 .queue();
+    }
+
+    private static UUID checkUser(CommandEvent event, Consumer<ButtonInteractionEvent> consumer) {
+        var uid = event.getMember().getIdLong();
+        return BotMain.BUTTON_MANAGER.newButton(evt -> {
+            if (evt.getUser().getIdLong() != uid) {
+                evt.reply("You cannot use that button!").setEphemeral(true).queue();
+                return;
+            }
+
+            consumer.accept(evt);
+        });
     }
 
     public static void onEvent(final GenericEvent genericEvent) {

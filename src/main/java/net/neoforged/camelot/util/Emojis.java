@@ -13,4 +13,6 @@ public class Emojis {
     public static final AppEmojiManager MANAGER = new AppEmojiManager(AppEmojiManager.EmojiBundle.fromClasspath("emojis"));
 
     public static final Emoji ADMIN_ABOOZ = MANAGER.getLazyEmoji("adminabooz");
+    public static final Emoji CMDLINE = MANAGER.getLazyEmoji("cmdline");
+    public static final Emoji ADD = MANAGER.getLazyEmoji("add");
 }
