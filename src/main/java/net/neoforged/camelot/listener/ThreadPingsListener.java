@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.ThreadPingsDAO;
+import net.neoforged.camelot.util.Emojis;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +78,7 @@ public class ThreadPingsListener implements EventListener {
             LOGGER.warn("Bot user lacks Mention Everyone permission for thread {}; role adding may not work properly", thread.getId());
         }
 
-        thread.sendMessage("A new thread! Adding some people into here...")
+        thread.sendMessage("A new thread! Adding some people into here... " + Emojis.LOADING_SPINNER.getFormatted())
                 .setSuppressedNotifications(true)
                 .setAllowedMentions(Set.of(MentionType.ROLE))
                 .delay(Duration.ofSeconds(3))
