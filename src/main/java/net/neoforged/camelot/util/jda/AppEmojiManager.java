@@ -116,7 +116,7 @@ public class AppEmojiManager implements EventListener {
                 });
     }
 
-    private static RestAction<List<CustomEmoji>> retrieveAppEmojis(JDA jda) {
+    public static RestAction<List<CustomEmoji>> retrieveAppEmojis(JDA jda) {
         return new RestActionImpl<>(jda, GET_EMOJIS.compile(jda.getSelfUser().getId()), (response, _) -> {
             DataArray emojis = response.getObject().getArray("items");
             List<CustomEmoji> list = new ArrayList<>(emojis.length());

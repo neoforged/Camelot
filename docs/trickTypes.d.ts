@@ -71,6 +71,7 @@ export interface Channel extends Mentionable {
 
 export interface JDA {
     getUserById(id: string): User | null;
+    getEmojis(): Emoji[];
 }
 
 export declare namespace Options {
