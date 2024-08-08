@@ -81,6 +81,17 @@ class CamelotConfig {
         return conf
     }
 
+    /**
+     * Run the provided closure over every module.
+     * Can be used to disable each module by default.
+     * @param configurator the closure to run on every module
+     */
+    void eachModule(@DelegatesTo(value = ModuleConfiguration, strategy = Closure.DELEGATE_FIRST) @ClosureParams(value = SimpleType, options = 'net.neoforged.camelot.config.module.ModuleConfiguration') Closure configurator) {
+        modules.values().each {
+            ConfigUtils.configure(it, configurator)
+        }
+    }
+
     void validate() {
         if (!token) {
             throw new IllegalArgumentException('Bot API Token must be provided!')

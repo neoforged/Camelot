@@ -8,6 +8,13 @@ import org.kohsuke.github.GitHub
  * <p>
  * If enabled, messages containing attachments with specific suffixes will have a reaction added by the bot.
  * If the reaction is clicked by another user, a Gist will be created from the attachments of the message.
+ * <p>
+ * For this module to work, you must configure {@link #auth} with a Personal Access Token that has the {@code gist} permission:
+ * <pre class="groovyTestCase">
+module(FilePreview) {
+    auth = patAuthentication({@code <pat>})
+}
+ * </pre>
  */
 @CompileStatic
 class FilePreview extends ModuleConfiguration implements GHAuth {
@@ -25,6 +32,14 @@ class FilePreview extends ModuleConfiguration implements GHAuth {
 
     /**
      * The file extensions that can be gisted.
+     * <p>
+     * To avoid replacing the default extensions, you should use the {@code +=} syntax to append other extensions:
+     * <pre class="groovyTestCase">
+ module(FilePreview) {
+     // Whitelist the .abcd extension
+     extensions += ['abcd']
+ }
+     * </pre>
      */
     Set<String> extensions = DEFAULT_EXTENSIONS
 }
