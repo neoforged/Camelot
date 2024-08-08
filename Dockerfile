@@ -1,4 +1,4 @@
-FROM openjdk:21
+FROM ghcr.io/graalvm/graalvm-community:21
 COPY build/libs/camelot-all.jar /camelot.jar
 VOLUME ["/home/camelot"]
 WORKDIR /home/camelot
