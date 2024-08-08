@@ -3,7 +3,7 @@
 Camelot features are grouped in modules that can be enabled and configured separately.  
 
 By default, the following modules are enabled:
-- Counters
+- [Counters](./counters)
 - Custom Pings
 - File Preview (must have a PAT configured to work)
 - Info Channels (must have a PAT configured to work)

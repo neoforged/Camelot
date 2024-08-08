@@ -24,6 +24,10 @@ export default defineUserConfig({
           {
             text: 'Moderation',
             link: '/modules/moderation'
+          },
+          {
+            text: 'Counters',
+            link: '/modules/counters'
           }
         ]
       }
