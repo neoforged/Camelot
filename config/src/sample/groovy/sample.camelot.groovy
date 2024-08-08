@@ -12,6 +12,10 @@ camelot {
         trickMasterRole = 456
     }
 
+    module(FilePreview) {
+        // auth = patAuthentication('ghp_')
+    }
+
     module(CustomPings) {
         pingThreadsChannel = 123
     }

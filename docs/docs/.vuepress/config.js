@@ -7,7 +7,7 @@ export default defineUserConfig({
 
   title: 'Camelot',
   description: 'Documentation for the Camelot Discord bot',
-  base: '/camelot/',
+  base: '/Camelot/',
 
   theme: defaultTheme({
     logo: 'images/hero.png',
