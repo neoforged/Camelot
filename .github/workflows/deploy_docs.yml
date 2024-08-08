@@ -37,7 +37,6 @@ jobs:
           cd docs
           npm ci
           npm run docs:build
-          > docs/.vuepress/dist/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
