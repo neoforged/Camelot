@@ -5,7 +5,7 @@ hero:
   text: Powerful Discord bot
   tagline: Customize your Discord experience
   image:
-    src: /hero.png
+    src: /favicon.png
     alt: Camelot
   actions:
       - text: Get Started running Camelot

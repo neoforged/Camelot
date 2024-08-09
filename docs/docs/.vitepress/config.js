@@ -5,8 +5,12 @@ export default {
     description: 'Documentation for the Camelot Discord bot',
     base: '/Camelot/',
 
+    head: [
+        ['link', { rel: 'icon', type: 'image/x-icon', href: '/Camelot/favicon.ico' }],
+    ],
+
     themeConfig: {
-        logo: '/hero.png',
+        logo: '/favicon.png',
         socialLinks: [
             { icon: 'github', link: 'https://github.com/neoforged/Camelot' }
         ],
