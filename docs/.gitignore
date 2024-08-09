@@ -1,4 +1,4 @@
 node_modules
-docs/.vuepress/
-!docs/.vuepress/public
-!docs/.vuepress/config.js
+docs/.vitepress/.cache/
+docs/.vitepress/cache/
+docs/.vitepress/dist/

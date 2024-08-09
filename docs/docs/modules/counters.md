@@ -5,3 +5,6 @@ The counters module (id: `counters`, configuration class: `Counters`) provides u
 - `<counter>==`: gets a counter's value
 
 For instance, `derps++` increments the value of the `derps` counter by 1.
+
+## Bot Permissions
+The following bot permissions are required by this module: `Send Messages`.

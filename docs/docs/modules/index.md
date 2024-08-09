@@ -8,7 +8,7 @@ By default, the following modules are enabled:
 - File Preview (must have a PAT configured to work)
 - Info Channels (must have a PAT configured to work)
 - Logging
-- Message Referencing
+- [Message Referencing](./message-referencing)
 - [Moderation](./moderation)
 - Quotes
 - Reminders

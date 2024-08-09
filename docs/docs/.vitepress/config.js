@@ -1,0 +1,48 @@
+export default {
+    lang: 'en-US',
+
+    title: 'Camelot',
+    description: 'Documentation for the Camelot Discord bot',
+    base: '/Camelot/',
+
+    themeConfig: {
+        logo: '/hero.png',
+        sidebar: [
+            {
+                text: 'Setting up Camelot',
+                link: '/get-started'
+            },
+            {
+                text: 'Modules',
+                link: '/modules/',
+                collapsed: false,
+                items: [
+                    {
+                        text: 'Moderation',
+                        link: '/modules/moderation'
+                    },
+                    {
+                        text: 'Counters',
+                        link: '/modules/counters'
+                    },
+                    {
+                        text: 'Message Referencing',
+                        link: '/modules/message-referencing'
+                    }
+                ]
+            }
+        ],
+        nav: [{
+            text: 'Setting up Camelot',
+            link: '/get-started',
+        }, {
+            text: 'Modules',
+            link: '/modules/',
+            activeMatch: '/modules/'
+        }],
+        footer: {
+            message: 'Released under the MIT License.',
+            copyright: 'Copyright © 2024 NeoForged'
+        }
+    }
+}
