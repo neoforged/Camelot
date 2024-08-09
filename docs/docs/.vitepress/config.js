@@ -7,6 +7,9 @@ export default {
 
     themeConfig: {
         logo: '/hero.png',
+        socialLinks: [
+            { icon: 'github', link: 'https://github.com/neoforged/Camelot' }
+        ],
         sidebar: [
             {
                 text: 'Setting up Camelot',
