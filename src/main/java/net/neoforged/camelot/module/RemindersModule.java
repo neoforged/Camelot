@@ -5,6 +5,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Suppliers;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import com.jagrosh.jdautilities.command.MessageContextMenu;
+import com.jagrosh.jdautilities.command.MessageContextMenuEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -12,12 +14,17 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
@@ -35,11 +42,12 @@ import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.Utils;
 
-import java.awt.*;
+import java.awt.Color;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -56,6 +64,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
     }
 
     private static final String SNOOZE_BUTTON_ID = "snooze_reminder";
+    private static final String BASE_REMIND_MESSAGE = "remindmsg";
     private static final Emoji SNOOZE_EMOJI = Emojis.MANAGER.getLazyEmoji("snooze");
 
     private List<ActionRow> snoozeButtons = List.of();
@@ -74,10 +83,54 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
     @Override
     public void registerCommands(CommandClientBuilder builder) {
         builder.addSlashCommands(new RemindCommand());
+        builder.addContextMenu(new MessageContextMenu() {
+            {
+                name = "Add reminder";
+                guildOnly = true;
+            }
+
+            @Override
+            protected void execute(MessageContextMenuEvent event) {
+                event.replyModal(Modal.create(
+                        BASE_REMIND_MESSAGE + "/" + event.getTarget().getId(),
+                        "Add reminder"
+                )
+                        .addActionRow(TextInput.create(
+                                "time",
+                                "Remind in",
+                                TextInputStyle.SHORT
+                        ).setPlaceholder("12h30m").setRequired(true).setMinLength(2).build())
+                        .addActionRow(TextInput.create(
+                                "text",
+                                "Reminder text",
+                                TextInputStyle.PARAGRAPH
+                        ).setRequired(false).build())
+                        .build()).queue();
+            }
+        });
     }
 
     @Override
     public void setup(JDA jda) {
+        jda.addEventListener(((EventListener) (gevent) -> {
+            if (gevent instanceof ModalInteractionEvent event) {
+                var split = event.getModalId().split("/", 2);
+                if (split[0].equals(BASE_REMIND_MESSAGE)) {
+                    var msgId = split[1];
+                    var url = "https://discord.com/channels/" + event.getGuild().getId() + "/" + event.getChannel().getId() + "/" + msgId;
+                    final var time = DateUtils.getDurationFromInput(event.getValue("time").getAsString());
+                    final var remTime = Instant.now().plus(time);
+                    Database.main().useExtension(RemindersDAO.class, db -> db.insertReminder(
+                            event.getUser().getIdLong(), event.getChannel().getIdLong(), remTime.getEpochSecond(),
+                            (url + " " + Optional.ofNullable(event.getValue("text")).map(ModalMapping::getAsString).orElse("")).trim()
+                    ));
+                    event.deferReply().setContent("> -# Reminder for " + url + "\nSuccessfully scheduled reminder on %s (%s)!".formatted(TimeFormat.DATE_TIME_LONG.format(remTime), TimeFormat.RELATIVE.format(remTime)))
+                            .addActionRow(DismissListener.createDismissButton())
+                            .queue();
+                }
+            }
+        }));
+
         snoozeButtons = ActionRow.partitionOf(config().getSnoozeDurations().stream().map(duration -> Button.of(ButtonStyle.SECONDARY, SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), DateUtils.formatDuration(duration), SNOOZE_EMOJI))
                 .toArray(ItemComponent[]::new));
 
@@ -159,25 +212,23 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
 
     private RestAction<Message> sendMessage(User user, Reminder reminder, MessageChannel channel) {
         final String[] textSplit = reminder.reminder().split(" ", 2);
-        if (textSplit.length == 2) {
-            final var msgOpt = ReferencingListener.decodeMessageLink(textSplit[0]);
-            if (msgOpt.isPresent()) {
-                final var msgInfo = msgOpt.get();
-                if (msgInfo.channelId() == reminder.channel()) {
-                    final var ra = msgInfo.retrieve(BotMain.get());
-                    if (ra.isPresent()) {
-                        return ra.get()
-                                .mapToResult()
-                                .flatMap(result -> {
-                                    if (result.isFailure()) {
-                                        return channel.sendMessage(createBaseMessage(user, reminder, reminder.reminder()));
-                                    } else {
-                                        return channel.sendMessage(createBaseMessage(user, reminder, textSplit[1]))
-                                                .setMessageReference(result.get().getId())
-                                                .mentionRepliedUser(false);
-                                    }
-                                });
-                    }
+        final var msgOpt = ReferencingListener.decodeMessageLink(textSplit[0]);
+        if (msgOpt.isPresent()) {
+            final var msgInfo = msgOpt.get();
+            if (msgInfo.channelId() == reminder.channel()) {
+                final var ra = msgInfo.retrieve(BotMain.get());
+                if (ra.isPresent()) {
+                    return ra.get()
+                            .mapToResult()
+                            .flatMap(result -> {
+                                if (result.isFailure()) {
+                                    return channel.sendMessage(createBaseMessage(user, reminder, reminder.reminder()));
+                                } else {
+                                    return channel.sendMessage(createBaseMessage(user, reminder, textSplit.length == 1 ? textSplit[0] : textSplit[1]))
+                                            .setMessageReference(result.get().getId())
+                                            .mentionRepliedUser(false);
+                                }
+                            });
                 }
             }
         }
