@@ -25,17 +25,21 @@ export default {
                 collapsed: false,
                 items: [
                     {
-                        text: 'Moderation',
-                        link: '/modules/moderation'
-                    },
-                    {
                         text: 'Counters',
                         link: '/modules/counters'
                     },
                     {
+                        text: 'File Preview',
+                        link: '/modules/file-preview'
+                    },
+                    {
                         text: 'Message Referencing',
                         link: '/modules/message-referencing'
-                    }
+                    },
+                    {
+                        text: 'Moderation',
+                        link: '/modules/moderation'
+                    },
                 ]
             }
         ],
