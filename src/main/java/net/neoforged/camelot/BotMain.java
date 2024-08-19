@@ -297,6 +297,22 @@ public class BotMain {
                 }
 
                 LOGGER.warn("Migration complete. Please fix TODOs and check that the configuration is correct before restarting the bot.");
+            } else {
+                try {
+                    Files.writeString(config, """
+                            import net.neoforged.camelot.config.module.*
+                            
+                            // Default Camelot configuration
+                            // Please configure at least the API token for the bot to start.
+                            // For more information, visit the documentation
+                            camelot {
+                                token = secret('<insert bot api token here>')
+                                prefix = '!'
+                            }""");
+                    LOGGER.warn("Created default config. Please configure it according to the documentation.");
+                } catch (IOException e) {
+                    LOGGER.error("Failed to create default config", e);
+                }
             }
 
             System.exit(1);

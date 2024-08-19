@@ -93,7 +93,7 @@ class CamelotConfig {
     }
 
     void validate() {
-        if (!token) {
+        if (!token || token == '<insert bot api token here>') {
             throw new IllegalArgumentException('Bot API Token must be provided!')
         }
 
