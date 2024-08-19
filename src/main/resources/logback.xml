@@ -31,9 +31,17 @@
                 %logger{50}/%marker - %msg%n
             </pattern>
         </encoder>
+
+        <!-- Filter out unneeded messages from the console -->
+        <filter class="net.neoforged.camelot.util.LoggingFilter" />
     </appender>
     <!--Log levels include ERROR, WARN, INFO, DEBUG, TRACE -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
     </root>
+
+    <!-- Disable the annoying useless printout -->
+    <logger name="org.flywaydb.core.internal.license.VersionPrinter" level="OFF" />
+    <!-- Disable the duplicate logging -->
+    <logger name="org.flywaydb.core.internal.database.base.BaseDatabaseType" level="OFF" />
 </configuration>
