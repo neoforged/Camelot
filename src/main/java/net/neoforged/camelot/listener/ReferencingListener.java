@@ -14,7 +14,10 @@ import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +48,7 @@ public final class ReferencingListener implements EventListener {
         if (originalMsg.getMessageReference() != null && isStringReference(originalMsg.getContentRaw())) {
             final Message referencedMessage = originalMsg.getMessageReference().getMessage();
             if (referencedMessage != null) {
-                event.getChannel().sendMessageEmbeds(reference(referencedMessage, event.getMember()))
+                event.getChannel().sendMessage(reference(referencedMessage, event.getMember()))
                         .flatMap($ -> originalMsg.delete().reason("Reference successful"))
                         .queue();
                 return;
@@ -59,7 +62,7 @@ public final class ReferencingListener implements EventListener {
 
         decodeMessageLink(msg[0])
                 .flatMap(info -> info.retrieve(BotMain.get()))
-                .ifPresent(action -> action.flatMap(message -> event.getChannel().sendMessageEmbeds(reference(message, event.getMember())))
+                .ifPresent(action -> action.flatMap(message -> event.getChannel().sendMessage(reference(message, event.getMember())))
                         .flatMap($ -> msg.length == 1 && originalMsg.getMessageReference() == null, $ -> originalMsg.delete().reason("Reference successful"))
                         .queue(null, ERROR_HANDLER));
     }
@@ -68,7 +71,7 @@ public final class ReferencingListener implements EventListener {
         return string.equals(".") || string.equals(ZERO_WIDTH_SPACE);
     }
 
-    public static List<MessageEmbed> reference(final Message message, final Member quoter) {
+    public static MessageCreateData reference(final Message message, final Member quoter) {
         final boolean hasAuthor = !message.isWebhookMessage();
         final String msgLink = message.getJumpUrl();
         final EmbedBuilder embed = new EmbedBuilder().setTimestamp(message.getTimeCreated()).setColor(0x2F3136);
@@ -84,8 +87,11 @@ public final class ReferencingListener implements EventListener {
         if (quoter.getIdLong() != message.getAuthor().getIdLong()) {
             embed.setFooter(Utils.getName(quoter.getUser()) + " referenced", quoter.getEffectiveAvatarUrl());
         }
+        var builder = new MessageCreateBuilder();
         if (!message.getAttachments().isEmpty()) {
-            embed.setImage(message.getAttachments().get(0).getUrl());
+            var attach = message.getAttachments().getFirst();
+            embed.setImage("attachment://attach." + attach.getFileExtension());
+            builder.addFiles(FileUpload.fromData(attach.getProxy().download().join(), "attach." + attach.getFileExtension()));
         }
 
         final List<MessageEmbed> embeds = new ArrayList<>();
@@ -97,7 +103,7 @@ public final class ReferencingListener implements EventListener {
                         .setFooter("Quoted" + (em.getFooter() == null ? "" : " | " + Utils.truncate(em.getFooter().getText(), MessageEmbed.TEXT_MAX_LENGTH - 9)))
                         .build()));
 
-        return embeds;
+        return builder.addEmbeds(embeds).build();
     }
 
     public static Optional<MessageLinkInformation> decodeMessageLink(final String link) {
