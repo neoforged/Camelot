@@ -2,5 +2,4 @@ FROM eclipse-temurin:21
 COPY build/libs/camelot-all.jar /camelot.jar
 VOLUME ["/home/camelot"]
 WORKDIR /home/camelot
-RUN cd /home/camelot
-ENTRYPOINT ["java", "--enable-preview", "-jar", "/camelot.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=90", "--enable-preview", "-jar", "/camelot.jar"]
