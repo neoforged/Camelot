@@ -67,6 +67,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import static j2html.TagCreator.*;
 
@@ -411,6 +412,36 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                         .flatMap(_ -> event.getInteraction().getHook().editOriginal("Appeal rejected."))
                         .queue();
             }
+
+            case "approve" -> {
+                var message = Optional.ofNullable(event.getValue("message"))
+                        .map(ModalMapping::getAsString).filter(Predicate.not(String::isBlank))
+                        .orElse(null);
+
+                event.deferReply(true).flatMap(_ ->
+                                event.getGuild().unban(UserSnowflake.fromId(userId))
+                                        .reason("rec: Ban appeal approved in thread: " + thread.getId()))
+                        .onSuccess(_ -> ModerationActionRecorder.recordAndLog(
+                                ModLogEntry.unban(userId, event.getGuild().getIdLong(), event.getUser().getIdLong(), "Ban appeal approved in thread: " + thread.getId()),
+                                event.getJDA()
+                        ))
+                        .flatMap(_ -> thread.sendMessage("Ban appeal **approved** by " + event.getUser().getAsMention() + (message == null ? "" : ". Message: **" + message + "**.")))
+                        .flatMap(_ -> closeAppeal(thread, false))
+                        .flatMap(_ -> retrieveUser)
+                        .flatMap(user -> event.getGuild().getDefaultChannel().createInvite()
+                                .setMaxUses(1).setMaxAge((long) 7, TimeUnit.DAYS)
+                                .reason("Un-ban invite for " + userId)
+                                .onSuccess(invite -> sendMailFromServer(appeal.email(), user, event.getGuild(), "Ban appeal approved",
+                                        pre(text("Your appeal has been "), b(text("approved")), text(".")),
+                                        pre(text("You may join the server again using "), a("this invite link").withHref(invite.getUrl()), text(" which expires in 7 days.")),
+                                        div().condWith(message != null, hr(),
+                                                h5("Message from moderators"),
+                                                pre(message))
+                                )))
+                        .onSuccess(_ -> Database.appeals().useExtension(BanAppealsDAO.class, db -> db.deleteAppeal(appeal.guildId(), appeal.userId())))
+                        .flatMap(_ -> event.getInteraction().getHook().editOriginal("Appeal approved."))
+                        .queue();
+            }
         }
     }
 
@@ -425,7 +456,6 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
             event.reply("Invalid appeal!").setEphemeral(true).queue();
             return;
         }
-        final var targetAction = event.getJDA().retrieveUserById(userId);
 
         assert event.getGuild() != null;
 
@@ -439,31 +469,9 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                             .addActionRow(TextInput.create("blockdays", "Block days", TextInputStyle.SHORT).setPlaceholder("The amount of days to block the user from re-sending an appeal for").build())
                             .build())
                     .queue();
-            case "approve" -> {
-                final ThreadChannel thread = event.getMessage().getStartedThread();
-                assert thread != null;
-
-                event.deferReply(true).flatMap(_ ->
-                                event.getGuild().unban(UserSnowflake.fromId(userId))
-                                    .reason("rec: Ban appeal approved in thread: " + thread.getId()))
-                        .onSuccess(_ -> ModerationActionRecorder.recordAndLog(
-                                ModLogEntry.unban(userId, event.getGuild().getIdLong(), event.getUser().getIdLong(), "Ban appeal approved in thread: " + thread.getId()),
-                                event.getJDA()
-                        ))
-                        .flatMap(_ -> thread.sendMessage("Ban appeal **approved** by " + event.getUser().getAsMention()))
-                        .flatMap(_ -> closeAppeal(thread, false))
-                        .flatMap(_ -> targetAction)
-                        .flatMap(user -> event.getGuild().getDefaultChannel().createInvite()
-                                .setMaxUses(1).setMaxAge((long) 7, TimeUnit.DAYS)
-                                .reason("Un-ban invite for " + userId)
-                                .onSuccess(invite -> sendMailFromServer(appeal.email(), user, event.getGuild(), "Ban appeal approved",
-                                        pre(text("Your appeal has been "), b(text("approved")), text(".")),
-                                        pre(text("You may join the server again using "), a("this invite link").withHref(invite.getUrl()), text(" which expires in 7 days."))
-                                )))
-                        .onSuccess(_ -> Database.appeals().useExtension(BanAppealsDAO.class, db -> db.deleteAppeal(appeal.guildId(), appeal.userId())))
-                        .flatMap(_ -> event.getInteraction().getHook().editOriginal("Appeal approved."))
-                        .queue();
-            }
+            case "approve" -> event.replyModal(Modal.create("ban-appeals/approve/" + userId, "Approve appeal")
+                    .addActionRow(TextInput.create("message", "Message", TextInputStyle.PARAGRAPH).setPlaceholder("Optional message sent to the appellee accompanying their invite to join the server").setRequired(false).build())
+                    .build());
         }
     }
 
