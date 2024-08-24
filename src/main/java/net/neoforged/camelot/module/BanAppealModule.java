@@ -471,7 +471,8 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                     .queue();
             case "approve" -> event.replyModal(Modal.create("ban-appeals/approve/" + userId, "Approve appeal")
                     .addActionRow(TextInput.create("message", "Message", TextInputStyle.PARAGRAPH).setPlaceholder("Optional message sent to the appellee accompanying their invite to join the server").setRequired(false).build())
-                    .build());
+                    .build())
+                    .queue();
         }
     }
 
