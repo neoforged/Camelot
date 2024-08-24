@@ -7,7 +7,7 @@ Camelot is available as an image on GHCR, at [`ghcr.io/neoforged/camelot`](https
 Camelot stores its files in the `/home/camelot/` directory:
 - `.db` SQLite databases in `/home/camelot/data`
 - logs in `/home/camelot/bot_logs`
-- static web server files in `/home/camelot/static` (only relevant if the web server module is enabled, as required by ban appeals or Minecraft ownership verification commands)
+- static web server files in `/home/camelot/static` (only relevant if the web server module is enabled, as required by ban appeals or the Minecraft ownership verification command)
 
 It is recommended that you mount the entire `/home/camelot` directory as a volume.
 You **must** mount at least `/home/camelot/data` or you **will** experience data loss.
