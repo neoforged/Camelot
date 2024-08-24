@@ -41,7 +41,7 @@ public class ThreadPingsListener implements EventListener {
 
         final ThreadChannel thread = event.getChannel().asThreadChannel();
         final List<Long> roleIds = new ArrayList<>();
-        Database.pings().useExtension(ThreadPingsDAO.class, threadPings -> {
+        Database.config().useExtension(ThreadPingsDAO.class, threadPings -> {
             // Check the thread's parent channel
             final IThreadContainerUnion parentChannel = thread.getParentChannel();
             roleIds.addAll(threadPings.query(parentChannel.getIdLong()));
@@ -63,7 +63,7 @@ public class ThreadPingsListener implements EventListener {
             final Role role = thread.getGuild().getRoleById(roleId);
             if (role == null) {
                 LOGGER.info("Role {} does not exist; deleting role from database", roleId);
-                Database.pings().useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearRole(roleId));
+                Database.config().useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearRole(roleId));
                 continue;
             }
             roles.add(role);

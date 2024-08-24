@@ -1,7 +1,6 @@
 package net.neoforged.camelot.module;
 
 import com.google.auto.service.AutoService;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDABuilder;
 import net.neoforged.camelot.commands.utility.ThreadPingsCommand;
 import net.neoforged.camelot.config.module.ThreadPings;
@@ -20,16 +19,13 @@ import net.neoforged.camelot.module.api.CamelotModule;
 public class ThreadPingsModule extends CamelotModule.Base<ThreadPings> {
     public ThreadPingsModule() {
         super(ThreadPings.class);
+        accept(BuiltInModule.CONFIGURATION_COMMANDS, configCommandBuilder -> configCommandBuilder
+                .accept(new ThreadPingsCommand.ConfigureChannel(), new ThreadPingsCommand.ConfigureGuild(), new ThreadPingsCommand.View()));
     }
 
     @Override
     public String id() {
         return "thread-pings";
-    }
-
-    @Override
-    public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommand(new ThreadPingsCommand());
     }
 
     @Override

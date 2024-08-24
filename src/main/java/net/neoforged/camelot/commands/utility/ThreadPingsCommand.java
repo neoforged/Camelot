@@ -2,7 +2,6 @@ package net.neoforged.camelot.commands.utility;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Role;
@@ -15,6 +14,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu.SelectTarget;
@@ -31,20 +31,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class ThreadPingsCommand extends InteractiveCommand {
+public abstract class ThreadPingsCommand extends InteractiveCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPingsCommand.class);
+    private static final SubcommandGroupData GROUP_DATA = new SubcommandGroupData("thread-pings", "Commands related to thread pings configuration");
 
     public ThreadPingsCommand() {
-        this.name = "thread-pings";
-        this.guildOnly = true;
-        this.children = new SlashCommand[]{
-                new ConfigureChannel(),
-                new ConfigureGuild(),
-                new View(),
-        };
-        this.userPermissions = new Permission[] {
-                Permission.MESSAGE_MANAGE
-        };
+        this.subcommandGroup = GROUP_DATA;
     }
 
     @Override
@@ -62,7 +54,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
         final GuildChannel channel = event.getJDA().getGuildChannelById(channelId);
         if (!isGuildId && channel == null) {
             LOGGER.info("Received interaction for non-existent channel {}; deleting associated pings from database", channelId);
-            Database.pings().useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearChannel(channelId));
+            Database.config().useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearChannel(channelId));
             return;
         }
 
@@ -73,7 +65,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
                 .map(ISnowflake::getIdLong)
                 .toList();
 
-        Database.pings().useExtension(ThreadPingsDAO.class, threadPings -> {
+        Database.config().useExtension(ThreadPingsDAO.class, threadPings -> {
             final List<Long> existingRoles = threadPings.query(channelId);
 
             for (Long existingRoleId : existingRoles) {
@@ -92,7 +84,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
         event.getInteraction().editMessage(buildMessage(isGuildId ? "this guild" : channel.getAsMention(), roles)).queue();
     }
 
-    public class ConfigureChannel extends SlashCommand {
+    public static class ConfigureChannel extends ThreadPingsCommand {
         public ConfigureChannel() {
             this.name = "configure-channel";
             this.help = "Configure roles to be pinged in threads made under a channel";
@@ -107,7 +99,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
             if (result == null) return;
             result.interaction.getHook().editOriginal(buildMessage(result.channel.getAsMention(), result.roles))
                     .setComponents(ActionRow.of(
-                            EntitySelectMenu.create(ThreadPingsCommand.super.getComponentId(result.channel.getId()),
+                            EntitySelectMenu.create(getComponentId(result.channel.getId()),
                                             SelectTarget.ROLE)
                                     .setMinValues(0)
                                     .setMaxValues(SelectMenu.OPTIONS_MAX_AMOUNT)
@@ -117,7 +109,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
         }
     }
 
-    public class ConfigureGuild extends SlashCommand {
+    public static class ConfigureGuild extends ThreadPingsCommand {
         public ConfigureGuild() {
             this.name = "configure-guild";
             this.help = "Configure roles to be pinged in threads made under this guild";
@@ -129,7 +121,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
             assert event.getGuild() != null;
             final long guildId = event.getGuild().getIdLong();
 
-            final List<Role> roles = Database.pings().withExtension(ThreadPingsDAO.class,
+            final List<Role> roles = Database.config().withExtension(ThreadPingsDAO.class,
                             threadPings -> threadPings.query(guildId))
                     .stream()
                     .map(id -> event.getJDA().getRoleById(id))
@@ -138,8 +130,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
 
             event.getInteraction().getHook().editOriginal(buildMessage("this guild", roles))
                     .setComponents(ActionRow.of(
-                            EntitySelectMenu.create(ThreadPingsCommand.super.getComponentId(guildId),
-                                            SelectTarget.ROLE)
+                            EntitySelectMenu.create(getComponentId(guildId), SelectTarget.ROLE)
                                     .setMinValues(0)
                                     .setMaxValues(SelectMenu.OPTIONS_MAX_AMOUNT)
                                     .build()
@@ -151,7 +142,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
     public static class View extends SlashCommand {
         public View() {
             this.name = "view";
-            this.help = "View  roles to be pinged in threads made under a channel";
+            this.help = "View roles to be pinged in threads made under a channel";
             this.options = List.of(
                     new OptionData(OptionType.CHANNEL, "channel", "The channel", true)
             );
@@ -182,7 +173,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
 
             if (result.channel instanceof StandardGuildChannel guildChannel && guildChannel.getParentCategory() != null) {
                 final var parentCategory = guildChannel.getParentCategory();
-                final List<Role> categoryRoles = Database.pings().withExtension(ThreadPingsDAO.class,
+                final List<Role> categoryRoles = Database.config().withExtension(ThreadPingsDAO.class,
                                 threadPings -> threadPings.query(parentCategory.getIdLong()))
                         .stream()
                         .map(id -> event.getJDA().getRoleById(id))
@@ -200,7 +191,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
                 }
             }
 
-            final List<Role> guildRoles = Database.pings().withExtension(ThreadPingsDAO.class,
+            final List<Role> guildRoles = Database.config().withExtension(ThreadPingsDAO.class,
                             threadPings -> threadPings.query(result.channel.getGuild().getIdLong()))
                     .stream()
                     .map(id -> event.getJDA().getRoleById(id))
@@ -235,7 +226,7 @@ public class ThreadPingsCommand extends InteractiveCommand {
             return null;
         }
 
-        final List<Role> roles = Database.pings().withExtension(ThreadPingsDAO.class,
+        final List<Role> roles = Database.config().withExtension(ThreadPingsDAO.class,
                         threadPings -> threadPings.query(channel.getIdLong()))
                 .stream()
                 .map(id -> event.getJDA().getRoleById(id))

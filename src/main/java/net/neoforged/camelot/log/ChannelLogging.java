@@ -59,7 +59,7 @@ public final class ChannelLogging {
             } else if (!acnowledgedUnknownChannel) {
                 acnowledgedUnknownChannel = true;
                 BotMain.LOGGER.warn("Unknown logging channel with id '{}'", channelId);
-                Database.main().useExtension(LoggingChannelsDAO.class, db -> db.removeAll(channelId));
+                Database.config().useExtension(LoggingChannelsDAO.class, db -> db.removeAll(channelId));
             }
         });
     }
@@ -68,6 +68,6 @@ public final class ChannelLogging {
      * {@return the channels associated with this logging type}
      */
     public List<Long> getChannels() {
-        return Database.main().withExtension(LoggingChannelsDAO.class, db -> db.getChannelsForType(type));
+        return Database.config().withExtension(LoggingChannelsDAO.class, db -> db.getChannelsForType(type));
     }
 }

@@ -14,6 +14,7 @@ import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.util.Emojis;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * A module that provides builtin objects and arguments.
@@ -29,7 +30,13 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
     @Override
     public void registerCommands(CommandClientBuilder builder) {
         var kids = new ArrayList<SlashCommand>();
-        BotMain.propagateParameter(CONFIGURATION_COMMANDS, kids::add);
+        BotMain.propagateParameter(CONFIGURATION_COMMANDS, new ConfigCommandBuilder() {
+            @Override
+            public ConfigCommandBuilder accept(SlashCommand... child) {
+                kids.addAll(Arrays.asList(child));
+                return this;
+            }
+        });
         if (!kids.isEmpty()) {
             builder.addSlashCommand(new SlashCommand() {
                 {
@@ -38,6 +45,7 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
                     this.userPermissions = new Permission[] {
                             Permission.MANAGE_SERVER
                     };
+                    this.guildOnly = true;
                     this.children = kids.toArray(SlashCommand[]::new);
                 }
 
@@ -60,6 +68,6 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
     }
 
     public interface ConfigCommandBuilder {
-        void accept(SlashCommand child);
+        ConfigCommandBuilder accept(SlashCommand... child);
     }
 }

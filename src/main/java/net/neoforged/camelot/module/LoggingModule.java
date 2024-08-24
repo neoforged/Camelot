@@ -40,7 +40,7 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
 
                     @Override
                     protected void execute(SlashCommandEvent event) {
-                        var types = Database.main().withExtension(LoggingChannelsDAO.class, db -> db.getTypesForChannel(event.getChannel().getIdLong()));
+                        var types = Database.config().withExtension(LoggingChannelsDAO.class, db -> db.getTypesForChannel(event.getChannel().getIdLong()));
                         var builder = StringSelectMenu.create(getComponentId())
                                 .setMaxValues(LoggingChannelsDAO.Type.values().length)
                                 .setMinValues(0);
@@ -59,7 +59,7 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
 
                     @Override
                     protected void onStringSelect(StringSelectInteractionEvent event, String[] arguments) {
-                        Database.main().useExtension(LoggingChannelsDAO.class, db -> {
+                        Database.config().useExtension(LoggingChannelsDAO.class, db -> {
                             db.removeAll(event.getChannelIdLong());
                             event.getValues().stream()
                                     .map(LoggingChannelsDAO.Type::valueOf)
