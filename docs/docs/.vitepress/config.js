@@ -19,6 +19,10 @@ export default {
                 link: '/get-started'
             },
             {
+                text: 'Formats',
+                link: '/formats'
+            },
+            {
                 text: 'Modules',
                 link: '/modules/',
                 collapsed: false,

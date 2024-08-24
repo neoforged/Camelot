@@ -140,6 +140,10 @@ dependencies {
     annotationProcessor group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
 
     compileOnly 'org.jetbrains:annotations:24.0.1'
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junit_version")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junit_version")
+    testImplementation('org.assertj:assertj-core:3.25.1')
 }
 
 jar {
@@ -173,6 +177,10 @@ shadowJar {
     archiveFile.set(project.file("$buildDir/libs/camelot-all.jar"))
     dependsOn(tasks.gitLog)
     from(tasks.gitLog.output)
+}
+
+test {
+    useJUnitPlatform()
 }
 
 publishing {
