@@ -6,6 +6,8 @@ import net.neoforged.camelot.config.ConfigUtils
 import net.neoforged.camelot.config.MailConfiguration
 import net.neoforged.camelot.config.OAuthConfiguration
 
+import java.awt.Color
+
 /**
  * Module for ban appeals.
  *
@@ -58,4 +60,26 @@ class BanAppeals extends ModuleConfiguration {
      * The amount of days in which the user is expected to get a response to their appeal.
      */
     int responseTime = 7
+
+    /**
+     * Configuration for ban appeal colours.
+     */
+    final Colors colors = new Colors()
+
+    /**
+     * Configure the ban appeal colours.
+     */
+    void colors(@DelegatesTo(value = Colors, strategy = Closure.DELEGATE_FIRST) Closure config) {
+        ConfigUtils.configure(colors, config)
+    }
+
+    /**
+     * Configuration for ban appeal colours.
+     */
+    static class Colors {
+        int approved = Color.GREEN.getRGB()
+        int rejected = Color.RED.getRGB()
+        int pendingReply = Color.GRAY.getRGB()
+        int ongoing = Color.YELLOW.getRGB()
+    }
 }

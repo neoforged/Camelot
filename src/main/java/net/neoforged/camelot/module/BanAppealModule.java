@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
@@ -204,7 +205,9 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         guild.getChannelById(GuildMessageChannel.class, config().getAppealsChannels().get(guild.getIdLong())).retrieveMessageById(existing.threadId())
                 .map(Message::getStartedThread)
-                .flatMap(thread -> thread.sendMessageEmbeds(embed.build()))
+                .flatMap(thread -> thread.sendMessageEmbeds(embed.build())
+                        .and(thread.retrieveParentMessage()
+                                .flatMap(msg -> msg.editMessageEmbeds(modifyColour(msg.getEmbeds().getFirst(), config().getColors().getOngoing())))))
                 .queue();
 
         Database.appeals().useExtension(BanAppealsDAO.class, db -> db.setFollowup(
@@ -299,7 +302,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                 .setTimestamp(Instant.now())
                 .setDescription("User appealed their ban for **" + Objects.requireNonNullElse(possibleBan.get().getReason(), "No reason given").replace("rec: ", "") + "**:\n")
                 .appendDescription(payload.getString("reason"))
-                .setColor(Color.CYAN);
+                .setColor(config().getColors().getOngoing());
 
         if (!payload.isNull("feedback") && !payload.getString("feedback").isBlank()) {
             if (payload.getString("feedback").length() > 1000) {
@@ -354,10 +357,17 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
         final var guild = event.getGuild();
         assert guild != null;
 
+        final ThreadChannel thread = event.getMessage().getStartedThread();
+        assert thread != null;
+
         switch (split[1]) {
             case "followup" -> {
                 final String replyText = event.getValue("reply").getAsString();
                 Database.appeals().useExtension(BanAppealsDAO.class, db -> db.setFollowup(event.getGuild().getIdLong(), userId, replyText));
+
+                thread.retrieveParentMessage()
+                        .flatMap(msg -> msg.editMessageEmbeds(modifyColour(msg.getEmbeds().getFirst(), config().getColors().getPendingReply())))
+                        .queue();
 
                 retrieveUser.onSuccess(user -> sendMailFromServer(appeal.email(), user, guild, "Ban appeal follow-up",
                         pre(text("The moderators of "), b(event.getGuild().getName()), text(" have sent you a message:")),
@@ -385,9 +395,6 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
                 final Instant until = Instant.now().plus(blockDays, ChronoUnit.DAYS);
                 Database.appeals().useExtension(BanAppealsDAO.class, db -> db.blockUntil(guild.getIdLong(), userId, "Previous appeal denied: " + reason, until.toEpochMilli()));
-
-                final ThreadChannel thread = event.getMessage().getStartedThread();
-                assert thread != null;
 
                 event.deferReply(true)
                         .flatMap(_ -> thread.sendMessage("Ban appeal **rejected** by " + event.getUser().getAsMention() + ". Reason: **" + reason + "**."))
@@ -463,7 +470,8 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
     private RestAction<?> closeAppeal(ThreadChannel thread, boolean rejected) {
         return thread.retrieveParentMessage()
                 .flatMap(msg -> msg.editMessageComponents(List.of())
-                        .setContent(rejected ? "Appeal rejected" : "Appeal approved"))
+                        .setContent(rejected ? "Appeal rejected" : "Appeal approved")
+                        .setEmbeds(modifyColour(msg.getEmbeds().getFirst(), rejected ? config().getColors().getRejected() : config().getColors().getApproved())))
                 .flatMap(_ -> thread.getManager().setArchived(true));
     }
 
@@ -690,5 +698,9 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
             return String.format("https://cdn.discordapp.com/embed/avatars/%s.png", avatar);
         }
         return String.format("https://cdn.discordapp.com/avatars/%s/%s.%s", id, avatar, avatar.startsWith("a_") ? "gif" : "png");
+    }
+
+    private static MessageEmbed modifyColour(MessageEmbed embed, int colour) {
+        return new EmbedBuilder(embed).setColor(colour).build();
     }
 }
