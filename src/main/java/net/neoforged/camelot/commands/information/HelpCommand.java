@@ -6,17 +6,28 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
-import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.configuration.Common;
+import net.neoforged.camelot.util.CachedOnlineData;
 import net.neoforged.camelot.util.jda.ButtonManager;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
+import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleData> {
+    private static final CachedOnlineData<String> LATEST_VERSION = CachedOnlineData.builder()
+            .client(BotMain.HTTP_CLIENT)
+            .uri(URI.create("https://search.maven.org/solrsearch/select?q=g:net.neoforged.camelot+AND+a:camelot&core=gav&rows=1&wt=json"))
+            .cacheDuration(Duration.ofHours(1))
+            .json()
+            .map(o -> o.getAsJsonObject("response").getAsJsonArray("docs").get(0).getAsJsonObject().get("v").getAsString())
+            .build();
 
     public HelpCommand(ButtonManager buttonManager) {
         super(buttonManager);
@@ -44,8 +55,14 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
      */
     public EmbedBuilder getHelpStartingAt(int index) {
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setAuthor(Common.NAME_WITH_VERSION, Common.REPO, BotMain.get().getSelfUser().getAvatarUrl());
-        embed.setDescription("## Latest commits:\n");
+        embed.setAuthor(Common.NAME_WITH_VERSION, Common.WEBSITE, BotMain.get().getSelfUser().getAvatarUrl());
+
+        var latest = LATEST_VERSION.getOrBust();
+        if (!latest.equals(Common.VERSION)) {
+            embed.appendDescription("You're running an outdated Camelot version. The latest version is **" + latest + "**.\n");
+        }
+
+        embed.appendDescription("## Last commits of this version:\n");
 
         appendCommits: try (var is = HelpCommand.class.getResourceAsStream("/gitlog")) {
             if (is == null) break appendCommits;

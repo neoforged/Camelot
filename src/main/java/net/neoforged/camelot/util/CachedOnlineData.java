@@ -1,6 +1,7 @@
 package net.neoforged.camelot.util;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -108,6 +109,14 @@ public interface CachedOnlineData<T> {
         }
 
         /**
+         * Decodes the response as a {@link JsonObject}.
+         */
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        public Builder<JsonObject> json() {
+            return gsonDecode(CODImpl.GSON, (TypeToken) TypeToken.get(JsonObject.class));
+        }
+
+        /**
          * Changes the type of this builder by replacing the handler with one that maps the result of the previous handler.
          */
         public <Z> Builder<Z> map(Function<T, Z> mapper) {
@@ -149,6 +158,7 @@ class CODImpl<T> implements CachedOnlineData<T> {
         thread.setDaemon(true);
         return thread;
     });
+    static final Gson GSON = new Gson();
 
     private final HttpClient client;
     private final HttpRequest request;
