@@ -3,7 +3,6 @@ export default {
 
     title: 'Camelot',
     description: 'Documentation for the Camelot Discord bot',
-    base: '/Camelot/',
 
     head: [
         ['link', { rel: 'icon', type: 'image/x-icon', href: '/Camelot/favicon.ico' }],
