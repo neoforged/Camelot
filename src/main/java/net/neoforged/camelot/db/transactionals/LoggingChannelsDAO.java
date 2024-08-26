@@ -1,7 +1,7 @@
 package net.neoforged.camelot.db.transactionals;
 
 import net.dv8tion.jda.api.entities.emoji.Emoji;
-import org.jdbi.v3.core.enums.EnumByOrdinal;
+import org.jdbi.v3.core.enums.EnumByName;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
@@ -11,7 +11,6 @@ import java.util.List;
 /**
  * A transactional used to interact with {@link Type logging channels}.
  */
-@EnumByOrdinal
 public interface LoggingChannelsDAO extends Transactional<LoggingChannelsDAO> {
 
     @SqlUpdate("insert into logging_channels(channel, type) values (?, ?)")
@@ -29,6 +28,7 @@ public interface LoggingChannelsDAO extends Transactional<LoggingChannelsDAO> {
     @SqlQuery("select type from logging_channels where channel = ?")
     List<Type> getTypesForChannel(long channelId);
 
+    @EnumByName
     enum Type {
         MODERATION("Moderation", "Moderation events, such as bans and warnings", "🔨"),
         JOINS("Joins", "Join and leave events", "🚪"),
