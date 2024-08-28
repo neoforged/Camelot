@@ -23,10 +23,15 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    configSources
+}
+
 java.withSourcesJar()
 
 groovydoc {
     use = true
+    source(configurations.configSources)
 }
 
 tasks.register('groovydocJar', Jar) {
@@ -38,9 +43,14 @@ tasks.register('groovydocJar', Jar) {
 dependencies {
     api "org.apache.groovy:groovy:${project.groovy_version}"
     api "org.apache.groovy:groovy-contracts:${project.groovy_version}"
-    implementation group: 'org.kohsuke', name: 'github-api', version: project.ghapi_version
+    api group: 'org.kohsuke', name: 'github-api', version: project.ghapi_version
 
     sampleCompileOnly(sourceSets.main.output)
+
+    project(':modules').subprojects.each {
+        sampleCompileOnly(project(path: it.path, configuration: 'configOut'))
+        configSources(project(path: it.path, configuration: 'configOutSrc'))
+    }
 }
 
 publishing {

@@ -1,4 +1,4 @@
-package net.neoforged.camelot.db.schemas;
+package net.neoforged.camelot.module.infochannels.db;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,15 +11,14 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
-import net.neoforged.camelot.commands.information.InfoChannelCommand;
-import net.neoforged.camelot.commands.information.RuleCommand;
-import net.neoforged.camelot.db.transactionals.InfoChannelsDAO;
-import net.neoforged.camelot.db.transactionals.RulesDAO;
+import net.neoforged.camelot.module.infochannels.command.RuleCommand;
+import net.neoforged.camelot.db.schemas.GithubLocation;
+import net.neoforged.camelot.module.infochannels.command.InfoChannelCommand;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;

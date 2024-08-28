@@ -1,6 +1,5 @@
-package net.neoforged.camelot.db.transactionals;
+package net.neoforged.camelot.module.infochannels.db;
 
-import net.neoforged.camelot.db.schemas.Rule;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -27,6 +26,11 @@ public interface RulesDAO extends Transactional<RulesDAO> {
     @SqlQuery("select * from rules where guild = :id and number = :number")
     Rule getRule(@Bind("id") long guildId, @Bind("number") int ruleNumber);
 
+    /**
+     * Inserts a raw rule into the database.
+     */
+    @SqlUpdate("insert or replace into rules (guild, channel, number, value) values (?, ?, ?, ?)")
+    void insert(long guild, long channel, int number, String value);
 
     /**
      * Inserts an rule into the database.
@@ -34,11 +38,6 @@ public interface RulesDAO extends Transactional<RulesDAO> {
      * @param rule the rule to insert
      */
     default void insert(Rule rule) {
-        getHandle().createUpdate("insert or replace into rules (guild, channel, number, value) values (?, ?, ?, ?)")
-                .bind(0, rule.guildId())
-                .bind(1, rule.channelId())
-                .bind(2, rule.number())
-                .bind(3, rule.embed().toData().toString())
-                .execute();
+        insert(rule.guildId(), rule.channelId(), rule.number(), rule.embed().toData().toString());
     }
 }

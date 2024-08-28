@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -229,13 +230,13 @@ public class BotMain {
 
         loadConfig(cliConfig.config.toPath());
 
-        modules = Map.copyOf(Stream.concat(
+        modules = Collections.unmodifiableMap(Stream.concat(
                         builtIn.stream(),
                         allModules.values().stream().filter(module -> module.config().isEnabled() && module.shouldLoad())
                 )
                 .collect(Collectors.toMap(
                         CamelotModule::getClass,
-                        camelotModule -> (CamelotModule<?>)camelotModule,
+                        camelotModule -> (CamelotModule<?>) camelotModule,
                         (_, b) -> b,
                         IdentityHashMap::new
                 )));
@@ -256,6 +257,7 @@ public class BotMain {
                 .setActivity(Activity.customStatus("Listening for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL);
 
+        forEachModule(CamelotModule::init);
         try {
             Database.init();
         } catch (IOException exception) {

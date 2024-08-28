@@ -3,8 +3,6 @@ package net.neoforged.camelot.configuration;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.config.module.BanAppeals;
 import net.neoforged.camelot.config.module.CustomPings;
-import net.neoforged.camelot.config.module.FilePreview;
-import net.neoforged.camelot.config.module.InfoChannels;
 import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.config.module.Tricks;
@@ -20,13 +18,14 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+// TODO - the splitting prevents accessing the other module, we need to find a way to fix it
 public class ConfigMigrator {
     @SuppressWarnings("unchecked")
     private final Map<Class<?>, String> configToId = ServiceLoader.load(CamelotModule.class)
             .stream().map(ServiceLoader.Provider::get)
             .collect(Collectors.toMap(CamelotModule::configType, CamelotModule::id));
 
-    public String migrate(Properties properties) {
+    public String migrate(Properties properties) throws Exception {
         final Set<String> disabled = Arrays.stream(properties.getProperty("disabledModules", "webserver,mc-verification,ban-appeal").split(","))
                 .map(String::trim).collect(Collectors.toSet());
 
@@ -46,12 +45,12 @@ public class ConfigMigrator {
         });
 
         script.module(CustomPings.class, () -> script.appendProperty("pingThreadsChannel", Long.parseLong(properties.getProperty("pingsThreadsChannel", "0"))));
-        script.module(FilePreview.class, () -> script.appendLine(STR."auth = patAuthentication(secret('\{escape(properties.getProperty("filePreview.gistToken", ""))}'))"));
+        script.module("net.neoforged.camelot.module.filepreview.FilePreviewModule", () -> script.appendLine(STR."auth = patAuthentication(secret('\{escape(properties.getProperty("filePreview.gistToken", ""))}'))"));
         script.module(WebServer.class, () -> script
                 .appendProperty("port", Integer.parseInt(properties.getProperty("server.port", "3000")))
                 .appendProperty("serverUrl", properties.getProperty("server.url", properties.getProperty("server.url"))));
 
-        script.module(InfoChannels.class, () -> {
+        script.module("net.neoforged.camelot.config.module.InfoChannels", () -> {
             if (Files.exists(Path.of("github.pem"))) {
                 script.appendLine("auth = appAuthentication {").indent();
                 script.appendProperty("appId", properties.getProperty("githubAppId"));
@@ -169,6 +168,10 @@ public class ConfigMigrator {
                 appendLine("// OAuth not configured");
             }
             return this;
+        }
+
+        public PaddedStringBuilder module(String className, Runnable appender) throws Exception {
+            return module((Class<? extends ModuleConfiguration>) Class.forName(className), appender);
         }
 
         public PaddedStringBuilder module(Class<? extends ModuleConfiguration> type, Runnable appender) {

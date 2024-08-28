@@ -1,4 +1,4 @@
-package net.neoforged.camelot.module;
+package net.neoforged.camelot.module.filepreview;
 
 import com.google.auto.service.AutoService;
 import net.dv8tion.jda.api.JDABuilder;

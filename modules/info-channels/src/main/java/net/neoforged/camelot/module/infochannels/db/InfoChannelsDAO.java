@@ -1,4 +1,4 @@
-package net.neoforged.camelot.db.transactionals;
+package net.neoforged.camelot.module.infochannels.db;
 
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -6,7 +6,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 import org.jetbrains.annotations.Nullable;
-import net.neoforged.camelot.db.schemas.InfoChannel;
 
 import java.util.List;
 

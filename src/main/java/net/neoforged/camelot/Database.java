@@ -7,6 +7,7 @@ import net.neoforged.camelot.db.impl.PostCallbackDecorator;
 import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.db.transactionals.ThreadPingsDAO;
 import net.neoforged.camelot.listener.CustomPingListener;
+import net.neoforged.camelot.module.BuiltInModule;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.callback.Context;
@@ -29,6 +30,10 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 /**
@@ -108,22 +113,39 @@ public class Database {
             }
         }
 
+        var callbacks = new EnumMap<BuiltInModule.DatabaseSource, List<Callback>>(BuiltInModule.DatabaseSource.class);
+        BotMain.propagateParameter(BuiltInModule.DB_MIGRATION_CALLBACKS, new BuiltInModule.MigrationCallbackBuilder() {
+            @Override
+            public BuiltInModule.MigrationCallbackBuilder add(BuiltInModule.DatabaseSource source, int version, BuiltInModule.StatementConsumer consumer) {
+                callbacks.computeIfAbsent(source, k -> new ArrayList<>()).add(schemaMigrationCallback(version, connection -> {
+                    try (var stmt = connection.createStatement()) {
+                        consumer.accept(stmt);
+                    }
+                }));
+                return this;
+            }
+        });
+
+        callbacks.computeIfAbsent(BuiltInModule.DatabaseSource.MAIN, _ -> new ArrayList<>()).add(schemaMigrationCallback(14, connection -> {
+            LOGGER.info("Migrating logging channels from main.db to configuration.db");
+            try (var stmt = connection.createStatement()) {
+                // So uh, while the type in the table is meant to be an int, it was actually a string. The new DB also stores a string
+                var rs = stmt.executeQuery("select type, channel from logging_channels");
+                config.useExtension(LoggingChannelsDAO.class, extension -> {
+                    while (rs.next()) {
+                        extension.insert(rs.getLong(2), LoggingChannelsDAO.Type.valueOf(rs.getString(1)));
+                    }
+                });
+            }
+        }));
+
         config = createDatabaseConnection(dir.resolve("configuration.db"), "config");
 
-        main = createDatabaseConnection(mainDb, "main", flyway -> flyway
-                .callbacks(schemaMigrationCallback(14, connection -> {
-                    LOGGER.info("Migrating logging channels from main.db to configuration.db");
-                    try (var stmt = connection.createStatement()) {
-                        // So uh, while the type in the table is meant to be an int, it was actually a string. The new DB also stores a string
-                        var rs = stmt.executeQuery("select type, channel from logging_channels");
-                        config.useExtension(LoggingChannelsDAO.class, extension -> {
-                            while (rs.next()) {
-                                extension.insert(rs.getLong(2), LoggingChannelsDAO.Type.valueOf(rs.getString(1)));
-                            }
-                        });
-                    }
-                })));
-        pings = createDatabaseConnection(dir.resolve("pings.db"), "pings", flyway -> flyway
+        main = createDatabaseConnection(mainDb, "Camelot DB main", flyway -> flyway
+                .locations("classpath:db/main")
+                .callbacks(callbacks.get(BuiltInModule.DatabaseSource.MAIN).toArray(Callback[]::new)));
+        pings = createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
+                .locations("classpath:db/pings")
                 .callbacks(schemaMigrationCallback(3, connection -> {
                     LOGGER.info("Migrating thread pings from pings.db to configuration.db");
                     try (var stmt = connection.createStatement()) {
@@ -140,8 +162,9 @@ public class Database {
         CustomPingListener.requestRefresh();
     }
 
-    public static Jdbi createDatabaseConnection(Path dbPath, String flywayLocation) {
-        return createDatabaseConnection(dbPath, flywayLocation, UnaryOperator.identity());
+    private static Jdbi createDatabaseConnection(Path dbPath, String flywayLocation) {
+        return createDatabaseConnection(dbPath, "Camelot DB", fluentConfiguration -> fluentConfiguration
+                .locations("classpath:db/" + flywayLocation));
     }
 
     /**
@@ -149,10 +172,11 @@ public class Database {
      *
      * @return a JDBI connection to the database
      */
-    public static Jdbi createDatabaseConnection(Path dbPath, String flywayLocation, UnaryOperator<FluentConfiguration> flywayConfig) {
+    public static Jdbi createDatabaseConnection(Path dbPath, String name, UnaryOperator<FluentConfiguration> flywayConfig) {
         dbPath = dbPath.toAbsolutePath();
         if (!Files.exists(dbPath)) {
             try {
+                Files.createDirectories(dbPath.getParent());
                 Files.createFile(dbPath);
             } catch (IOException e) {
                 throw new RuntimeException("Exception creating database!", e);
@@ -162,15 +186,12 @@ public class Database {
         final SQLiteDataSource dataSource = new SQLiteDataSource();
         dataSource.setUrl(url);
         dataSource.setEncoding("UTF-8");
-        dataSource.setDatabaseName("Camelot DB");
+        dataSource.setDatabaseName(name);
         dataSource.setEnforceForeignKeys(true);
         dataSource.setCaseSensitiveLike(false);
         LOGGER.info("Initiating SQLite database connection at {}.", url);
 
-        final var flyway = flywayConfig.apply(Flyway.configure()
-                        .dataSource(dataSource)
-                        .locations("classpath:db/" + flywayLocation))
-                .load();
+        final var flyway = flywayConfig.apply(Flyway.configure().dataSource(dataSource)).load();
         flyway.migrate();
 
         final Jdbi jdbi = Jdbi.create(dataSource)

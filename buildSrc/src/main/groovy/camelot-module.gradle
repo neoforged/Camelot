@@ -1,0 +1,97 @@
+import java.util.stream.Collectors
+
+project.plugins.apply('java-library')
+project.plugins.apply('groovy')
+
+var config = project.extensions.create('camelotModule', CamelotModuleConfig)
+
+var library = project.configurations.create('library')
+var moduleConfig = project.configurations.create('module')
+project.configurations.getByName('api').extendsFrom(library, moduleConfig)
+project.configurations.create('configOut')
+project.configurations.create('configOutSrc')
+
+sourceSets.create('config')
+
+dependencies {
+    "configImplementation"(implementation(project(':config')))
+    "configOut"(compileOnly(sourceSets.config.output))
+    "configOutSrc"(sourceSets.config.allSource)
+
+    compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
+    annotationProcessor group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
+
+    implementation(project(':'))
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.vendor = JvmVendorSpec.GRAAL_VM
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.add('--enable-preview')
+}
+
+tasks.jar {
+    from(sourceSets.config.output)
+}
+
+abstract class CamelotModuleConfig {
+    @Input
+    abstract Property<String> getId()
+}
+
+tasks.register('createFiles') {
+    doLast {
+        var name = config.id.get().split('-')
+            .toList().stream().map { it.capitalize() }
+            .collect(Collectors.joining(''))
+        var modulePkg = config.id.get().replace('-', '')
+        writeOrMove(project.file("src/main/java/net/neoforged/camelot/module/${modulePkg}/${name}Module.java"), null, """
+package net.neoforged.camelot.module.${modulePkg};
+
+import com.google.auto.service.AutoService;
+
+import net.neoforged.camelot.config.module.${name};
+import net.neoforged.camelot.module.api.CamelotModule;
+
+@AutoService(CamelotModule.class)
+public class ${name}Module extends CamelotModule.Base<${name}> {
+    public ${name}Module() {
+        super(${name}.class);
+    }
+    
+    @Override
+    public String id() {
+        return "${config.id.get()}";
+    }
+}""")
+        writeOrMove(project.file("src/config/groovy/net/neoforged/camelot/config/module/${name}.groovy"), rootProject.file("config/src/main/groovy/net/neoforged/camelot/config/module/${name}.groovy"), """
+package net.neoforged.camelot.config.module
+
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class ${name} extends ModuleConfiguration {
+}""")
+    }
+}
+
+tasks.register('createDBFolder') {
+    doLast {
+        var modulePkg = config.id.get().replace('-', '')
+        project.file("src/main/resources/net/neoforged/camelot/module/${modulePkg}/db/schema").mkdirs()
+    }
+}
+
+private static void writeOrMove(File file, File source, String txt) {
+    if (source?.exists()) {
+        file.delete()
+        file << source.text
+        source.delete()
+    } else {
+        file.delete()
+        file.parentFile.mkdirs()
+        file << txt
+    }
+}

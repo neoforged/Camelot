@@ -1,4 +1,4 @@
-package net.neoforged.camelot.db.schemas;
+package net.neoforged.camelot.module.infochannels.db;
 
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.utils.data.DataObject;
@@ -17,7 +17,7 @@ import java.sql.SQLException;
  * @param channelId       the ID of the channel the rule is in
  * @param number the number of the rule
  * @param embed the content of the rule
- * @see net.neoforged.camelot.db.transactionals.RulesDAO
+ * @see RulesDAO
  */
 public record Rule(long guildId, long channelId, int number, MessageEmbed embed) {
     public static final class Mapper implements RowMapper<Rule> {

@@ -3,9 +3,15 @@ package net.neoforged.camelot.module.api;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.neoforged.camelot.Database;
 import net.neoforged.camelot.config.CamelotConfig;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
+import org.flywaydb.core.api.Location;
+import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +26,13 @@ public interface CamelotModule<C extends ModuleConfiguration> {
      * This ID is used to disable the module in the config.
      */
     String id();
+
+    /**
+     * The earliest entrypoint, used to initialise databases.
+     */
+    default void init() {
+
+    }
 
     /**
      * Register the commands that are part of this module.
@@ -85,12 +98,14 @@ public interface CamelotModule<C extends ModuleConfiguration> {
      * @param <C> the configuration type
      */
     abstract class Base<C extends ModuleConfiguration> implements CamelotModule<C> {
+        protected final Logger logger;
         private final Class<C> configType;
         private final Map<ParameterType<?>, Consumer<?>> parameters = new IdentityHashMap<>();
         private C config;
 
         protected Base(Class<C> configType) {
             this.configType = configType;
+            logger = LoggerFactory.getLogger(getClass());
         }
 
         protected <T> void accept(ParameterType<T> type, Consumer<T> acceptor) {
@@ -115,6 +130,41 @@ public interface CamelotModule<C extends ModuleConfiguration> {
         @Override
         public Class<C> configType() {
             return configType;
+        }
+    }
+
+    /**
+     * Base class for {@link CamelotModule camelot modules} with a database.
+     *
+     * @param <C> the configuration type
+     */
+    abstract class WithDatabase<C extends ModuleConfiguration> extends Base<C> {
+        private final String dbId;
+        private final Location migrationLocation;
+
+        private Jdbi db;
+
+        protected WithDatabase(Class<C> configType) {
+            this(configType, null, null);
+        }
+
+        protected WithDatabase(Class<C> configType, String dbId, Location migrationLocation) {
+            super(configType);
+            this.dbId = dbId == null ? id() : dbId;
+            this.migrationLocation = migrationLocation == null ? new Location("classpath:" + getClass().getPackageName().replace(".", "/") + "/db/schema") : migrationLocation;
+        }
+
+        public Jdbi db() {
+            return db;
+        }
+
+        @Override
+        public void init() {
+            try {
+                db = Database.createDatabaseConnection(Path.of("data/" + dbId + ".db"), "Module " + id() + " database", flyway -> flyway.locations(migrationLocation));
+            } catch (Exception exception) {
+                throw new RuntimeException("Encountered exception setting up database connections for module '" + id() + "':", exception);
+            }
         }
     }
 }

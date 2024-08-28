@@ -1,4 +1,4 @@
-package net.neoforged.camelot.commands.information;
+package net.neoforged.camelot.module.infochannels.command;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommand;
@@ -9,9 +9,10 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
-import net.neoforged.camelot.Database;
-import net.neoforged.camelot.db.schemas.Rule;
-import net.neoforged.camelot.db.transactionals.RulesDAO;
+import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.module.infochannels.InfoChannelsModule;
+import net.neoforged.camelot.module.infochannels.db.Rule;
+import net.neoforged.camelot.module.infochannels.db.RulesDAO;
 
 import java.util.List;
 
@@ -74,6 +75,6 @@ public class RuleCommand extends SlashCommand {
     }
 
     protected Rule getRule(Guild guild, int id) {
-        return Database.main().withExtension(RulesDAO.class, db -> db.getRule(guild.getIdLong(), id));
+        return BotMain.getModule(InfoChannelsModule.class).db().withExtension(RulesDAO.class, db -> db.getRule(guild.getIdLong(), id));
     }
 }

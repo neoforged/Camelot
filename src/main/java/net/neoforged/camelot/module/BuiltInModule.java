@@ -13,8 +13,11 @@ import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.util.Emojis;
 
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * A module that provides builtin objects and arguments.
@@ -22,6 +25,7 @@ import java.util.Arrays;
 @AutoService(CamelotModule.class)
 public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltIn> {
     public static final ParameterType<ConfigCommandBuilder> CONFIGURATION_COMMANDS = ParameterType.get("configuration_commands", ConfigCommandBuilder.class);
+    public static final ParameterType<MigrationCallbackBuilder> DB_MIGRATION_CALLBACKS = ParameterType.get("db_migration_callbacks", MigrationCallbackBuilder.class);
 
     public BuiltInModule() {
         super(ModuleConfiguration.BuiltIn.class);
@@ -69,5 +73,17 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
 
     public interface ConfigCommandBuilder {
         ConfigCommandBuilder accept(SlashCommand... child);
+    }
+
+    public interface MigrationCallbackBuilder {
+        MigrationCallbackBuilder add(DatabaseSource source, int version, StatementConsumer consumer);
+    }
+
+    public enum DatabaseSource {
+        MAIN
+    }
+
+    public interface StatementConsumer {
+        void accept(Statement statement) throws SQLException;
     }
 }
