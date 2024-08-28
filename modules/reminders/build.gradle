@@ -1,0 +1,11 @@
+plugins {
+    id 'camelot-module'
+}
+
+camelotModule {
+    id = 'reminders'
+}
+
+dependencies {
+    library(libs.bundles.database)
+}

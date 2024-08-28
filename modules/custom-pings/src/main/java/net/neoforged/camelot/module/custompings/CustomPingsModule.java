@@ -12,6 +12,7 @@ import net.neoforged.camelot.config.module.CustomPings;
 import net.neoforged.camelot.db.impl.PostCallbackDecorator;
 import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.module.custompings.db.PingsCallbacks;
 import net.neoforged.camelot.module.custompings.db.PingsDAO;
 
 import java.util.Objects;
@@ -33,14 +34,14 @@ public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
                     });
 
                     logger.info("Moving custom pings from pings.db to custom-pings.db");
-                    isMigrating = true;
+                    PingsCallbacks.migrating = true;
                     var pings = stmt.executeQuery("select * from pings");
                     db().useExtension(PingsDAO.class, db -> {
                         while (pings.next()) {
                             db.insert(pings.getLong(2), pings.getLong(3), pings.getString(4), pings.getString(5));
                         }
                     });
-                    isMigrating = false;
+                    PingsCallbacks.migrating = false;
 
                     CustomPingListener.requestRefresh();
                 }));

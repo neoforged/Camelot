@@ -1,4 +1,4 @@
-package net.neoforged.camelot.commands.utility;
+package net.neoforged.camelot.module.reminders;
 
 import com.jagrosh.jdautilities.command.CooldownScope;
 import com.jagrosh.jdautilities.command.SlashCommand;
@@ -13,11 +13,10 @@ import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.PaginatableCommand;
-import net.neoforged.camelot.db.schemas.Reminder;
-import net.neoforged.camelot.db.transactionals.RemindersDAO;
 import net.neoforged.camelot.listener.DismissListener;
+import net.neoforged.camelot.module.reminders.db.Reminder;
+import net.neoforged.camelot.module.reminders.db.RemindersDAO;
 import net.neoforged.camelot.util.DateUtils;
 
 import java.time.Instant;
@@ -58,7 +57,7 @@ public class RemindCommand extends SlashCommand {
             try {
                 final var time = DateUtils.getDurationFromInput(event.getOption("time", "", OptionMapping::getAsString));
                 final var remTime = Instant.now().plus(time);
-                Database.main().useExtension(RemindersDAO.class, db -> db.insertReminder(
+                BotMain.getModule(RemindersModule.class).db().useExtension(RemindersDAO.class, db -> db.insertReminder(
                         userId, event.isFromType(ChannelType.PRIVATE) ? 0 : event.getChannel().getIdLong(), remTime.getEpochSecond(), event.getOption("content", OptionMapping::getAsString)
                 ));
                 event.deferReply().setContent("Successfully scheduled reminder on %s (%s)!".formatted(TimeFormat.DATE_TIME_LONG.format(remTime), TimeFormat.RELATIVE.format(remTime)))
@@ -84,7 +83,7 @@ public class RemindCommand extends SlashCommand {
 
         @Override
         protected void execute(SlashCommandEvent event) {
-            final Reminder reminder = Database.main().withExtension(RemindersDAO.class, db -> db.getReminderById(event.getOption("reminder", 0, OptionMapping::getAsInt)));
+            final Reminder reminder = BotMain.getModule(RemindersModule.class).db().withExtension(RemindersDAO.class, db -> db.getReminderById(event.getOption("reminder", 0, OptionMapping::getAsInt)));
             if (reminder == null) {
                 event.reply("Unknown reminder!").setEphemeral(true).queue();
                 return;
@@ -94,7 +93,7 @@ public class RemindCommand extends SlashCommand {
                 return;
             }
 
-            Database.main().useExtension(RemindersDAO.class, db -> db.deleteReminder(reminder.id()));
+            BotMain.getModule(RemindersModule.class).db().useExtension(RemindersDAO.class, db -> db.deleteReminder(reminder.id()));
             event.reply("Reminder deleted!").setEphemeral(true).queue();
         }
     }
@@ -113,7 +112,7 @@ public class RemindCommand extends SlashCommand {
 
         @Override
         public ListCmd.Data collectData(SlashCommandEvent event) {
-            return new ListCmd.Data(Database.main().withExtension(RemindersDAO.class, db -> db.getAllRemindersOf(
+            return new ListCmd.Data(BotMain.getModule(RemindersModule.class).db().withExtension(RemindersDAO.class, db -> db.getAllRemindersOf(
                     event.getUser().getIdLong()
             )));
         }

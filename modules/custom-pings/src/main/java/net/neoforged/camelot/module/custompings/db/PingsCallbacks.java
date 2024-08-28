@@ -2,12 +2,13 @@ package net.neoforged.camelot.module.custompings.db;
 
 import net.neoforged.camelot.db.api.ExecutionCallback;
 import net.neoforged.camelot.module.custompings.CustomPingListener;
-import net.neoforged.camelot.module.custompings.CustomPingsModule;
 
 public class PingsCallbacks {
+    public static volatile boolean migrating;
+
     @ExecutionCallback(methodName = "insert")
     public static void onInsert(PingsDAO dao, long guild, long user, String regex, String message) {
-        if (!CustomPingsModule.isMigrating) {
+        if (!migrating) {
             CustomPingListener.requestRefresh();
         }
     }

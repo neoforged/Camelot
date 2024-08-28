@@ -1,4 +1,4 @@
-package net.neoforged.camelot.module;
+package net.neoforged.camelot.module.reminders;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -30,14 +30,14 @@ import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
-import net.neoforged.camelot.commands.utility.RemindCommand;
 import net.neoforged.camelot.config.module.Reminders;
-import net.neoforged.camelot.db.schemas.Reminder;
-import net.neoforged.camelot.db.transactionals.RemindersDAO;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
+import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.module.reminders.db.Reminder;
+import net.neoforged.camelot.module.reminders.db.RemindersCallbacks;
+import net.neoforged.camelot.module.reminders.db.RemindersDAO;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.Utils;
@@ -55,12 +55,30 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @AutoService(CamelotModule.class)
-public class RemindersModule extends CamelotModule.Base<Reminders> {
+public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
     public static final Supplier<ScheduledExecutorService> EXECUTOR = Suppliers.memoize(() ->
             Executors.newScheduledThreadPool(1, Utils.daemonGroup("Reminders")));
 
     public RemindersModule() {
         super(Reminders.class);
+
+        accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
+                .add(BuiltInModule.DatabaseSource.MAIN, 17, statement -> {
+                    logger.info("Moving reminders from main.db to reminders.db");
+                    RemindersCallbacks.migrating = true;
+                    var rs = statement.executeQuery("select * from reminders");
+                    db().useExtension(RemindersDAO.class, db -> {
+                        while (rs.next()) {
+                            db.insertReminder(
+                                   rs.getLong(2),
+                                   rs.getLong(3),
+                                   rs.getLong(4),
+                                   rs.getString(5)
+                            );
+                        }
+                    });
+                    RemindersCallbacks.migrating = false;
+                }));
     }
 
     private static final String SNOOZE_BUTTON_ID = "snooze_reminder";
@@ -120,7 +138,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
                     var url = "https://discord.com/channels/" + event.getGuild().getId() + "/" + event.getChannel().getId() + "/" + msgId;
                     final var time = DateUtils.getDurationFromInput(event.getValue("time").getAsString());
                     final var remTime = Instant.now().plus(time);
-                    Database.main().useExtension(RemindersDAO.class, db -> db.insertReminder(
+                    db().useExtension(RemindersDAO.class, db -> db.insertReminder(
                             event.getUser().getIdLong(), event.getChannel().getIdLong(), remTime.getEpochSecond(),
                             (url + " " + Optional.ofNullable(event.getValue("text")).map(ModalMapping::getAsString).orElse("")).trim()
                     ));
@@ -134,7 +152,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
         snoozeButtons = ActionRow.partitionOf(config().getSnoozeDurations().stream().map(duration -> Button.of(ButtonStyle.SECONDARY, SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), DateUtils.formatDuration(duration), SNOOZE_EMOJI))
                 .toArray(ItemComponent[]::new));
 
-        Database.main().useExtension(RemindersDAO.class, db -> db.getAllReminders()
+        db().useExtension(RemindersDAO.class, db -> db.getAllReminders()
                 .forEach(reminder -> {
                     final Instant now = Instant.now();
                     if (reminder.time().isBefore(now)) {
@@ -165,7 +183,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
 
             final Instant offset = Instant.now().plusSeconds(snoozeSecs);
             snoozable.invalidate(event.getMessage().getIdLong());
-            Database.main().useExtension(RemindersDAO.class, db -> db.insertReminder(
+            db().useExtension(RemindersDAO.class, db -> db.insertReminder(
                     reminder.user(), reminder.channel(), offset.getEpochSecond(), reminder.reminder()
             ));
             event.reply("Successfully snoozed reminder until %s (%s)!".formatted(TimeFormat.DATE_TIME_LONG.format(offset), TimeFormat.RELATIVE.format(offset)))
@@ -174,7 +192,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
     }
 
     public void run(int reminderId) {
-        final var reminder = Database.main().withExtension(RemindersDAO.class, db -> db.getReminderById(reminderId));
+        final var reminder = db().withExtension(RemindersDAO.class, db -> db.getReminderById(reminderId));
         if (reminder == null) return;
 
         BotMain.get().retrieveUserById(reminder.user())
@@ -207,7 +225,7 @@ public class RemindersModule extends CamelotModule.Base<Reminders> {
                 BotMain.LOGGER.error("Failed to send reminder to '{}' in channel with ID '{}': ", reminder.user(), reminder.channel(), err);
                 return null;
             })
-            .whenComplete((a, b) -> Database.main().useExtension(RemindersDAO.class, db -> db.deleteReminder(reminderId)));
+            .whenComplete((a, b) -> db().useExtension(RemindersDAO.class, db -> db.deleteReminder(reminderId)));
     }
 
     private RestAction<Message> sendMessage(User user, Reminder reminder, MessageChannel channel) {
