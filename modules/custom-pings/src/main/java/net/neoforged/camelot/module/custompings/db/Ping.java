@@ -1,4 +1,4 @@
-package net.neoforged.camelot.db.schemas;
+package net.neoforged.camelot.module.custompings.db;
 
 import com.google.re2j.Pattern;
 import org.jdbi.v3.core.mapper.RowMapper;

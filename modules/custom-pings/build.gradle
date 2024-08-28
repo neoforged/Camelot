@@ -1,0 +1,13 @@
+plugins {
+    id 'camelot-module'
+}
+
+camelotModule {
+    id = 'custom-pings'
+}
+
+dependencies {
+    library(libs.bundles.database)
+    library(libs.re2j)
+    library(libs.fastutil)
+}

@@ -5,7 +5,6 @@ import net.neoforged.camelot.db.api.CallbackConfig;
 import net.neoforged.camelot.db.api.StringSearch;
 import net.neoforged.camelot.db.impl.PostCallbackDecorator;
 import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
-import net.neoforged.camelot.listener.CustomPingListener;
 import net.neoforged.camelot.module.BuiltInModule;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.callback.Callback;
@@ -62,18 +61,6 @@ public class Database {
      */
     public static Jdbi main() {
         return main;
-    }
-
-    /**
-     * Static JDBI custom pings instance. Can be accessed via {@link #pings()}.
-     */
-    private static Jdbi pings;
-
-    /**
-     * {@return the static custom pings JDBI instance}
-     */
-    public static Jdbi pings() {
-        return pings;
     }
 
     private static Jdbi appeals;
@@ -144,12 +131,18 @@ public class Database {
         main = createDatabaseConnection(mainDb, "Camelot DB main", flyway -> flyway
                 .locations("classpath:db/main")
                 .callbacks(callbacks.get(BuiltInModule.DatabaseSource.MAIN).toArray(Callback[]::new)));
-        pings = createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
-                .locations("classpath:db/pings")
-                .callbacks(callbacks.get(BuiltInModule.DatabaseSource.PINGS).toArray(Callback[]::new)));
+
+        var pings = dir.resolve("pings.db");
+        if (Files.exists(pings)) {
+            // Run migrations and then delete it
+            createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
+                    .locations("classpath:db/pings")
+                    .callbacks(callbacks.get(BuiltInModule.DatabaseSource.PINGS).toArray(Callback[]::new)));
+            Files.delete(pings);
+        }
+
         appeals = createDatabaseConnection(dir.resolve("appeals.db"), "appeals");
         stats = createDatabaseConnection(dir.resolve("stats.db"), "stats");
-        CustomPingListener.requestRefresh();
     }
 
     private static Jdbi createDatabaseConnection(Path dbPath, String flywayLocation) {

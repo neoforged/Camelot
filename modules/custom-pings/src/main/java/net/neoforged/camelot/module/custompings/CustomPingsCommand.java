@@ -1,4 +1,4 @@
-package net.neoforged.camelot.commands.utility;
+package net.neoforged.camelot.module.custompings;
 
 import com.google.re2j.Pattern;
 import com.google.re2j.PatternSyntaxException;
@@ -14,11 +14,9 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.PaginatableCommand;
-import net.neoforged.camelot.db.schemas.Ping;
-import net.neoforged.camelot.db.transactionals.PingsDAO;
-import net.neoforged.camelot.module.CustomPingsModule;
+import net.neoforged.camelot.module.custompings.db.Ping;
+import net.neoforged.camelot.module.custompings.db.PingsDAO;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -67,7 +65,7 @@ public class CustomPingsCommand extends SlashCommand {
                 return;
             }
 
-            final var pingAmount = Database.pings().withExtension(PingsDAO.class,
+            final var pingAmount = BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class,
                     db -> db.getAllPingsOf(event.getUser().getIdLong(), event.getGuild().getIdLong()))
                     .size();
 
@@ -77,7 +75,7 @@ public class CustomPingsCommand extends SlashCommand {
                 return;
             }
 
-            Database.pings().useExtension(PingsDAO.class, db -> db.insert(
+            BotMain.getModule(CustomPingsModule.class).db().useExtension(PingsDAO.class, db -> db.insert(
                     event.getGuild().getIdLong(), event.getUser().getIdLong(),
                     regex, event.getOption("message", "", OptionMapping::getAsString)
             ));
@@ -99,7 +97,7 @@ public class CustomPingsCommand extends SlashCommand {
 
         @Override
         protected void execute(SlashCommandEvent event) {
-            final Ping ping = Database.pings().withExtension(PingsDAO.class, db -> db.getPing(event.getOption("ping", 0, OptionMapping::getAsInt)));
+            final Ping ping = BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getPing(event.getOption("ping", 0, OptionMapping::getAsInt)));
             if (ping == null) {
                 event.reply("Unknown ping!").setEphemeral(true).queue();
                 return;
@@ -109,7 +107,7 @@ public class CustomPingsCommand extends SlashCommand {
                 return;
             }
 
-            Database.pings().useExtension(PingsDAO.class, db -> db.deletePing(ping.id()));
+            BotMain.getModule(CustomPingsModule.class).db().useExtension(PingsDAO.class, db -> db.deletePing(ping.id()));
             event.reply("Ping deleted!").setEphemeral(true).queue();
         }
     }
@@ -138,7 +136,7 @@ public class CustomPingsCommand extends SlashCommand {
                 return null;
             }
 
-            return new Data(Database.pings().withExtension(PingsDAO.class, db -> db.getAllPingsOf(
+            return new Data(BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getAllPingsOf(
                     target.getIdLong(), event.getGuild().getIdLong()
             )));
         }

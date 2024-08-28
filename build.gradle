@@ -76,7 +76,7 @@ evaluationDependsOn(':config')
 configurations {
     library.extendsFrom(implementation)
     module
-    runtimeClasspath.extendsFrom(module)
+    runtimeClasspath.extendsFrom(module, library)
 }
 
 dependencies {
@@ -103,7 +103,6 @@ dependencies {
 
     implementation libs.bundles.graal
     implementation libs.args4j
-    implementation libs.re2j
     implementation libs.fastutil
 
     implementation libs.semver

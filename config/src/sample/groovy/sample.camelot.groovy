@@ -16,10 +16,6 @@ camelot {
         // auth = patAuthentication('ghp_')
     }
 
-    module(CustomPings) {
-        pingThreadsChannel = 123
-    }
-
     module(InfoChannels) {
         auth = appAuthentication {
             appId = '123'

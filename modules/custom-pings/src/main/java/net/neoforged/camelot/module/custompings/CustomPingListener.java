@@ -1,4 +1,4 @@
-package net.neoforged.camelot.listener;
+package net.neoforged.camelot.module.custompings;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -23,13 +23,11 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.module.CustomPingsModule;
+import net.neoforged.camelot.module.custompings.db.Ping;
+import net.neoforged.camelot.module.custompings.db.PingsDAO;
+import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import net.neoforged.camelot.Database;
-import net.neoforged.camelot.db.schemas.Ping;
-import net.neoforged.camelot.db.transactionals.PingsDAO;
-import net.neoforged.camelot.util.Utils;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,7 +46,7 @@ public class CustomPingListener implements EventListener {
 
     public static void requestRefresh() {
         synchronized (CACHE) {
-            final var newValue = Database.pings().withExtension(PingsDAO.class, PingsDAO::getAllPings);
+            final var newValue = BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, PingsDAO::getAllPings);
             CACHE.clear();
             CACHE.putAll(newValue);
         }
@@ -73,11 +71,11 @@ public class CustomPingListener implements EventListener {
         message.getGuild().retrieveMemberById(ping.user())
                 .flatMap(pinged -> canViewChannel(pinged, message.getGuildChannel()), pinged -> pinged.getUser().openPrivateChannel()
                         .flatMap(channel -> sendPingMessage(ping, message, channel))
-                        .onErrorFlatMap(ex -> getPingThread(message.getJDA(), pinged.getIdLong()).flatMap(channel -> sendPingMessage(ping, message, channel))))
-                .queue(null, new ErrorHandler().handle(ErrorResponse.UNKNOWN_MEMBER, err -> {
+                        .onErrorFlatMap(_ -> getPingThread(message.getJDA(), message.getGuildIdLong(), pinged.getIdLong()).flatMap(channel -> sendPingMessage(ping, message, channel))))
+                .queue(null, new ErrorHandler().handle(ErrorResponse.UNKNOWN_MEMBER, _ -> {
                     // User left the guild, dump their pings in the thread, then delete from database
-                    final List<Ping> pings = Database.pings().withExtension(PingsDAO.class, db -> db.getAllPingsOf(ping.user(), message.getGuild().getIdLong()));
-                    getPingThread(message.getJDA(), ping.user())
+                    final List<Ping> pings = BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getAllPingsOf(ping.user(), message.getGuild().getIdLong()));
+                    getPingThread(message.getJDA(), message.getGuildIdLong(), ping.user())
                             .flatMap(thread -> thread.sendMessage(MessageCreateData.fromEmbeds(new EmbedBuilder()
                                     .setTitle("Custom pings dump")
                                     .setFooter("User left the guild")
@@ -85,60 +83,70 @@ public class CustomPingListener implements EventListener {
                                             .map(p -> p.id() + ". `" + p.regex().toString() + "` | " + p.message())
                                             .collect(Collectors.joining("\n")))
                                     .build())))
-                            .queue($ -> Database.pings().useExtension(PingsDAO.class, db -> db.deletePingsOf(ping.user(), message.getGuild().getIdLong())));
+                            .queue($ -> BotMain.getModule(CustomPingsModule.class).db().useExtension(PingsDAO.class, db -> db.deletePingsOf(ping.user(), message.getGuild().getIdLong())));
                 }));
     }
 
-    private static RestAction<? extends MessageChannel> getPingThread(JDA jda, long memberId) {
-        final Long threadId = Database.pings().withExtension(PingsDAO.class, db -> db.getThread(memberId));
+    private static RestAction<? extends MessageChannel> getPingThread(JDA jda, long guildId, long memberId) {
+        final Long threadId = BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getThread(memberId, guildId));
         if (threadId == null) {
-            return createNewThread(jda, memberId);
+            return createNewThread(jda, guildId, memberId);
         } else {
             final ThreadChannel channel = jda.getThreadChannelById(threadId);
             if (channel != null) {
-                return new RestAction<>() {
-                    @NotNull
-                    @Override
-                    public JDA getJDA() {
-                        return channel.getJDA();
-                    }
-
-                    @NotNull
-                    @Override
-                    public RestAction<MessageChannel> setCheck(@Nullable BooleanSupplier checks) {
-                        return this;
-                    }
-
-                    @Override
-                    public void queue(@Nullable Consumer<? super MessageChannel> success, @Nullable Consumer<? super Throwable> failure) {
-                        if (success != null) {
-                            success.accept(channel);
-                        }
-                    }
-
-                    @Override
-                    public MessageChannel complete(boolean shouldQueue) throws RateLimitedException {
-                        return channel;
-                    }
-
-                    @NotNull
-                    @Override
-                    public CompletableFuture<MessageChannel> submit(boolean shouldQueue) {
-                        return CompletableFuture.completedFuture(channel);
-                    }
-                };
+                return singleton(channel);
             } else {
-                return createNewThread(jda, memberId);
+                var pingsChannel = jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getPingThreadsChannel(guildId)).longValue());
+                //noinspection rawtypes, unchecked this is so dirty
+                return pingsChannel.retrieveArchivedPrivateJoinedThreadChannels()
+                        .flatMap(threadChannels -> threadChannels.stream().filter(c -> c.getIdLong() == threadId)
+                                .findFirst()
+                                .map(CustomPingListener::singleton)
+                                .orElseGet(() -> (RestAction<MessageChannel>) (RestAction) createNewThread(jda, guildId, memberId)));
             }
         }
     }
 
-    private static RestAction<ThreadChannel> createNewThread(JDA jda, long memberId) {
-        return Objects.requireNonNull(jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).config().getPingThreadsChannel()))
+    private static RestAction<MessageChannel> singleton(MessageChannel channel) {
+        return new RestAction<>() {
+            @NotNull
+            @Override
+            public JDA getJDA() {
+                return channel.getJDA();
+            }
+
+            @NotNull
+            @Override
+            public RestAction<MessageChannel> setCheck(@Nullable BooleanSupplier checks) {
+                return this;
+            }
+
+            @Override
+            public void queue(@Nullable Consumer<? super MessageChannel> success, @Nullable Consumer<? super Throwable> failure) {
+                if (success != null) {
+                    success.accept(channel);
+                }
+            }
+
+            @Override
+            public MessageChannel complete(boolean shouldQueue) throws RateLimitedException {
+                return channel;
+            }
+
+            @NotNull
+            @Override
+            public CompletableFuture<MessageChannel> submit(boolean shouldQueue) {
+                return CompletableFuture.completedFuture(channel);
+            }
+        };
+    }
+
+    private static RestAction<ThreadChannel> createNewThread(JDA jda, long guildId, long memberId) {
+        return Objects.requireNonNull(jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getPingThreadsChannel(guildId)).longValue()))
                 .createThreadChannel("Custom ping notifications of " + memberId, true)
                 .setInvitable(false)
                 .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)
-                .onSuccess(channel -> Database.pings().useExtension(PingsDAO.class, db -> db.insertThread(memberId, channel.getIdLong())));
+                .onSuccess(channel -> BotMain.getModule(CustomPingsModule.class).db().useExtension(PingsDAO.class, db -> db.insertThread(memberId, guildId, channel.getIdLong())));
     }
 
     private static MessageCreateAction sendPingMessage(final Ping ping, final Message message, final MessageChannel channel) {

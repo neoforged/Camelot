@@ -2,7 +2,6 @@ package net.neoforged.camelot.configuration;
 
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.config.module.BanAppeals;
-import net.neoforged.camelot.config.module.CustomPings;
 import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.config.module.Tricks;
@@ -44,7 +43,6 @@ public class ConfigMigrator {
             script.appendLine("trickMasterRole = " + Long.parseLong(properties.getProperty("trick.master", properties.getProperty("trickMaster", "0"))));
         });
 
-        script.module(CustomPings.class, () -> script.appendProperty("pingThreadsChannel", Long.parseLong(properties.getProperty("pingsThreadsChannel", "0"))));
         script.module("net.neoforged.camelot.module.filepreview.FilePreviewModule", () -> script.appendLine(STR."auth = patAuthentication(secret('\{escape(properties.getProperty("filePreview.gistToken", ""))}'))"));
         script.module(WebServer.class, () -> script
                 .appendProperty("port", Integer.parseInt(properties.getProperty("server.port", "3000")))

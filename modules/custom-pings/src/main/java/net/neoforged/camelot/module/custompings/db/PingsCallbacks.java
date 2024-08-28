@@ -1,13 +1,15 @@
-package net.neoforged.camelot.db.callback;
+package net.neoforged.camelot.module.custompings.db;
 
 import net.neoforged.camelot.db.api.ExecutionCallback;
-import net.neoforged.camelot.db.transactionals.PingsDAO;
-import net.neoforged.camelot.listener.CustomPingListener;
+import net.neoforged.camelot.module.custompings.CustomPingListener;
+import net.neoforged.camelot.module.custompings.CustomPingsModule;
 
 public class PingsCallbacks {
     @ExecutionCallback(methodName = "insert")
     public static void onInsert(PingsDAO dao, long guild, long user, String regex, String message) {
-        CustomPingListener.requestRefresh();
+        if (!CustomPingsModule.isMigrating) {
+            CustomPingListener.requestRefresh();
+        }
     }
 
     @ExecutionCallback(methodName = "deletePing")

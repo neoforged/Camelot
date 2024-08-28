@@ -9,11 +9,6 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class CustomPings extends ModuleConfiguration {
     /**
-     * The channel in which to create ping private threads if a member does not have DMs enabled.
-     */
-    long pingThreadsChannel
-
-    /**
      * The maximum amount of custom pings an user can have.
      * {@code -1} means indefinite
      */

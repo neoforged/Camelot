@@ -146,6 +146,7 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
             this.options = List.of(
                     new OptionData(OptionType.CHANNEL, "channel", "The channel", true)
             );
+            this.subcommandGroup = GROUP_DATA;
         }
 
         @Override

@@ -2,7 +2,6 @@ package net.neoforged.camelot.db.transactionals;
 
 import net.neoforged.camelot.db.api.RegisterExecutionCallbacks;
 import net.neoforged.camelot.db.callback.RemindersCallbacks;
-import net.neoforged.camelot.db.schemas.Ping;
 import net.neoforged.camelot.db.schemas.Reminder;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
