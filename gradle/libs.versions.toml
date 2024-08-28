@@ -1,0 +1,68 @@
+[versions]
+graal = "22.2.0"
+groovy = "4.0.21"
+jdbi = "3.32.0"
+jackson = "2.13.3"
+jjwt = "0.10.5"
+junit = "5.10.0"
+
+[libraries]
+
+angusmail = { module = "org.eclipse.angus:angus-mail", version = "2.0.1" }
+annotations = { module = "org.jetbrains:annotations", version = "24.0.1" }
+args4j = { module = "args4j:args4j", version = "2.33" }
+assertj = { module = "org.assertj:assertj-core", version = "3.25.1" }
+autoservice = { module = "com.google.auto.service:auto-service", version = "1.0.1" }
+
+bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version = "1.58" }
+
+chewtils = { module = "com.github.matyrobbrt:JDA-Chewtils", version = "cea80c2" }
+
+fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.12" }
+flyway = { module = "org.flywaydb:flyway-core", version = "8.5.13" }
+
+githubapi = { module = "org.kohsuke:github-api", version = "1.313" }
+graal-js = { module = "org.graalvm.js:js", version.ref = "graal" }
+graal-js-scriptengine = { module = "org.graalvm.js:js-scriptengine", version.ref = "graal" }
+
+groovy = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
+groovy-contracts = { module = "org.apache.groovy:groovy-contracts", version.ref = "groovy" }
+
+guava = { module = "com.google.guava:guava", version = "30.1.1-jre" }
+
+jda = { module = "net.dv8tion:JDA", version = "5.0.1" }
+
+jdbi-core = { module = "org.jdbi:jdbi3-core", version.ref = "jdbi" }
+jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }
+
+j2html = { module = "com.j2html:j2html", version = "1.6.0" }
+
+jackson-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
+javalin = { module = "io.javalin:javalin", version = "5.6.1" }
+
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+json = { module = "org.json:json", version = "20231013" }
+junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+
+logback = { module = "ch.qos.logback:logback-classic", version = "1.5.6" }
+
+mavenartifact = { module = "org.apache.maven:maven-artifact", version = "3.9.1" }
+
+re2j = { module = "com.google.re2j:re2j", version = "1.7" }
+
+semver = { module = "com.matyrobbrt:semver-graaljs", version = "1.1.0" }
+sqlitejdbc = { module = "org.xerial:sqlite-jdbc", version = "3.40.0.0" }
+
+trove4j = { module = "net.sf.trove4j:trove4j", version = "3.0.3" }
+
+[bundles]
+graal = ["graal-js", "graal-js-scriptengine"]
+groovy = ["groovy", "groovy-contracts"]
+database = ["jdbi-core", "jdbi-sqlobject", "flyway", "sqlitejdbc"]
+jackson = ["jackson-yaml"]
+jjwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
+testing = ["assertj", "junit-api", "junit-engine"]

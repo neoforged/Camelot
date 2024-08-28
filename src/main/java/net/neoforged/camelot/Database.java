@@ -5,7 +5,6 @@ import net.neoforged.camelot.db.api.CallbackConfig;
 import net.neoforged.camelot.db.api.StringSearch;
 import net.neoforged.camelot.db.impl.PostCallbackDecorator;
 import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
-import net.neoforged.camelot.db.transactionals.ThreadPingsDAO;
 import net.neoforged.camelot.listener.CustomPingListener;
 import net.neoforged.camelot.module.BuiltInModule;
 import org.flywaydb.core.Flyway;
@@ -32,7 +31,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
@@ -139,24 +137,16 @@ public class Database {
             }
         }));
 
-        config = createDatabaseConnection(dir.resolve("configuration.db"), "config");
+        config = createDatabaseConnection(dir.resolve("configuration.db"), "Camelot DB config", flyway -> flyway
+                .locations("classpath:db/config")
+                .callbacks(callbacks.get(BuiltInModule.DatabaseSource.CONFIG).toArray(Callback[]::new)));
 
         main = createDatabaseConnection(mainDb, "Camelot DB main", flyway -> flyway
                 .locations("classpath:db/main")
                 .callbacks(callbacks.get(BuiltInModule.DatabaseSource.MAIN).toArray(Callback[]::new)));
         pings = createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
                 .locations("classpath:db/pings")
-                .callbacks(schemaMigrationCallback(3, connection -> {
-                    LOGGER.info("Migrating thread pings from pings.db to configuration.db");
-                    try (var stmt = connection.createStatement()) {
-                        var rs = stmt.executeQuery("select channel, role from thread_pings");
-                        config.useExtension(ThreadPingsDAO.class, extension -> {
-                            while (rs.next()) {
-                                extension.add(rs.getLong(1), rs.getLong(2));
-                            }
-                        });
-                    }
-                })));
+                .callbacks(callbacks.get(BuiltInModule.DatabaseSource.PINGS).toArray(Callback[]::new)));
         appeals = createDatabaseConnection(dir.resolve("appeals.db"), "appeals");
         stats = createDatabaseConnection(dir.resolve("stats.db"), "stats");
         CustomPingListener.requestRefresh();

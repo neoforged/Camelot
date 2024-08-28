@@ -26,7 +26,7 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
             .uri(URI.create("https://search.maven.org/solrsearch/select?q=g:net.neoforged.camelot+AND+a:camelot&core=gav&rows=1&wt=json"))
             .cacheDuration(Duration.ofHours(1))
             .json()
-            .map(o -> o.getAsJsonObject("response").getAsJsonArray("docs").get(0).getAsJsonObject().get("v").getAsString())
+            .map(o -> o.get("response").get("docs").get(0).get("v").asText())
             .build();
 
     public HelpCommand(ButtonManager buttonManager) {

@@ -80,7 +80,9 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
     }
 
     public enum DatabaseSource {
-        MAIN
+        MAIN,
+        CONFIG,
+        PINGS
     }
 
     public interface StatementConsumer {

@@ -1,7 +1,6 @@
-package net.neoforged.camelot.db.transactionals;
+package net.neoforged.camelot.module.quotes.db;
 
 import net.neoforged.camelot.db.api.StringSearch;
-import net.neoforged.camelot.db.schemas.Quote;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -113,8 +112,14 @@ public interface QuotesDAO extends Transactional<QuotesDAO> {
                 .execute((stmt, _) -> stmt.get().getResultSet().getInt("id")));
     }
 
-    @SqlUpdate("update quotes set _rowid_ = :new where id = :id")
-    void setId(@Bind("id") int id, @Bind("new") int newId);
+    default int insertQuote(long guild, int authorId, String quote, @Nullable String context, @Nullable Long quoter, int id) {
+        return withHandle(h -> h.createUpdate("insert into quotes(guild, author, quote, context, quoter, id) values (?, ?, ?, ?, ?, ?) returning id")
+                .bind(0, guild).bind(1, authorId)
+                .bind(2, quote).bind(3, context)
+                .bind(4, quoter)
+                .bind(5, id)
+                .execute((stmt, _) -> stmt.get().getResultSet().getInt("id")));
+    }
 
     default int getOrCreateAuthor(long guild, String name, @Nullable Long userId) {
         if (userId == null) {
@@ -129,6 +134,9 @@ public interface QuotesDAO extends Transactional<QuotesDAO> {
                             .bind(0, guild).bind(1, name).bind(2, userId).execute((stmt, _) -> stmt.get().getResultSet().getInt(1))));
         }
     }
+
+    @SqlUpdate("insert into quote_authors(id, guild, name, uid) values (?, ?, ?, ?)")
+    void insertAuthor(int id, long guild, String name, long userId);
 
     @Nullable
     @SqlQuery("select quoter from quotes where id = ?")

@@ -1,4 +1,4 @@
-package net.neoforged.camelot.commands.information;
+package net.neoforged.camelot.module.quotes;
 
 import com.google.common.primitives.Ints;
 import com.jagrosh.jdautilities.command.CommandEvent;
@@ -19,16 +19,14 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.db.api.StringSearch;
-import net.neoforged.camelot.db.schemas.Quote;
-import net.neoforged.camelot.db.transactionals.QuotesDAO;
-import net.neoforged.camelot.module.QuotesModule;
+import net.neoforged.camelot.module.quotes.db.Quote;
+import net.neoforged.camelot.module.quotes.db.QuotesDAO;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -59,7 +57,7 @@ public class QuoteCommand extends SlashCommand {
 
         final Quote quote;
         if (event.getArgs().isBlank()) {
-            quote = Database.main().withExtension(QuotesDAO.class, db -> db.getRandomQuote(event.getGuild().getIdLong()));
+            quote = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getRandomQuote(event.getGuild().getIdLong()));
         } else {
             final String[] spl = event.getArgs().split(" ", 2);
             final Integer num = Ints.tryParse(spl[0]);
@@ -68,7 +66,7 @@ public class QuoteCommand extends SlashCommand {
                 return;
             }
 
-            quote = Database.main().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), num));
+            quote = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), num));
         }
 
         if (quote == null) {
@@ -98,9 +96,9 @@ public class QuoteCommand extends SlashCommand {
 
             final Quote quote;
             if (event.getOption("id") == null) {
-                quote = Database.main().withExtension(QuotesDAO.class, db -> db.getRandomQuote(event.getGuild().getIdLong()));
+                quote = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getRandomQuote(event.getGuild().getIdLong()));
             } else {
-                quote = Database.main().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), event.getOption("id").getAsInt()));
+                quote = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), event.getOption("id").getAsInt()));
             }
 
             if (quote == null) {
@@ -142,7 +140,7 @@ public class QuoteCommand extends SlashCommand {
             }
 
             final String authorName = authorText == null ? (authorUser.getNickname() == null ? authorUser.getEffectiveName() : authorUser.getNickname() + " (" + authorUser.getUser().getEffectiveName() + ")") : authorText;
-            final int id = Database.main().withExtension(QuotesDAO.class, db -> db.insertQuote(
+            final int id = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.insertQuote(
                     event.getGuild().getIdLong(),
                     db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser == null ? null : authorUser.getIdLong()),
                     event.getOption("quote", OptionMapping::getAsString),
@@ -175,9 +173,9 @@ public class QuoteCommand extends SlashCommand {
             final Data data;
             if (!event.getArgs().isBlank()) {
                 final var filter = StringSearch.contains(event.getArgs().trim());
-                data = new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong(), filter, null)), filter, null, event.getGuild().getIdLong());
+                data = new Data(BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong(), filter, null)), filter, null, event.getGuild().getIdLong());
             } else {
-                data = new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong())), null, null, event.getGuild().getIdLong());
+                data = new Data(BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong())), null, null, event.getGuild().getIdLong());
             }
 
             if (data.itemAmount() < 1) {
@@ -213,17 +211,17 @@ public class QuoteCommand extends SlashCommand {
             });
 
             if (filter != null || userFilter != null) {
-                return new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong(), filter, userFilter)), filter, userFilter, event.getGuild().getIdLong());
+                return new Data(BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong(), filter, userFilter)), filter, userFilter, event.getGuild().getIdLong());
             }
 
-            return new Data(Database.main().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong())), null, null, event.getGuild().getIdLong());
+            return new Data(BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, q -> q.getQuoteAmount(event.getGuild().getIdLong())), null, null, event.getGuild().getIdLong());
         }
 
         // Crime incoming: the interaction shouldn't be nullable, but because this command is special and allows
         // text commands, we don't have an interaction there, so resort to storing more data in the button data
         @Override
         public CompletableFuture<MessageEditData> createMessage(int page, Data data, @Nullable Interaction interaction) {
-            final var quotes = Database.main().withExtension(QuotesDAO.class, db -> {
+            final var quotes = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> {
                 if (data.contentFilter == null && data.userSearch == null) {
                     return db.getQuotes(data.guildId, page * this.itemsPerPage, this.itemsPerPage);
                 } else {
@@ -259,7 +257,7 @@ public class QuoteCommand extends SlashCommand {
         @Override
         protected void execute(SlashCommandEvent event) {
             final int id = event.getOption("id", 0, OptionMapping::getAsInt);
-            final Quote quote = Database.main().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), id));
+            final Quote quote = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), id));
             if (quote == null) {
                 event.reply("Unknown quote.").setEphemeral(true).queue();
                 return;
@@ -270,7 +268,7 @@ public class QuoteCommand extends SlashCommand {
                 return;
             }
 
-            Database.main().useExtension(QuotesDAO.class, db -> db.deleteQuote(id));
+            BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.deleteQuote(id));
 
             event.reply("Quote deleted.").queue();
         }
@@ -292,7 +290,7 @@ public class QuoteCommand extends SlashCommand {
         @Override
         protected void execute(SlashCommandEvent event) {
             final int id = event.getOption("id", -1, OptionMapping::getAsInt);
-            final Quote quote = Database.main().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), id));
+            final Quote quote = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), id));
             if (quote == null) {
                 event.reply("Unknown quote.").setEphemeral(true).queue();
                 return;
@@ -311,17 +309,17 @@ public class QuoteCommand extends SlashCommand {
 
             if (authorUser != null || authorText != null) {
                 final String authorName = authorText == null ? (authorUser.getNickname() == null ? authorUser.getEffectiveName() : authorUser.getNickname() + " (" + authorUser.getUser().getEffectiveName() + ")") : authorText;
-                Database.main().useExtension(QuotesDAO.class, db -> db.updateQuoteAuthor(
+                BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.updateQuoteAuthor(
                         id, db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser == null ? null : authorUser.getIdLong())
                 ));
             }
 
             if (event.getOption("quote") != null) {
-                Database.main().useExtension(QuotesDAO.class, db -> db.updateQuote(id, event.getOption("quote").getAsString()));
+                BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.updateQuote(id, event.getOption("quote").getAsString()));
             }
 
             if (event.getOption("context") != null) {
-                Database.main().useExtension(QuotesDAO.class, db -> db.updateQuoteContext(id, event.getOption("context").getAsString()));
+                BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.updateQuoteContext(id, event.getOption("context").getAsString()));
             }
 
             event.reply("Quote modified!").queue();
@@ -339,7 +337,7 @@ public class QuoteCommand extends SlashCommand {
 
         @Override
         protected void execute(SlashCommandEvent event) {
-            final Quote quote = Database.main().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), event.getOption("id").getAsInt()));
+            final Quote quote = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getQuote(event.getGuild().getIdLong(), event.getOption("id").getAsInt()));
             if (quote == null) {
                 event.reply("Unknown quote.").setEphemeral(true).queue();
                 return;
@@ -372,7 +370,7 @@ public class QuoteCommand extends SlashCommand {
     private static boolean canModify(Member member, int quoteId) {
         return member.hasPermission(Permission.MESSAGE_MANAGE) || Objects.equals(
                 member.getIdLong(),
-                Database.main().withExtension(QuotesDAO.class, db -> db.getQuoter(quoteId))
+                BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.getQuoter(quoteId))
         );
     }
 

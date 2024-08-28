@@ -41,9 +41,8 @@ tasks.register('groovydocJar', Jar) {
 }
 
 dependencies {
-    api "org.apache.groovy:groovy:${project.groovy_version}"
-    api "org.apache.groovy:groovy-contracts:${project.groovy_version}"
-    api group: 'org.kohsuke', name: 'github-api', version: project.ghapi_version
+    api libs.bundles.groovy
+    api libs.githubapi
 
     sampleCompileOnly(sourceSets.main.output)
 

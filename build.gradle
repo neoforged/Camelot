@@ -82,57 +82,44 @@ configurations {
 dependencies {
     implementation project(':config')
 
-    api group: 'com.github.matyrobbrt', name: 'JDA-Chewtils', version: "${project.jda_chewtils_version}"
-    api group: 'net.dv8tion', name: 'JDA', version: "${project.jda_version}"
-    implementation group: 'com.google.guava', name: 'guava', version: "${project.guava_version}"
-    implementation group: 'com.google.code.gson', name: 'gson', version: "${project.gson_version}"
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: "${project.logback_version}"
+    api libs.chewtils
+    api libs.jda
+    implementation libs.trove4j
 
-    implementation group: 'org.flywaydb', name: 'flyway-core', version: project.flyway_version
-    implementation libs.bundles.jdbi
-    implementation group: 'org.xerial', name: 'sqlite-jdbc', version: project.sqlite_version
+    implementation libs.guava
+    implementation libs.logback
+
+    implementation libs.bundles.database
 
     // YML parsing and generation
     implementation libs.bundles.jackson
 
     // GitHub API interaction library
-    implementation group: 'org.kohsuke', name: 'github-api', version: project.ghapi_version
+    implementation libs.githubapi
     // GitHub api JWT generation
-    implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: project.jjwt_version
-    implementation group: 'io.jsonwebtoken', name: 'jjwt-impl', version: project.jjwt_version
-    implementation group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: project.jjwt_version
+    implementation libs.bundles.jjwt
     // Converting private keys for GitHub auth
-    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: project.bcpkix_version
+    implementation libs.bcpkix
 
-    // JDA runtime dependency that we use for custom snowflake views
-    implementation group: 'net.sf.trove4j', name: 'trove4j', version: project.trove4j_version
+    implementation libs.bundles.graal
+    implementation libs.args4j
+    implementation libs.re2j
+    implementation libs.fastutil
 
-    // implementation group: 'club.minnced', name: 'discord-webhooks', version: project.discord_webhooks_version
-    implementation group: 'net.sf.jopt-simple', name: 'jopt-simple', version: project.jopt_version // Used by tricks
-
-    implementation group: 'org.graalvm.js', name: 'js', version: project.graal_version
-    implementation group: 'org.graalvm.js', name: 'js-scriptengine', version: project.graal_version
-    implementation group: 'args4j', name: 'args4j', version: project.arg4j_version
-    implementation group: 'com.google.re2j', name: 're2j', version: project.re2j_version
-    implementation group: 'it.unimi.dsi', name: 'fastutil', version: project.fastutil_version
-
-    implementation group: 'com.matyrobbrt', name: 'semver-graaljs', version: project.semver_version
-    implementation group: 'org.apache.maven', name: 'maven-artifact', version: project.maven_artifact_version
-    implementation("io.javalin:javalin:${project.javalin_version}") {
+    implementation libs.semver
+    implementation libs.mavenartifact
+    implementation(libs.javalin.get()) {
         exclude module: 'slf4j-api'
     }
-    implementation("com.j2html:j2html:${project.j2html_version}")
-    implementation("org.eclipse.angus:angus-mail:${project.angus_mail_version}")
-    implementation "org.json:json:${project.json_version}"
+    implementation libs.j2html
+    implementation libs.angusmail
+    implementation libs.json
 
-    compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
-    annotationProcessor group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
+    compileOnly(annotationProcessor(libs.autoservice.get()))
 
-    compileOnly 'org.jetbrains:annotations:24.0.1'
+    compileOnlyApi(libs.annotations)
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junit_version")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junit_version")
-    testImplementation('org.assertj:assertj-core:3.25.1')
+    testImplementation(libs.bundles.testing)
 
     project(':modules').subprojects.each {
         library(project(path: it.path, configuration: 'library'))
@@ -154,7 +141,6 @@ jar {
             'Implementation-Vendor': 'NeoForged',
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
             'Built-On-Java': "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
-            'Built-On': "${project.jda_version}-${project.jda_chewtils_version}",
             'Main-Class': 'net.neoforged.camelot.BotMain'
     ])
 }

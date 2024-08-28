@@ -3,10 +3,9 @@ plugins {
 }
 
 camelotModule {
-    id = 'info-channels'
+    id = 'thread-pings'
 }
 
 dependencies {
     library(libs.bundles.database)
-    library(libs.bundles.jackson)
 }

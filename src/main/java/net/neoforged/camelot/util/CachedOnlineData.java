@@ -1,8 +1,9 @@
 package net.neoforged.camelot.util;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,24 +97,31 @@ public interface CachedOnlineData<T> {
         }
 
         /**
-         * Decodes the response using Gson.
+         * Decodes the response using Jackson as json.
          *
-         * @param gson  the Gson instance to decode with
-         * @param token the type to decode to
+         * @param mapper the jackson mapper instance to decode with
+         * @param token  the type to decode to
          */
-        public Builder<T> gsonDecode(Gson gson, TypeToken<T> token) {
+        public Builder<T> jsonDecode(ObjectMapper mapper, TypeReference<T> token) {
             return this.bodyHandler(_ -> HttpResponse.BodySubscribers.mapping(
                     HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8),
-                    in -> gson.fromJson(in, token)
+                    in -> {
+                        try {
+                            return mapper.readValue(in, token);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
             ));
         }
 
         /**
-         * Decodes the response as a {@link JsonObject}.
+         * Decodes the response as a {@link JsonNode}.
          */
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        public Builder<JsonObject> json() {
-            return gsonDecode(CODImpl.GSON, (TypeToken) TypeToken.get(JsonObject.class));
+        public Builder<JsonNode> json() {
+            //noinspection rawtypes,unchecked
+            return jsonDecode(CODImpl.MAPPER, (TypeReference) new TypeReference<JsonNode>() {
+            });
         }
 
         /**
@@ -158,7 +166,7 @@ class CODImpl<T> implements CachedOnlineData<T> {
         thread.setDaemon(true);
         return thread;
     });
-    static final Gson GSON = new Gson();
+    static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final HttpClient client;
     private final HttpRequest request;

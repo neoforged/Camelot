@@ -25,19 +25,6 @@ dependencyResolutionManagement {
             url 'https://jitpack.io'
         }
     }
-
-    versionCatalogs {
-        create('libs') {
-            final jdbi = version('jdbi', '3.32.0')
-            library('jdbi-core', 'org.jdbi', 'jdbi3-core').versionRef(jdbi)
-            library('jdbi-sqlobject', 'org.jdbi', 'jdbi3-sqlobject').versionRef(jdbi)
-            bundle('jdbi', ['jdbi-core', 'jdbi-sqlobject'])
-
-            final jackson = version('jackson', '2.13.3')
-            library('jackson-yaml', 'com.fasterxml.jackson.dataformat', 'jackson-dataformat-yaml').versionRef(jackson)
-            bundle('jackson', ['jackson-yaml'])
-        }
-    }
 }
 
 rootProject.name = 'Camelot'
@@ -46,3 +33,5 @@ include ':config'
 
 include ':modules:info-channels'
 include ':modules:file-preview'
+include ':modules:thread-pings'
+include ':modules:quotes'

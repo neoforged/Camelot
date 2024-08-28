@@ -1,4 +1,4 @@
-package net.neoforged.camelot.module;
+package net.neoforged.camelot.module.quotes;
 
 import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
@@ -10,11 +10,10 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
-import net.neoforged.camelot.commands.information.QuoteCommand;
 import net.neoforged.camelot.config.module.Quotes;
-import net.neoforged.camelot.db.schemas.Quote;
-import net.neoforged.camelot.db.transactionals.QuotesDAO;
+import net.neoforged.camelot.module.BuiltInModule;
+import net.neoforged.camelot.module.quotes.db.Quote;
+import net.neoforged.camelot.module.quotes.db.QuotesDAO;
 import net.neoforged.camelot.module.api.CamelotModule;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +41,39 @@ import static net.neoforged.camelot.util.ImageUtils.drawUserAvatar;
  * The module that handles quotes.
  */
 @AutoService(CamelotModule.class)
-public class QuotesModule extends CamelotModule.Base<Quotes> {
+public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
     public QuotesModule() {
         super(Quotes.class);
+        accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
+                .add(BuiltInModule.DatabaseSource.MAIN, 16, stmt -> {
+                    logger.info("Migrating quote authors from main.db to quotes.db");
+                    var authors = stmt.executeQuery("select * from quote_authors");
+                    db().useExtension(QuotesDAO.class, db -> {
+                        while (authors.next()) {
+                            db.insertAuthor(
+                                    authors.getInt(1),
+                                    authors.getLong(2),
+                                    authors.getString(3),
+                                    authors.getLong(4)
+                            );
+                        }
+                    });
+
+                    logger.info("Migrating quotes from main.db to quotes.db");
+                    var quotes = stmt.executeQuery("select * from quotes");
+                    db().useExtension(QuotesDAO.class, db -> {
+                        while (quotes.next()) {
+                            db.insertQuote(
+                                    quotes.getLong(2),
+                                    quotes.getInt(3),
+                                    quotes.getString(4),
+                                    quotes.getString(5),
+                                    quotes.getLong(6),
+                                    quotes.getInt(1)
+                            );
+                        }
+                    });
+                }));
     }
 
     @Override
@@ -68,7 +97,7 @@ public class QuotesModule extends CamelotModule.Base<Quotes> {
             protected void execute(MessageContextMenuEvent event) {
                 final Member authorUser = event.getTarget().getMember();
                 final String authorName = authorUser.getNickname() == null ? authorUser.getEffectiveName() : authorUser.getNickname() + " (" + authorUser.getUser().getEffectiveName() + ")";
-                final int id = Database.main().withExtension(QuotesDAO.class, db -> db.insertQuote(
+                final int id = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.insertQuote(
                         event.getGuild().getIdLong(),
                         db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser.getIdLong()),
                         event.getTarget().getContentRaw(),
@@ -83,7 +112,7 @@ public class QuotesModule extends CamelotModule.Base<Quotes> {
     private Font usedFont;
     @Override
     public void setup(JDA jda) {
-        final QuotesDAO db = Database.main().onDemand(QuotesDAO.class);
+        final QuotesDAO db = BotMain.getModule(QuotesModule.class).db().onDemand(QuotesDAO.class);
         BotMain.EXECUTOR.scheduleAtFixedRate(() -> updateAuthors(jda, db), 1, 5, TimeUnit.MINUTES);
 
         try {

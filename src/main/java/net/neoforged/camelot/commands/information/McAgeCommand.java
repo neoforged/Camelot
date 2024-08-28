@@ -1,8 +1,9 @@
 package net.neoforged.camelot.commands.information;
 
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.Permission;
@@ -28,7 +29,7 @@ public class McAgeCommand extends SlashCommand {
             .client(BotMain.HTTP_CLIENT)
             .uri(URI.create("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"))
             .cacheDuration(Duration.ofMinutes(10))
-            .gsonDecode(new Gson(), new TypeToken<>() {})
+            .jsonDecode(new ObjectMapper(), new TypeReference<VersionManifest>() {})
             .map(versionManifest -> versionManifest.versions.stream().collect(Collectors.toUnmodifiableMap(ver -> ver.version, Function.identity())))
             .build();
 
@@ -67,7 +68,7 @@ public class McAgeCommand extends SlashCommand {
         addComponent(components, period.getDays(), "day");
 
         final String formattedVersion = "Minecraft " + versionString;
-        if (components.size() == 0) {
+        if (components.isEmpty()) {
             event.getHook().sendMessage(formattedVersion + " was released today!").queue();
             return;
         }
@@ -90,11 +91,13 @@ public class McAgeCommand extends SlashCommand {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private record MinecraftVersion(
-            @SerializedName("id")
+            @JsonProperty("id")
             String version,
             Date releaseTime
     ) { }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private record VersionManifest(List<MinecraftVersion> versions) {}
 }

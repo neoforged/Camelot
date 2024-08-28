@@ -3,10 +3,9 @@ plugins {
 }
 
 camelotModule {
-    id = 'info-channels'
+    id = 'quotes'
 }
 
 dependencies {
     library(libs.bundles.database)
-    library(libs.bundles.jackson)
 }
