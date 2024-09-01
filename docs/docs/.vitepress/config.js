@@ -4,10 +4,6 @@ export default {
     title: 'Camelot',
     description: 'Documentation for the Camelot Discord bot',
 
-    head: [
-        ['link', { rel: 'icon', type: 'image/x-icon', href: '/Camelot/favicon.ico' }],
-    ],
-
     themeConfig: {
         logo: '/favicon.png',
         socialLinks: [
