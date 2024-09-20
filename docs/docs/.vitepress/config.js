@@ -39,6 +39,10 @@ export default {
                         text: 'Moderation',
                         link: '/modules/moderation'
                     },
+                    {
+                        text: 'Sticky Roles',
+                        link: '/modules/sticky-roles'
+                    },
                 ]
             }
         ],

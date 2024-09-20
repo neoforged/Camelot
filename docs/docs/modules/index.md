@@ -13,5 +13,6 @@ By default, the following modules are enabled:
 - Quotes
 - Reminders
 - Statistics
+- [Sticky Roles](./sticky-roles)
 - Thread Pings
 - Tricks

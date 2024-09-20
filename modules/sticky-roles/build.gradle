@@ -1,0 +1,11 @@
+plugins {
+    id 'camelot-module'
+}
+
+camelotModule {
+    id = 'sticky-roles'
+}
+
+dependencies {
+    library(libs.bundles.database)
+}
