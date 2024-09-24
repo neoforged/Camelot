@@ -5,24 +5,20 @@ import io.javalin.http.ContentType;
 import io.javalin.http.HttpStatus;
 import j2html.TagCreator;
 import j2html.tags.DomContent;
-import j2html.tags.Tag;
 import j2html.tags.UnescapedText;
 import j2html.tags.specialized.BodyTag;
-import j2html.tags.specialized.DivTag;
 import j2html.tags.specialized.HeadTag;
 import j2html.tags.specialized.HtmlTag;
 import j2html.tags.specialized.TitleTag;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import static j2html.TagCreator.*;
 
-public class WebServer implements Runnable, Closeable {
+public final class WebServer implements Runnable {
     public static final UnescapedText THEME_DROPDOWN = rawHtml("""
 <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
   <symbol id="check2" viewBox="0 0 16 16">
@@ -98,11 +94,6 @@ public class WebServer implements Runnable, Closeable {
             }
         });
         javalin.start(port);
-    }
-
-    @Override
-    public void close() throws IOException {
-        javalin.close();
     }
 
     public static BaseRootTag tag() {
