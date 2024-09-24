@@ -83,7 +83,14 @@ public record ScriptMap(Value value) {
         final EmbedBuilder builder = new EmbedBuilder();
         builder.setDescription(getString("description"));
 
-        stringOrObject("title", builder::setTitle, obj -> builder.setTitle(obj.getString("value"), obj.getString("url")));
+        stringOrObject("title", builder::setTitle, obj -> {
+            var title = obj.getString("value");
+            if (title == null || title.isBlank()) {
+                builder.setUrl(obj.getString("url"));
+            } else {
+                builder.setTitle(title, obj.getString("url"));
+            }
+        });
 
         getList("fields").stream().map(ScriptMap::new).forEach(field -> builder.addField(
                 Objects.requireNonNull(field.getString("name")),

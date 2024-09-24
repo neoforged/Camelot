@@ -119,13 +119,13 @@ export interface Privileged {
 
 declare namespace Embeds {
     export type Title = {
-        value: string | null;
-        url: string | null;
+        value?: string | null;
+        url?: string | null;
     }
 
     export type Footer = {
-        value: string | null,
-        iconUrl: string | null
+        value?: string | null,
+        iconUrl?: string | null
     }
 
     export type Field = {
