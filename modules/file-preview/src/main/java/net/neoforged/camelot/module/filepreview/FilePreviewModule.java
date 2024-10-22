@@ -2,7 +2,9 @@ package net.neoforged.camelot.module.filepreview;
 
 import com.google.auto.service.AutoService;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.entities.messages.MessageSnapshot;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.neoforged.camelot.config.module.FilePreview;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @AutoService(CamelotModule.class)
 public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
@@ -42,10 +45,7 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
     @Override
     public void registerListeners(JDABuilder builder) {
         builder.addEventListeners(Utils.listenerFor(MessageReceivedEvent.class, event -> {
-            if (
-                    event.getMessage().getAttachments().stream().anyMatch(it -> config().getExtensions().contains(it.getFileExtension()))
-                    || hasCodeBlock(event.getMessage().getContentRaw())
-            ) {
+            if (messageMatches(event.getMessage())) {
                 event.getMessage().addReaction(EMOJI).queue();
             }
         }));
@@ -59,7 +59,10 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
                         try {
                             // We could check if the message is valid for gisting, but it's not really needed since the only way we'd have reacted is if the message is gistable
                             final var gist = new GistBuilder(config().getAuth());
-                            for (final var attach : it.getAttachments()) {
+
+                            final var itr = Stream.concat(it.getAttachments().stream(), it.getMessageSnapshots().stream().flatMap(s -> s.getAttachments().stream())).iterator();
+                            while (itr.hasNext()) {
+                                final var attach = itr.next();
                                 if (config().getExtensions().contains(attach.getFileExtension())) {
                                     try (final var is = URI.create(attach.getProxy().getUrl()).toURL().openStream()) {
                                         gist.file(attach.getFileName(), new String(is.readAllBytes()));
@@ -107,6 +110,21 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
                 }
             }
         }));
+    }
+
+    private boolean messageMatches(Message message) {
+        if (message.getAttachments().stream().anyMatch(it -> config().getExtensions().contains(it.getFileExtension())) || hasCodeBlock(message.getContentRaw())) {
+            return true;
+        }
+
+        if (!message.getMessageSnapshots().isEmpty()) {
+            for (MessageSnapshot messageSnapshot : message.getMessageSnapshots()) {
+                if (messageSnapshot.getAttachments().stream().anyMatch(it -> config().getExtensions().contains(it.getFileExtension()))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // A message has a codeblock if it has at least two "counts" of ```, and if the codeblock is at least 10 lines long or 300 characters
