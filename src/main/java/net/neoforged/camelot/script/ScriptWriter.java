@@ -1,8 +1,8 @@
 package net.neoforged.camelot.script;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.StringWriter;
 import java.util.List;
@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+@CanIgnoreReturnValue
 public class ScriptWriter {
     private final StringWriter writer;
     private int indentAmount;
@@ -71,12 +72,12 @@ public class ScriptWriter {
         return this;
     }
 
-    public <T> ScriptWriter writeKeyValueIfNot(String key, T value, Predicate<T> predicate) {
+    public <T> ScriptWriter writeKeyValueIfNot(String key, @Nullable T value, Predicate<T> predicate) {
         return writeKeyValueIf(key, value, Predicate.not(predicate));
     }
 
-    public <T> ScriptWriter writeKeyValueIf(String key, T value, Predicate<T> predicate) {
-        if (predicate.test(value)) {
+    public <T> ScriptWriter writeKeyValueIf(String key, @Nullable T value, Predicate<T> predicate) {
+        if (value != null && predicate.test(value)) {
             writeKeyValue(key, _ -> {
                 switch (value) {
                     case Integer number -> writeInt(number);
@@ -88,7 +89,6 @@ public class ScriptWriter {
         return this;
     }
 
-    @CanIgnoreReturnValue
     public ScriptWriter writeKeyValue(String key, Consumer<ScriptWriter> value) {
         writeLineStart().write("'").write(key).write("'").write(": ");
         value.accept(this);
