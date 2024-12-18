@@ -112,8 +112,8 @@ public class EvalCommand extends Command {
      */
     private static String getMessageScript(Message msg) {
         final String content = msg.getContentRaw().substring((Commands.get().getPrefix() + "eval").length()).trim();
-        if (content.startsWith("```js")) {
-            return content.substring("```js".length(), content.lastIndexOf("```")).trim();
+        if (content.startsWith("```")) {
+            return content.substring("```".length(), content.lastIndexOf("```")).trim();
         } else if (content.startsWith("`")) {
             return content.substring(1, content.lastIndexOf('`')).trim();
         }

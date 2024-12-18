@@ -88,7 +88,7 @@ public class VerifyMCCommand extends InteractiveCommand {
         final long userId = Long.parseLong(arguments[1]);
         if (arguments[0].equals("cancel")) {
             if (!event.getMember().hasPermission(Permission.MODERATE_MEMBERS)) {
-                event.reply("You cannot use this button!").setEphemeral(true);
+                event.reply("You cannot use this button!").setEphemeral(true).queue();
                 return;
             }
 
