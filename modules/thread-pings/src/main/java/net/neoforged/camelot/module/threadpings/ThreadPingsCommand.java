@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.LongFunction;
 import java.util.stream.Collectors;
@@ -364,7 +363,7 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
     }
 
     private static void applyNewRoles(long channelId, List<Long> roleIds, LongFunction<List<Long>> query,
-                                      BiConsumer<Long, Long> adder, BiConsumer<Long, Long> remover) {
+                                      ChannelRoleConsumer adder, ChannelRoleConsumer remover) {
         final List<Long> existingRoles = query.apply(channelId);
 
         for (Long existingRoleId : existingRoles) {
@@ -378,5 +377,10 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
                 adder.accept(channelId, roleId);
             }
         }
+    }
+
+    @FunctionalInterface
+    private interface ChannelRoleConsumer {
+        void accept(long channelId, long roleId);
     }
 }
