@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.LongFunction;
@@ -42,11 +44,11 @@ public record ThreadPingsListener(Jdbi database) implements EventListener {
             return;
 
         final ThreadChannel thread = event.getChannel().asThreadChannel();
-        final List<Long> pingRoleIds = new ArrayList<>();
+        final Set<Long> pingRoleIds = new LinkedHashSet<>();
         database.useExtension(ThreadPingsDAO.class,
                 threadPings -> queryRoles(thread, pingRoleIds, threadPings::query));
 
-        final List<Long> exemptRoleIds = new ArrayList<>();
+        final Set<Long> exemptRoleIds = new LinkedHashSet<>();
 
         database.useExtension(ThreadPingsExemptionsDAO.class,
                 threadPingsExempt -> queryRoles(thread, exemptRoleIds, threadPingsExempt::query));
@@ -102,7 +104,7 @@ public record ThreadPingsListener(Jdbi database) implements EventListener {
                 );
     }
 
-    private static void queryRoles(ThreadChannel thread, List<Long> roleIds, LongFunction<List<Long>> roleQuery) {
+    private static void queryRoles(ThreadChannel thread, Collection<Long> roleIds, LongFunction<List<Long>> roleQuery) {
         // Check the thread's parent channel
         final IThreadContainerUnion parentChannel = thread.getParentChannel();
         roleIds.addAll(roleQuery.apply(parentChannel.getIdLong()));
