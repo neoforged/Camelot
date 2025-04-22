@@ -2,7 +2,6 @@ package net.neoforged.camelot.configuration;
 
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.config.module.BanAppeals;
-import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.config.module.Tricks;
 import net.neoforged.camelot.config.module.WebServer;
@@ -62,7 +61,7 @@ public class ConfigMigrator {
             }
         });
 
-        script.module(MinecraftVerification.class, () ->
+        script.module("net.neoforged.camelot.config.module.MinecraftVerification", () ->
                 script.appendOauthBlock("discord").appendOauthBlock("microsoft"));
 
         script.module(BanAppeals.class, () -> {

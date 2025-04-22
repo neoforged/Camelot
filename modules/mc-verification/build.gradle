@@ -1,0 +1,13 @@
+plugins {
+    id 'camelot-module'
+}
+
+camelotModule {
+    id = 'mc-verification'
+}
+
+dependencies {
+    library(libs.json)
+    library(libs.j2html)
+    library(libs.bundles.database)
+}

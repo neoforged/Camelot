@@ -4,6 +4,8 @@ import groovy.transform.CompileStatic
 import net.neoforged.camelot.config.ConfigUtils
 import net.neoforged.camelot.config.OAuthConfiguration
 
+import java.time.Duration
+
 /**
  * Module for Minecraft ownership verification.
  * <p>Disabled by default.
@@ -30,4 +32,18 @@ class MinecraftVerification extends ModuleConfiguration {
     void microsoftAuth(@DelegatesTo(value = OAuthConfiguration, strategy = Closure.DELEGATE_FIRST) Closure config) {
         ConfigUtils.configure(microsoftAuth, config)
     }
+
+    /**
+     * How long bans after failure to verify Minecraft ownership shall last for.
+     * <p>
+     * The default is <b>3 months</b> (90 days).
+     */
+    Duration banDuration = Duration.ofDays(90)
+
+    /**
+     * How long users have to verify before getting banned.
+     * <p>
+     * The default is <b>1 day</b> (24 hours).
+     */
+    Duration verificationDeadline = Duration.ofHours(24)
 }

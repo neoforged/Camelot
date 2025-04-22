@@ -1,4 +1,4 @@
-package net.neoforged.camelot.module;
+package net.neoforged.camelot.module.mcverification;
 
 import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
@@ -14,16 +14,17 @@ import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
-import net.neoforged.camelot.commands.moderation.VerifyMCCommand;
 import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
-import net.neoforged.camelot.db.transactionals.McVerificationDAO;
 import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.log.ModerationActionRecorder;
+import net.neoforged.camelot.module.BanAppealModule;
+import net.neoforged.camelot.module.LoggingModule;
+import net.neoforged.camelot.module.WebServerModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.server.WebServer;
+import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.oauth.OAuthClient;
 import net.neoforged.camelot.util.oauth.OAuthScope;
@@ -60,7 +61,7 @@ import static j2html.TagCreator.text;
 import static j2html.TagCreator.title;
 
 @AutoService(CamelotModule.class)
-public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVerification> {
+public class MinecraftVerificationModule extends CamelotModule.WithDatabase<MinecraftVerification> {
     private OAuthClient microsoft, discord;
 
     public MinecraftVerificationModule() {
@@ -91,7 +92,7 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommand(new VerifyMCCommand());
+        builder.addSlashCommand(new VerifyMCCommand(db().onDemand(McVerificationDAO.class)));
     }
 
     @Override
@@ -99,7 +100,7 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
         discord = OAuthUtils.discord(config().getDiscordAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/discord"), OAuthScope.Discord.IDENTIFY);
         microsoft = OAuthUtils.microsoft(config().getMicrosoftAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/microsoft"), OAuthScope.Microsoft.XBOX_LIVE);
 
-        final McVerificationDAO dao = Database.main().onDemand(McVerificationDAO.class);
+        final McVerificationDAO dao = db().onDemand(McVerificationDAO.class);
         BotMain.EXECUTOR.scheduleAtFixedRate(() -> banNotVerified(jda, dao), 1, 1, TimeUnit.MINUTES);
     }
 
@@ -110,14 +111,22 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
                 for (final long toBan : users) {
                     // We do not use allOf because we do not want a deleted user to cause all unbans to fail
                     jda.retrieveUserById(toBan)
-                            .flatMap(user -> Utils.attemptDM(user, pc -> pc.sendMessageEmbeds(new EmbedBuilder()
-                                    .setAuthor(guild.getName(), null, guild.getIconUrl())
-                                    .setDescription("You have been **banned** in **" + guild.getName() + "**.")
-                                    .addField("Reason", "Failed to verify Minecraft account ownership", false)
-                                    .addField("Duration", "1 year", false)
-                                    .setColor(ModLogEntry.Type.BAN.getColor())
-                                    .setTimestamp(Instant.now())
-                                    .build())))
+                            .flatMap(user -> Utils.attemptDM(user, pc -> {
+                                var message = new EmbedBuilder()
+                                        .setAuthor(guild.getName(), null, guild.getIconUrl())
+                                        .setDescription("You have been **banned** in **" + guild.getName() + "**.")
+                                        .addField("Reason", "Failed to verify Minecraft account ownership", false)
+                                        .addField("Duration", DateUtils.formatDuration(config().getBanDuration()), false)
+                                        .setColor(ModLogEntry.Type.BAN.getColor())
+                                        .setTimestamp(Instant.now());
+
+                                if (BotMain.getModule(BanAppealModule.class) != null) {
+                                    message.appendDescription("\nYou may appeal the ban at " + BotMain.getModule(WebServerModule.class)
+                                            .makeLink("/ban-appeals/" + guild.getId()) + ".");
+                                }
+
+                                return pc.sendMessageEmbeds(message.build());
+                            }))
 
                             .flatMap(_ -> guild.ban(UserSnowflake.fromId(toBan), 0, TimeUnit.MINUTES).reason("rec: Failed to verify Minecraft account ownership"))
                             .queue(_ -> db.delete(guild.getIdLong(), toBan), new ErrorHandler()
@@ -190,7 +199,7 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
         final String xboxToken = context.cookie("xbox_token");
         final long userId = getUser(discordToken).getLong("id");
 
-        final String targetMessage = Database.main().withExtension(McVerificationDAO.class, db -> db.getTargetMessage(serverId, userId));
+        final String targetMessage = db().withExtension(McVerificationDAO.class, db -> db.getTargetMessage(serverId, userId));
         if (targetMessage == null) {
             context.result(new JSONObject().put("error", "Verification not needed").toString())
                     .status(HttpStatus.UNAUTHORIZED);
@@ -204,7 +213,7 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
             return;
         }
 
-        Database.main().useExtension(McVerificationDAO.class, db -> db.delete(serverId, userId));
+        db().useExtension(McVerificationDAO.class, db -> db.delete(serverId, userId));
         context.status(HttpStatus.OK);
         context.removeCookie("xbox_token");
         context.removeCookie("discord_token");
@@ -259,7 +268,7 @@ public class MinecraftVerificationModule extends CamelotModule.Base<MinecraftVer
             discordStatus = span(span(" Please link your Discord account"));
         } else {
             final JSONObject self = getUser(discordToken);
-            if (Database.main().withExtension(McVerificationDAO.class, db -> db.getTargetMessage(serverId, self.getLong("id"))) == null) {
+            if (db().withExtension(McVerificationDAO.class, db -> db.getTargetMessage(serverId, self.getLong("id"))) == null) {
                 context.html(WebServer.tag()
                                 .withTitle(title("You do not need to verify Minecraft ownership"))
                                 .withContent(div(h2("You do not need to verify Minecraft ownership")).withClass("px-4 py-5 my-5 text-center"))

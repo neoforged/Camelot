@@ -107,7 +107,7 @@ dependencies {
 
     implementation libs.semver
     implementation libs.mavenartifact
-    implementation(libs.javalin.get()) {
+    api(libs.javalin.get()) {
         exclude module: 'slf4j-api'
     }
     implementation libs.j2html
