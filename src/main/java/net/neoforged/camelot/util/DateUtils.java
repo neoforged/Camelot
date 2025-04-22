@@ -29,8 +29,8 @@ public class DateUtils {
         duration = duration.minus(of(years * 365, ChronoUnit.DAYS));
         if (years > 0) appendMaybePlural(str, years, "year");
 
-        final long months = duration.getSeconds() / ChronoUnit.MONTHS.getDuration().getSeconds();
-        duration = duration.minus(of(months, ChronoUnit.MONTHS));
+        final long months = duration.getSeconds() / (ChronoUnit.DAYS.getDuration().getSeconds() * 30);
+        duration = duration.minus(of(months * 30, ChronoUnit.DAYS));
         if (months > 0) appendMaybePlural(str, months, "month");
 
         final long days = duration.toDays();
