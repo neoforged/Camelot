@@ -14,5 +14,5 @@ By default, the following modules are enabled:
 - Reminders
 - Statistics
 - [Sticky Roles](./sticky-roles)
-- Thread Pings
+- [Thread Pings](./thread-pings)
 - Tricks

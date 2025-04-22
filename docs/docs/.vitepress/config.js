@@ -43,6 +43,10 @@ export default {
                         text: 'Sticky Roles',
                         link: '/modules/sticky-roles'
                     },
+                    {
+                        text: 'Thread Pings',
+                        link: '/modules/thread-pings'
+                    }
                 ]
             }
         ],
