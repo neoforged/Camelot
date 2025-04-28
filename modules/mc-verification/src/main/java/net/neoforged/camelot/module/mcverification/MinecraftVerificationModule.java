@@ -388,7 +388,10 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
             }
         }
 
-        var xerr = json.getString("XErr");
+        String xerr = "";
+        if (json.has("XErr")) {
+            xerr = json.get("XErr").toString();
+        }
 
         if (!xerr.isEmpty()) {
             switch (xerr) {
