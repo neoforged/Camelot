@@ -3,6 +3,7 @@ package net.neoforged.camelot.module.mcverification;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
@@ -95,7 +96,11 @@ public class VerifyMCCommand extends InteractiveCommand {
     protected void onButton(ButtonInteractionEvent event, String[] arguments) {
         final long userId = Long.parseLong(arguments[1]);
         if (arguments[0].equals("cancel")) {
-            if (!event.getMember().hasPermission(Permission.MODERATE_MEMBERS)) {
+            // Allow either the original user who ran the command or someone with Moderate Members to cancel
+            final User originalRunner = event.getMessage().getInteraction() != null
+                    ? event.getMessage().getInteraction().getUser()
+                    : null;
+            if (!event.getUser().equals(originalRunner) && !event.getMember().hasPermission(Permission.MODERATE_MEMBERS)) {
                 event.reply("You cannot use this button!").setEphemeral(true).queue();
                 return;
             }
