@@ -873,7 +873,13 @@ public class ManageTrickCommand extends SlashCommand {
             final EmbedBuilder embed = new EmbedBuilder();
             embed.setTitle("Usage of /" + command.getName());
             embed.addField("Used characters", STR."`\{chars.get()}` / `4000`", true);
-            embed.addField("Subcommand amount", STR."`\{command.getSubcommands().size()}` / `\{CommandData.MAX_OPTIONS}`", true);
+
+            var subcommandAmount = "`" + command.getSubcommands().size() + "`";
+            if (!command.getSubcommandGroups().isEmpty()) {
+                subcommandAmount += " + `" + command.getSubcommandGroups().size() + "`";
+            }
+            subcommandAmount += " / `" + CommandData.MAX_OPTIONS + "`";
+            embed.addField("Subcommand amount", subcommandAmount, true);
             embed.addField("Subcommand groups amount", STR."`\{command.getSubcommandGroups().size()}` / `\{CommandData.MAX_OPTIONS}`", true);
 
             if (!command.getSubcommandGroups().isEmpty()) {
