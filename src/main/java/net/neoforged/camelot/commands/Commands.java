@@ -8,6 +8,7 @@ import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.information.McAgeCommand;
 import net.neoforged.camelot.commands.information.VersioningCommand;
 import net.neoforged.camelot.commands.utility.PingCommand;
+import net.neoforged.camelot.commands.utility.ShutdownCommand;
 import net.neoforged.camelot.config.CamelotConfig;
 
 /**
@@ -39,6 +40,7 @@ public class Commands {
 
                 .addSlashCommand(new PingCommand())
                 .addSlashCommand(new HelpCommand(BotMain.BUTTON_MANAGER))
+                .addSlashCommand(new ShutdownCommand())
 
                 // Information commands
                 .addSlashCommands(new McAgeCommand(), new VersioningCommand());
