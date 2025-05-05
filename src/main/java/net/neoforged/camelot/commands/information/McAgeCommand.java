@@ -25,11 +25,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class McAgeCommand extends SlashCommand {
-    public static final CachedOnlineData<Map<String, MinecraftVersion>> VERSIONS = CachedOnlineData.<VersionManifest>builder()
+    private static final CachedOnlineData<Map<String, MinecraftVersion>> VERSIONS = CachedOnlineData.<VersionManifest>builder()
             .client(BotMain.HTTP_CLIENT)
             .uri(URI.create("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"))
             .cacheDuration(Duration.ofMinutes(10))
-            .jsonDecode(new ObjectMapper(), new TypeReference<VersionManifest>() {})
+            .jsonDecode(new ObjectMapper(), new TypeReference<>() {})
             .map(versionManifest -> versionManifest.versions.stream().collect(Collectors.toUnmodifiableMap(ver -> ver.version, Function.identity())))
             .build();
 

@@ -30,8 +30,8 @@ public class MessageLogging extends LoggingHandler {
         super(jda, LoggingChannelsDAO.Type.MESSAGES);
         this.cache = new MessageCache(
                 Caffeine.newBuilder()
-                        .maximumSize(100_000)
-                        .expireAfterWrite(12, TimeUnit.HOURS)
+                        .maximumSize(250_000)
+                        .expireAfterWrite(3, TimeUnit.DAYS)
                         .build(),
                 this::onMessageUpdate,
                 this::onMessageDelete

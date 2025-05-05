@@ -37,7 +37,7 @@ public abstract class ModerationCommand<T> extends SlashCommand {
     /**
      * The list of user having in-progress actions against them.
      */
-    public static final LongSet IN_PROGRESS = LongSets.synchronize(new LongArraySet());
+    private static final LongSet IN_PROGRESS = LongSets.synchronize(new LongArraySet());
 
     protected ModerationCommand() {
         this.guildOnly = true;

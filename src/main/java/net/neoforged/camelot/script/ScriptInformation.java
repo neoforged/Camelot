@@ -13,7 +13,7 @@ import java.util.List;
  */
 public record ScriptInformation(
         String description,
-        List<OptionHandler> options,
-        List<OptionHandler> arguments
+        List<OptionHandler<?>> options,
+        List<OptionHandler<?>> arguments
 ) {
 }

@@ -1,10 +1,12 @@
 package net.neoforged.camelot.configuration;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.config.module.BanAppeals;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.config.module.Tricks;
 import net.neoforged.camelot.config.module.WebServer;
+import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 
 import java.nio.file.Files;
@@ -21,6 +23,7 @@ public class ConfigMigrator {
     @SuppressWarnings("unchecked")
     private final Map<Class<?>, String> configToId = ServiceLoader.load(CamelotModule.class)
             .stream().map(ServiceLoader.Provider::get)
+            .filter(c -> !(c instanceof BuiltInModule))
             .collect(Collectors.toMap(CamelotModule::configType, CamelotModule::id));
 
     public String migrate(Properties properties) throws Exception {
@@ -42,7 +45,7 @@ public class ConfigMigrator {
             script.appendLine("trickMasterRole = " + Long.parseLong(properties.getProperty("trick.master", properties.getProperty("trickMaster", "0"))));
         });
 
-        script.module("net.neoforged.camelot.module.filepreview.FilePreviewModule", () -> script.appendLine(STR."auth = patAuthentication(secret('\{escape(properties.getProperty("filePreview.gistToken", ""))}'))"));
+        script.module("net.neoforged.camelot.config.module.FilePreview", () -> script.appendLine(STR."auth = patAuthentication(secret('\{escape(properties.getProperty("filePreview.gistToken", ""))}'))"));
         script.module(WebServer.class, () -> script
                 .appendProperty("port", Integer.parseInt(properties.getProperty("server.port", "3000")))
                 .appendProperty("serverUrl", properties.getProperty("server.url", properties.getProperty("server.url"))));
@@ -118,6 +121,7 @@ public class ConfigMigrator {
         return value.replace("'", "\\'");
     }
 
+    @CanIgnoreReturnValue
     private class PaddedStringBuilder {
         private final Set<String> disabled;
         private final StringBuilder builder;
@@ -167,6 +171,7 @@ public class ConfigMigrator {
             return this;
         }
 
+        @SuppressWarnings("unchecked")
         public PaddedStringBuilder module(String className, Runnable appender) throws Exception {
             return module((Class<? extends ModuleConfiguration>) Class.forName(className), appender);
         }

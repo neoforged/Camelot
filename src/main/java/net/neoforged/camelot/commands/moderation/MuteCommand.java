@@ -21,7 +21,7 @@ import java.util.List;
  * The command used to mute a user.
  */
 public class MuteCommand extends ModerationCommand<Void> {
-    public static final Duration MAX_DURATION = Duration.ofDays(28);
+    private static final Duration MAX_DURATION = Duration.ofDays(28);
 
     public MuteCommand() {
         this.name = "mute";

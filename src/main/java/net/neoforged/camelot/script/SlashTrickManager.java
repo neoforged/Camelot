@@ -243,7 +243,7 @@ public class SlashTrickManager implements EventListener {
         );
     }
 
-    private static Pair<List<OptionData>, List<OptionHandler>> buildOptions(ScriptInformation information) {
+    private static Pair<List<OptionData>, List<OptionHandler<?>>> buildOptions(ScriptInformation information) {
         final int size = information.arguments().size() + information.options().size();
         final List<OptionData> options = new ArrayList<>(size);
 
@@ -266,7 +266,7 @@ public class SlashTrickManager implements EventListener {
         }
         options.sort((o1, o2) -> o1.isRequired() == o2.isRequired() ? 0 : (o1.isRequired() ? -1 : 1));
 
-        final List<OptionHandler> sortedHandlers = new ArrayList<>(size);
+        final List<OptionHandler<?>> sortedHandlers = new ArrayList<>(size);
         sortedHandlers.addAll(information.arguments());
         sortedHandlers.addAll(information.options());
 
@@ -301,6 +301,6 @@ public class SlashTrickManager implements EventListener {
         }
     }
 
-    record TrickInfo(int id, Map<String, OptionHandler> options) {
+    record TrickInfo(int id, Map<String, OptionHandler<?>> options) {
     }
 }

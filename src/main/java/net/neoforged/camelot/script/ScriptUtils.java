@@ -279,9 +279,11 @@ public class ScriptUtils {
 
                 final Value desc = exports.getMember("description").execute();
                 final String descString = desc.isNull() ? "" : toString(desc);
+
+                //noinspection unchecked,rawtypes
                 return new ScriptInformation(
                         descString.isBlank() ? "Trick has no description" : descString,
-                        parser.getOptions(), parser.getArguments()
+                        (List)parser.getOptions(), (List) parser.getArguments()
                 );
             } catch (Exception ex) {
                 throw new CannotRetrieveInformationException(ex);

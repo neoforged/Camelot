@@ -18,10 +18,10 @@ import java.util.List;
  * Command used to compare and test version ranges of different types.
  */
 public class VersioningCommand extends SlashCommand {
-    public static final SemverAPI SEMVER_API = SemverAPI.getWithOptions(SemverOptions.DEFAULT.withIncludePrerelease(true));
+    private static final SemverAPI SEMVER_API = SemverAPI.getWithOptions(SemverOptions.DEFAULT.withIncludePrerelease(true));
 
-    public static final SubcommandGroupData MAVEN = new SubcommandGroupData("maven", "Maven versioning");
-    public static final SubcommandGroupData SEMVER = new SubcommandGroupData("semver", "Semver versioning");
+    private static final SubcommandGroupData MAVEN = new SubcommandGroupData("maven", "Maven versioning");
+    private static final SubcommandGroupData SEMVER = new SubcommandGroupData("semver", "Semver versioning");
 
     public VersioningCommand() {
         this.name = "versioning";
@@ -42,13 +42,13 @@ public class VersioningCommand extends SlashCommand {
 
             new CompareCommand(SEMVER) {
                 @Override
-                public int compare(String ver1, String ver2) throws Exception {
+                public int compare(String ver1, String ver2) {
                     return SemverAPI.API.compare(ver1, ver2);
                 }
             },
             new TestCommand(SEMVER) {
                 @Override
-                public boolean isIn(String version, String range) throws Exception {
+                public boolean isIn(String version, String range) {
                     return SEMVER_API.actuallySatisfies(version, range);
                 }
             }
