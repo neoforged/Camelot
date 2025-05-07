@@ -30,7 +30,7 @@ groovy-contracts = { module = "org.apache.groovy:groovy-contracts", version.ref 
 
 guava = { module = "com.google.guava:guava", version = "30.1.1-jre" }
 
-jda = { module = "net.dv8tion:JDA", version = "5.1.2" }
+jda = { module = "net.dv8tion:JDA", version = "5.5.1" }
 
 jdbi-core = { module = "org.jdbi:jdbi3-core", version.ref = "jdbi" }
 jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }
