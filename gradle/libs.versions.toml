@@ -16,7 +16,7 @@ autoservice = { module = "com.google.auto.service:auto-service", version = "1.0.
 
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version = "1.58" }
 
-chewtils = { module = "com.github.matyrobbrt:JDA-Chewtils", version = "cea80c2" }
+chewtils = { module = "com.github.matyrobbrt:JDA-Chewtils", version = "65ad10a" }
 
 fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.12" }
 flyway = { module = "org.flywaydb:flyway-core", version = "8.5.13" }
