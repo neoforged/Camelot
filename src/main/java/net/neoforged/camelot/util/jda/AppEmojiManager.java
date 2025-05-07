@@ -2,9 +2,11 @@ package net.neoforged.camelot.util.jda;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Icon;
+import net.dv8tion.jda.api.entities.emoji.ApplicationEmoji;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -262,6 +264,18 @@ public class AppEmojiManager implements EventListener {
         @Override
         public CustomEmoji asCustom() {
             return this;
+        }
+
+        @NotNull
+        @Override
+        public RichCustomEmoji asRich() {
+            throw new IllegalStateException();
+        }
+
+        @NotNull
+        @Override
+        public ApplicationEmoji asApplication() {
+            throw new IllegalStateException();
         }
 
         @Override
