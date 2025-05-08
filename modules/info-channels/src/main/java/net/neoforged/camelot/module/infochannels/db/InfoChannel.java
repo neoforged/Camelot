@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.module.infochannels.InfoChannelsModule;
 import net.neoforged.camelot.module.infochannels.command.RuleCommand;
 import net.neoforged.camelot.db.schemas.GithubLocation;
 import net.neoforged.camelot.module.infochannels.command.InfoChannelCommand;
@@ -135,7 +136,7 @@ public record InfoChannel(long channel, GithubLocation location, boolean forceRe
 
                 @Override
                 public void run() {
-                    Database.main().useExtension(RulesDAO.class, db -> {
+                    BotMain.getModule(InfoChannelsModule.class).db().useExtension(RulesDAO.class, db -> {
                         db.deleteRules(channelId);
                         rules.forEach((nr, embed) -> db.insert(new Rule(guildId, channelId, nr, embed)));
                     });
