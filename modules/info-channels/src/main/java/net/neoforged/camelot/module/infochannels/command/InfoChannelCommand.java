@@ -308,7 +308,7 @@ public class InfoChannelCommand extends SlashCommand {
                 try (final InputStream is = content.read()) {
                     final byte[] ct = is.readAllBytes();
                     final String hash = Hashing.sha256()
-                            .hashBytes(ct)
+                            .hashBytes(new String(ct, StandardCharsets.UTF_8).trim().getBytes(StandardCharsets.UTF_8))
                             .toString();
 
                     if (Objects.equals(hash, ch.hash())) { // We don't want to update the channel content if the github contents haven't changed
@@ -443,8 +443,10 @@ public class InfoChannelCommand extends SlashCommand {
             }
         }
 
+        var database = BotMain.getModule(InfoChannelsModule.class).db();
+
         // If the channel isn't an info channel or is being updated, early-exit
-        final InfoChannel infoChannel = BotMain.getModule(InfoChannelsModule.class).db().withExtension(InfoChannelsDAO.class, db -> db.getChannel(channel.getIdLong()));
+        final InfoChannel infoChannel = database.withExtension(InfoChannelsDAO.class, db -> db.getChannel(channel.getIdLong()));
         if (infoChannel == null|| UPDATING_CHANNELS.contains(infoChannel.channel())) return;
 
         var app = BotMain.getModule(InfoChannelsModule.class).config().getAuth();
@@ -458,12 +460,18 @@ public class InfoChannelCommand extends SlashCommand {
                         try {
                             msg.removeIf(Predicate.not(Message::isWebhookMessage)); // We want to filter out messages that aren't from the webhook
                             Collections.reverse(msg); // We receive newest to oldest
-                            final String dump = infoChannel.type().write(msg, MAPPER, infoChannel.channel()); // Format the messages
+                            final String dump = infoChannel.type().write(msg, MAPPER, infoChannel.channel()).trim(); // Format the messages
                             infoChannel.location().updateInDirectory(
                                     app, infoChannel.channel() + ".yml",
                                     "Updated info channel content: " + infoChannel.channel(),
                                     dump
                             ); // Finally, update the messages on VCS
+
+                            final var hash = Hashing.sha256()
+                                    .hashBytes(dump.getBytes(StandardCharsets.UTF_8))
+                                    .toString();
+
+                            database.useExtension(InfoChannelsDAO.class, db -> db.updateHash(infoChannel.channel(), hash));
                         } catch (Exception e) {
                             BotMain.LOGGER.error("Could not update messages on GitHub {}:", infoChannel, e);
                         }
