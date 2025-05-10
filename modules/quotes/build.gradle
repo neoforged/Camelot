@@ -8,4 +8,5 @@ camelotModule {
 
 dependencies {
     library(libs.bundles.database)
+    library(libs.bundles.graal)
 }

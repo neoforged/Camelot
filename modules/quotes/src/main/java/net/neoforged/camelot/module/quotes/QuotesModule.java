@@ -12,9 +12,11 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.config.module.Quotes;
 import net.neoforged.camelot.module.BuiltInModule;
+import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.module.quotes.db.Quote;
 import net.neoforged.camelot.module.quotes.db.QuotesDAO;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.script.ScriptObject;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -74,6 +76,17 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
                         }
                     });
                 }));
+
+        accept(TricksModule.COMPILING_SCRIPT, compilingScript -> compilingScript.object().putLazyGetter("guild.getQuotes", () -> db().withExtension(QuotesDAO.class, db ->
+                db.getQuotes(compilingScript.context().guild().getIdLong(), 0, Integer.MAX_VALUE)).stream()
+                .map(q -> ScriptObject.of("Quote")
+                        .put("id", q.id())
+                        .put("quote", q.quote())
+                        .put("context", q.context())
+                        .put("author", ScriptObject.of("QuoteAuthor")
+                                .put("name", q.author().name())
+                                .put("userId", q.author().userId() == 0 ? null : q.author().userId())))
+                .toList()));
     }
 
     @Override

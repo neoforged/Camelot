@@ -41,7 +41,15 @@ public class ScriptObject implements ProxyObject {
     }
 
     public ScriptObject put(String key, Object value) {
-        values.put(key, value);
+        var spl = key.split("\\.", 2);
+        if (spl.length == 1) {
+            values.put(key, value);
+        } else {
+            var object = values.get(spl[0]);
+            if (object instanceof ScriptObject o) {
+                o.put(spl[1], value);
+            }
+        }
         return this;
     }
 

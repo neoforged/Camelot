@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.utility.EvalCommand;
@@ -20,6 +21,9 @@ import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
 import net.neoforged.camelot.listener.TrickListener;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.module.api.ParameterType;
+import net.neoforged.camelot.script.ScriptContext;
+import net.neoforged.camelot.script.ScriptObject;
 import net.neoforged.camelot.script.SlashTrickManager;
 
 /**
@@ -27,6 +31,9 @@ import net.neoforged.camelot.script.SlashTrickManager;
  */
 @AutoService(CamelotModule.class)
 public class TricksModule extends CamelotModule.Base<Tricks> {
+    public record CompilingScript(ScriptContext context, ScriptObject object) {}
+    public static final ParameterType<CompilingScript> COMPILING_SCRIPT = ParameterType.get("compilingscript", CompilingScript.class);
+
     public TricksModule() {
         super(Tricks.class);
     }

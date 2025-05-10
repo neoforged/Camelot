@@ -50,6 +50,16 @@ export interface Emoji extends Mentionable {
     name: string;
 }
 
+export interface Quote {
+    id: number
+    quote: string
+    context: string | null
+    author: {
+        name: string
+        userId?: number | null
+    }
+}
+
 export interface Guild extends Snowflake {
     name: string;
     memberCount: number;
@@ -59,6 +69,7 @@ export interface Guild extends Snowflake {
     getEmojis(): Emoji[];
 
     getCounter(counter: string): number | null;
+    getQuotes(): Quote[]
 }
 
 export enum ChannelType {

@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.CountersDAO;
+import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.AppEmojiManager;
 import org.graalvm.polyglot.proxy.ProxyInstant;
@@ -77,7 +78,7 @@ public record ScriptContext(
      * @return the script object
      */
     public ScriptObject compile() {
-        return ScriptObject.of("Script")
+        var object = ScriptObject.of("Script")
                 // The context with which the script was executed
                 .put("guild", createGuild(guild))
                 .put("member", createMember(member))
@@ -93,6 +94,9 @@ public record ScriptContext(
                         .putVoidMethod("log", args -> reply.accept(MessageCreateData.fromContent(Arrays.stream(args.getArguments())
                                 .map(ScriptUtils::toString).collect(Collectors.joining())))))
                 .putVoidMethod("replyEmbed", args -> reply.accept(MessageCreateData.fromEmbeds(args.argList(0, true, val -> new ScriptMap(val).asEmbed()))));
+        // Allow other plugins to expand on these objects - e.g. to add quotes
+        BotMain.propagateParameter(TricksModule.COMPILING_SCRIPT, new TricksModule.CompilingScript(this, object));
+        return object;
     }
 
     public ScriptObject privilegedCompile() {
