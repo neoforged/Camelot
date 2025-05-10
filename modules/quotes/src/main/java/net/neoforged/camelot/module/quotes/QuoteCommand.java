@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -301,7 +302,7 @@ public class QuoteCommand extends SlashCommand {
                 return;
             }
 
-            final Member authorUser = event.getOption("author", OptionMapping::getAsMember);
+            final User authorUser = event.getOption("author", OptionMapping::getAsUser);
             final String authorText = event.getOption("author-text", OptionMapping::getAsString);
             if (authorUser != null && authorText != null) {
                 event.reply("`author` and `author-text` are mutually exclusive.").setEphemeral(true).queue();
@@ -309,7 +310,17 @@ public class QuoteCommand extends SlashCommand {
             }
 
             if (authorUser != null || authorText != null) {
-                final String authorName = authorText == null ? (authorUser.getNickname() == null ? authorUser.getEffectiveName() : authorUser.getNickname() + " (" + authorUser.getUser().getEffectiveName() + ")") : authorText;
+                final String authorName;
+                if (authorText == null) {
+                    final Member authorMember = event.getOption("author", OptionMapping::getAsMember);
+                    if (authorMember == null) {
+                        authorName = authorUser.getEffectiveName();
+                    } else {
+                        authorName = authorMember.getNickname() == null ? authorMember.getEffectiveName() : authorMember.getNickname() + " (" + authorMember.getUser().getEffectiveName() + ")";
+                    }
+                } else {
+                    authorName = authorText;
+                }
                 BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.updateQuoteAuthor(
                         id, db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser == null ? null : authorUser.getIdLong())
                 ));
