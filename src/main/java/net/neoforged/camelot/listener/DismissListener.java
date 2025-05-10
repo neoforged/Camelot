@@ -39,8 +39,8 @@ public final class DismissListener implements EventListener {
         switch (idParts.length) {
             // dismiss
             case 1 -> {
-                if (event.getMessage().getInteraction() != null) {
-                    final User owner = event.getMessage().getInteraction().getUser();
+                if (event.getMessage().getInteractionMetadata() != null) {
+                    final User owner = event.getMessage().getInteractionMetadata().getUser();
                     deleteIf(owner.getId(), event).queue();
                 }
             }

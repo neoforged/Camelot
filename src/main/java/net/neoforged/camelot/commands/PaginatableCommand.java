@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,12 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
      * If replies should be {@link net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction#setEphemeral(boolean) ephemeral}.
      */
     protected boolean ephemeral;
+
+    /**
+     * If replies should have a <code>Dismiss</code> button usable by the user who triggered the command.
+     * Cannot be used alongside {@link #ephemeral}.
+     */
+    protected boolean dismissible;
 
     protected PaginatableCommand(ButtonManager buttonManager) {
         this.buttonManager = buttonManager;
@@ -139,6 +146,9 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
         }
         if ((currentPage + 1) * itemsPerPage < itemAmount) {
             components.add(Button.primary(id + "/" + currentPage + "/next", NEXT_EMOJI));
+        }
+        if (!ephemeral && dismissible) {
+            components.add(DismissListener.createDismissButton());
         }
         return components;
     }

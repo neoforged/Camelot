@@ -156,13 +156,14 @@ public class QuoteCommand extends SlashCommand {
         private ListQuotes(ButtonManager buttonManager) {
             super(buttonManager);
             this.name = "list";
-            this.help = "List quotes";
+            this.help = "List quotes (with an optional filters)";
             this.itemsPerPage = 10;
             this.options = List.of(
                     new OptionData(OptionType.INTEGER, "page", "The page to start from"),
                     new OptionData(OptionType.STRING, "filter", "Quote-level search string"),
                     new OptionData(OptionType.STRING, "author", "Author filter. Can be a mention")
             );
+            this.dismissible = true;
         }
 
         @Override
