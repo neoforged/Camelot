@@ -309,6 +309,8 @@ public class QuoteCommand extends SlashCommand {
                 return;
             }
 
+            var database = BotMain.getModule(QuotesModule.class).db();
+
             if (authorUser != null || authorText != null) {
                 final String authorName;
                 if (authorText == null) {
@@ -321,17 +323,16 @@ public class QuoteCommand extends SlashCommand {
                 } else {
                     authorName = authorText;
                 }
-                BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.updateQuoteAuthor(
-                        id, db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser == null ? null : authorUser.getIdLong())
-                ));
+                var authorId = database.withExtension(QuotesDAO.class, db -> db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser == null ? null : authorUser.getIdLong()));
+                database.useExtension(QuotesDAO.class, db -> db.updateQuoteAuthor(id, authorId));
             }
 
             if (event.getOption("quote") != null) {
-                BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.updateQuote(id, event.getOption("quote").getAsString()));
+                database.useExtension(QuotesDAO.class, db -> db.updateQuote(id, event.getOption("quote").getAsString()));
             }
 
             if (event.getOption("context") != null) {
-                BotMain.getModule(QuotesModule.class).db().useExtension(QuotesDAO.class, db -> db.updateQuoteContext(id, event.getOption("context").getAsString()));
+                database.useExtension(QuotesDAO.class, db -> db.updateQuoteContext(id, event.getOption("context").getAsString()));
             }
 
             event.reply("Quote modified!").queue();
