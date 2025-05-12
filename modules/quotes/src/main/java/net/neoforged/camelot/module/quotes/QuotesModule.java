@@ -71,6 +71,7 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
                                     quotes.getString(4),
                                     quotes.getString(5),
                                     quotes.getLong(6),
+                                    null,
                                     quotes.getInt(1)
                             );
                         }
@@ -83,6 +84,7 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
                         .put("id", q.id())
                         .put("quote", q.quote())
                         .put("context", q.context())
+                        .put("message", q.message())
                         .put("author", ScriptObject.of("QuoteAuthor")
                                 .put("name", q.author().name())
                                 .put("userId", q.author().userId() == 0 ? null : q.author().userId())))
@@ -115,7 +117,8 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
                         db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser.getIdLong()),
                         event.getTarget().getContentRaw(),
                         null,
-                        event.getUser().getIdLong()
+                        event.getUser().getIdLong(),
+                        event.getTarget().getJumpUrl()
                 ));
                 event.reply(STR."Quote #\{id} added: \{event.getTarget().getJumpUrl()}").queue();
             }

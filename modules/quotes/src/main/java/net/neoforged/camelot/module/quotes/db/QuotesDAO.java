@@ -16,13 +16,13 @@ import java.util.Map;
 @RegisterRowMapper(Quote.Mapper.class)
 @RegisterRowMapper(Quote.Author.Mapper.class)
 public interface QuotesDAO extends Transactional<QuotesDAO> {
-    String SELECT_QUOTE = "select quotes.id, quotes.quote, quotes.context, quote_authors.id, quote_authors.name, quote_authors.uid from quotes inner JOIN quote_authors on quote_authors.id = quotes.author and quote_authors.guild = quotes.guild";
+    String SELECT_QUOTE = "select quotes.id, quotes.quote, quotes.context, quotes.message, quote_authors.id, quote_authors.name, quote_authors.uid from quotes inner JOIN quote_authors on quote_authors.id = quotes.author and quote_authors.guild = quotes.guild";
 
     @Nullable
-    @SqlQuery("select quotes.id, quotes.quote, quotes.context, quote_authors.id, quote_authors.name, quote_authors.uid from quotes inner JOIN quote_authors on quote_authors.id = quotes.author and quote_authors.guild = quotes.guild where quotes.guild = ? and quotes.id = ?")
+    @SqlQuery(SELECT_QUOTE + " where quotes.guild = ? and quotes.id = ?")
     Quote getQuote(long guild, int id);
 
-    @SqlQuery("select quotes.id, quotes.quote, quotes.context, quote_authors.id, quote_authors.name, quote_authors.uid from quotes inner JOIN quote_authors on quote_authors.id = quotes.author and quote_authors.guild = quotes.guild where quotes.guild = ? order by random() limit 1")
+    @SqlQuery(SELECT_QUOTE + " where quotes.guild = ? order by random() limit 1")
     Quote getRandomQuote(long guild);
 
     @SqlQuery(SELECT_QUOTE + " where quotes.guild = :guild limit :limit offset :from")
@@ -104,20 +104,20 @@ public interface QuotesDAO extends Transactional<QuotesDAO> {
 
     record UserSearch(String search, boolean isId) {}
 
-    default int insertQuote(long guild, int authorId, String quote, @Nullable String context, @Nullable Long quoter) {
-        return withHandle(h -> h.createUpdate("insert into quotes(guild, author, quote, context, quoter) values (?, ?, ?, ?, ?) returning id")
+    default int insertQuote(long guild, int authorId, String quote, @Nullable String context, @Nullable Long quoter, @Nullable String message) {
+        return withHandle(h -> h.createUpdate("insert into quotes(guild, author, quote, context, quoter, message) values (?, ?, ?, ?, ?, ?) returning id")
                 .bind(0, guild).bind(1, authorId)
                 .bind(2, quote).bind(3, context)
-                .bind(4, quoter)
+                .bind(4, quoter).bind(5, message)
                 .execute((stmt, _) -> stmt.get().getResultSet().getInt("id")));
     }
 
-    default int insertQuote(long guild, int authorId, String quote, @Nullable String context, @Nullable Long quoter, int id) {
-        return withHandle(h -> h.createUpdate("insert into quotes(guild, author, quote, context, quoter, id) values (?, ?, ?, ?, ?, ?) returning id")
+    default int insertQuote(long guild, int authorId, String quote, @Nullable String context, @Nullable Long quoter, @Nullable String message, int id) {
+        return withHandle(h -> h.createUpdate("insert into quotes(guild, author, quote, context, quoter, message, id) values (?, ?, ?, ?, ?, ?, ?) returning id")
                 .bind(0, guild).bind(1, authorId)
                 .bind(2, quote).bind(3, context)
-                .bind(4, quoter)
-                .bind(5, id)
+                .bind(4, quoter).bind(5, message)
+                .bind(6, id)
                 .execute((stmt, _) -> stmt.get().getResultSet().getInt("id")));
     }
 

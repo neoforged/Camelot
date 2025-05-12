@@ -54,6 +54,7 @@ export interface Quote {
     id: number
     quote: string
     context: string | null
+    message: string | null
     author: {
         name: string
         userId?: number | null

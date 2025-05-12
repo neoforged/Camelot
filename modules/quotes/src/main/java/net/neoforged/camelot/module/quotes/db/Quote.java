@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public record Quote(int id, Author author, String quote, @Nullable String context) {
+public record Quote(int id, Author author, String quote, @Nullable String context, @Nullable String message) {
     public record Author(int id, String name, long userId) {
         public static final class Mapper implements RowMapper<Author> {
             @Override
@@ -28,10 +28,10 @@ public record Quote(int id, Author author, String quote, @Nullable String contex
         @Override
         public Quote map(ResultSet rs, StatementContext ctx) throws SQLException {
             final Author author = new Author(
-                    rs.getInt(4), rs.getString(5), rs.getLong(6)
+                    rs.getInt(5), rs.getString(6), rs.getLong(7)
             );
             return new Quote(
-                    rs.getInt(1), author, rs.getString(2), rs.getString(3)
+                    rs.getInt(1), author, rs.getString(2), rs.getString(3), rs.getString(4)
             );
         }
     }

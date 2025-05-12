@@ -107,11 +107,16 @@ public class QuoteCommand extends SlashCommand {
                 return;
             }
 
-            event.reply(STR. """
-            #\{ quote.id() }
-            > \{ quote.quote() }
-            \\- \{ quote.createAuthor() }
-            """ .trim()).setAllowedMentions(List.of()).queue();
+            var message = String.join("\n",
+                    "#" + quote.id(),
+                    "> " + quote.quote(),
+                    "\\- " + quote.createAuthor());
+
+            if (quote.message() != null) {
+                message += "\n-# ╰› " + quote.message();
+            }
+
+            event.reply(message).setAllowedMentions(List.of()).queue();
         }
     }
 
@@ -123,7 +128,8 @@ public class QuoteCommand extends SlashCommand {
                     new OptionData(OptionType.STRING, "quote", "The quote to add", true),
                     new OptionData(OptionType.USER, "author", "The author of the quote. Mutually exclusive with author-text"),
                     new OptionData(OptionType.STRING, "author-text", "The name of the author. Mutually exclusive with author"),
-                    new OptionData(OptionType.STRING, "context", "The quote context")
+                    new OptionData(OptionType.STRING, "context", "The quote context"),
+                    new OptionData(OptionType.STRING, "message", "A link to the message that was quoted")
             );
         }
 
@@ -140,13 +146,20 @@ public class QuoteCommand extends SlashCommand {
                 return;
             }
 
+            final String message = event.optString("message");
+            if (message != null && !Message.JUMP_URL_PATTERN.matcher(message).matches()) {
+                event.reply("Invalid message link!").setEphemeral(true).queue();
+                return;
+            }
+
             final String authorName = authorText == null ? (authorUser.getNickname() == null ? authorUser.getEffectiveName() : authorUser.getNickname() + " (" + authorUser.getUser().getEffectiveName() + ")") : authorText;
             final int id = BotMain.getModule(QuotesModule.class).db().withExtension(QuotesDAO.class, db -> db.insertQuote(
                     event.getGuild().getIdLong(),
                     db.getOrCreateAuthor(event.getGuild().getIdLong(), authorName, authorUser == null ? null : authorUser.getIdLong()),
                     event.getOption("quote", OptionMapping::getAsString),
                     event.getOption("context", OptionMapping::getAsString),
-                    event.getUser().getIdLong()
+                    event.getUser().getIdLong(),
+                    message
             ));
 
             event.reply(STR. "Added quote #\{ id }." ).queue();
@@ -235,7 +248,7 @@ public class QuoteCommand extends SlashCommand {
                     .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()) + " • " + data.itemAmount() + " total");
             quotes.forEach(quote -> embed.addField(
                     "Quote #" + quote.id(),
-                    STR."> \{quote.quote()}\n- \{quote.createAuthor()}",
+                    STR."> \{quote.quote()}\n\\- \{quote.createAuthor()}\{quote.message() == null ? "" : ("\n-# ╰› " + quote.message())}",
                     false
             ));
             return CompletableFuture.completedFuture(new MessageEditBuilder()
