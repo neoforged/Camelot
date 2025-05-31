@@ -33,25 +33,23 @@ public interface QuotesDAO extends Transactional<QuotesDAO> {
         arguments.put("guild", guild);
         arguments.put("limit", limit);
         arguments.put("from", offset);
-        final StringBuilder query = new StringBuilder();
+        final StringBuilder query = new StringBuilder(SELECT_QUOTE)
+                .append(" where quotes.guild = :guild");
         if (userSearch == null) {
-            query.append(SELECT_QUOTE).append(" where quotes.guild = :guild");
             if (filter != null) {
                 query.append(" and quotes.quote like :filter");
                 arguments.put("filter", filter);
             }
         } else {
-            query.append("select quotes.id, quotes.quote, quotes.context, quote_authors.id, quote_authors.name, quote_authors.uid from quote_authors");
-            query.append(" inner join quotes on quotes.author = quote_authors.id");
             if (filter != null) {
                 query.append(" and quotes.quote like :qf");
                 arguments.put("qf", filter.asQuery());
             }
             if (userSearch.isId()) {
-                query.append(" where uid = :uid");
+                query.append(" and uid = :uid");
                 arguments.put("uid", Long.parseLong(userSearch.search()));
             } else {
-                query.append(" where name like :nq");
+                query.append(" and name like :nq");
                 arguments.put("nq", StringSearch.contains(userSearch.search()));
             }
         }
