@@ -5,7 +5,7 @@ import java.nio.file.Files
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.gradleutils' version '3.0.0-alpha.13'
+    id 'net.neoforged.gradleutils' version '5.0.3'
     id 'com.github.johnrengelman.shadow' version '7.+'
 }
 
