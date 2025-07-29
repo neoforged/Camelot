@@ -36,9 +36,9 @@ class MinecraftVerification extends ModuleConfiguration {
     /**
      * How long bans after failure to verify Minecraft ownership shall last for.
      * <p>
-     * The default is <b>3 months</b> (90 days).
+     * The default is <b>1 month</b> (30 days).
      */
-    Duration banDuration = Duration.ofDays(90)
+    Duration banDuration = Duration.ofDays(30)
 
     /**
      * How long users have to verify before getting banned.

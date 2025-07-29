@@ -81,7 +81,7 @@ public class VerifyMCCommand extends InteractiveCommand {
                 .addActionRow(Button.danger(getComponentId("cancel", target), "Cancel"))
                 .flatMap(InteractionHook::retrieveOriginal)
                 .onSuccess(msg -> db.insert(
-                        event.getGuild().getIdLong(), target.getIdLong(), msg.getJumpUrl(), Timestamp.from(Instant.now().plus(24, ChronoUnit.HOURS))
+                        event.getGuild().getIdLong(), target.getIdLong(), msg.getJumpUrl(), Timestamp.from(Instant.now().plus(verificationDeadline))
                 ))
                 .flatMap(_ -> event.getGuild().timeoutFor(target, verificationDeadline)
                         .reason("rec: MC verification pending"))
