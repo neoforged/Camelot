@@ -126,7 +126,7 @@ public class Database {
 
         config = createDatabaseConnection(dir.resolve("configuration.db"), "Camelot DB config", flyway -> flyway
                 .locations("classpath:db/config")
-                .callbacks(callbacks.get(BuiltInModule.DatabaseSource.CONFIG).toArray(Callback[]::new)));
+                .callbacks(callbacks.getOrDefault(BuiltInModule.DatabaseSource.CONFIG, List.of()).toArray(Callback[]::new)));
 
         main = createDatabaseConnection(mainDb, "Camelot DB main", flyway -> flyway
                 .locations("classpath:db/main")
