@@ -133,11 +133,16 @@ public class Database {
 
         var pings = dir.resolve("pings.db");
         if (Files.exists(pings)) {
-            // Run migrations and then delete it
-            createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
-                    .locations("classpath:db/pings")
-                    .callbacks(callbacks.get(BuiltInModule.DatabaseSource.PINGS).toArray(Callback[]::new)));
-            Files.delete(pings);
+            if (callbacks.get(BuiltInModule.DatabaseSource.PINGS).isEmpty()) {
+                LOGGER.info("Skipping migration of pings.db");
+            }
+            else {
+                // Run migrations and then delete it
+                createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
+                        .locations("classpath:db/pings")
+                        .callbacks(callbacks.get(BuiltInModule.DatabaseSource.PINGS).toArray(Callback[]::new)));
+                Files.delete(pings);
+            }
         }
 
         appeals = createDatabaseConnection(dir.resolve("appeals.db"), "appeals");
