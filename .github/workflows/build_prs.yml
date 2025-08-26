@@ -1,21 +1,21 @@
-name: Build Pull Requests
+name: Build and test PRs
 
-on: [ pull_request ]
+on:
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - ready_for_review
+      - reopened
+  push:
+    branches:
+      - 'feature/**'
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          fetch-depth: 0
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Run build with Gradle Wrapper
-        run: ./gradlew :build :shadowJar :outputVersion
+    uses: neoforged/actions/.github/workflows/build-prs.yml@main
+    with:
+      java: 21
+      gradle_tasks: test
+      jar_compatibility: false
