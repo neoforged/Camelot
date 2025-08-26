@@ -130,12 +130,12 @@ dependencies {
 
 jar {
     manifest.attributes([
-            'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
+            'Maven-Artifact': "${project.group}:${base.archivesName.get()}:${project.version}",
             'Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            'Specification-Title': archivesBaseName,
+            'Specification-Title': base.archivesName.get(),
             'Specification-Vendor': 'NeoForged',
             'Specification-Version': '1',
-            'Implementation-Title': archivesBaseName,
+            'Implementation-Title': base.archivesName.get(),
             'Implementation-Version': "${project.version}",
             'Implementation-Vendor': 'NeoForged',
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
