@@ -5,8 +5,8 @@ import java.nio.file.Files
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.gradleutils' version '5.0.3'
-    id 'com.github.johnrengelman.shadow' version '7.+'
+    id 'net.neoforged.gradleutils' version '5.0.4'
+    id 'com.gradleup.shadow' version '9.0.2'
 }
 
 group 'net.neoforged.camelot'
@@ -118,6 +118,7 @@ dependencies {
 
     compileOnlyApi(libs.annotations)
 
+    testImplementation(platform(libs.junit.bom))
     testImplementation(libs.bundles.testing)
 
     project(':modules').subprojects.each {
@@ -130,12 +131,12 @@ dependencies {
 
 jar {
     manifest.attributes([
-            'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
+            'Maven-Artifact': "${project.group}:${base.archivesName.get()}:${project.version}",
             'Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            'Specification-Title': archivesBaseName,
+            'Specification-Title': base.archivesName.get(),
             'Specification-Vendor': 'NeoForged',
             'Specification-Version': '1',
-            'Implementation-Title': archivesBaseName,
+            'Implementation-Title': base.archivesName.get(),
             'Implementation-Version': "${project.version}",
             'Implementation-Vendor': 'NeoForged',
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),

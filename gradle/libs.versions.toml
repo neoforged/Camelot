@@ -45,8 +45,10 @@ jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 json = { module = "org.json:json", version = "20231013" }
-junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
-junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-api = { module = "org.junit.jupiter:junit-jupiter-api" }
+junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
+junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 
 logback = { module = "ch.qos.logback:logback-classic", version = "1.5.6" }
 
@@ -65,4 +67,4 @@ groovy = ["groovy", "groovy-contracts"]
 database = ["jdbi-core", "jdbi-sqlobject", "flyway", "sqlitejdbc"]
 jackson = ["jackson-yaml"]
 jjwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
-testing = ["assertj", "junit-api", "junit-engine"]
+testing = ["assertj", "junit-api", "junit-engine", "junit-launcher"]
