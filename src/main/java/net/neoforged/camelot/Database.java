@@ -1,5 +1,7 @@
 package net.neoforged.camelot;
 
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.db.api.CallbackConfig;
 import net.neoforged.camelot.db.api.StringSearch;
@@ -28,9 +30,6 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
 import java.util.function.UnaryOperator;
 
 /**
@@ -98,11 +97,11 @@ public class Database {
             }
         }
 
-        var callbacks = new EnumMap<BuiltInModule.DatabaseSource, List<Callback>>(BuiltInModule.DatabaseSource.class);
+        final ListMultimap<BuiltInModule.DatabaseSource, Callback> callbacks = MultimapBuilder.ListMultimapBuilder.enumKeys(BuiltInModule.DatabaseSource.class).arrayListValues().build();
         BotMain.propagateParameter(BuiltInModule.DB_MIGRATION_CALLBACKS, new BuiltInModule.MigrationCallbackBuilder() {
             @Override
             public BuiltInModule.MigrationCallbackBuilder add(BuiltInModule.DatabaseSource source, int version, BuiltInModule.StatementConsumer consumer) {
-                callbacks.computeIfAbsent(source, k -> new ArrayList<>()).add(schemaMigrationCallback(version, connection -> {
+                callbacks.put(source, schemaMigrationCallback(version, connection -> {
                     try (var stmt = connection.createStatement()) {
                         consumer.accept(stmt);
                     }
@@ -111,7 +110,7 @@ public class Database {
             }
         });
 
-        callbacks.computeIfAbsent(BuiltInModule.DatabaseSource.MAIN, _ -> new ArrayList<>()).add(schemaMigrationCallback(14, connection -> {
+        callbacks.put(BuiltInModule.DatabaseSource.MAIN, schemaMigrationCallback(14, connection -> {
             LOGGER.info("Migrating logging channels from main.db to configuration.db");
             try (var stmt = connection.createStatement()) {
                 // So uh, while the type in the table is meant to be an int, it was actually a string. The new DB also stores a string
@@ -134,11 +133,16 @@ public class Database {
 
         var pings = dir.resolve("pings.db");
         if (Files.exists(pings)) {
-            // Run migrations and then delete it
-            createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
-                    .locations("classpath:db/pings")
-                    .callbacks(callbacks.get(BuiltInModule.DatabaseSource.PINGS).toArray(Callback[]::new)));
-            Files.delete(pings);
+            if (callbacks.get(BuiltInModule.DatabaseSource.PINGS).isEmpty()) {
+                LOGGER.info("Skipping migration of pings.db");
+            }
+            else {
+                // Run migrations and then delete it
+                createDatabaseConnection(dir.resolve("pings.db"), "Camelot DB pings", flyway -> flyway
+                        .locations("classpath:db/pings")
+                        .callbacks(callbacks.get(BuiltInModule.DatabaseSource.PINGS).toArray(Callback[]::new)));
+                Files.delete(pings);
+            }
         }
 
         appeals = createDatabaseConnection(dir.resolve("appeals.db"), "appeals");
