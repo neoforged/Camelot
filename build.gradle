@@ -152,12 +152,14 @@ tasks.register('outputVersion') {
 }
 
 shadowJar {
-    mergeServiceFiles()
     archiveClassifier = 'all'
     archiveFile.set(project.file("$buildDir/libs/camelot-all.jar"))
     dependsOn(tasks.gitLog)
     from(tasks.gitLog.output)
     configurations = [project.configurations.library, project.configurations.module]
+
+    mergeServiceFiles()
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 test {
