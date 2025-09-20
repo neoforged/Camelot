@@ -1,7 +1,10 @@
 package net.neoforged.camelot.util.oauth;
 
+import io.javalin.http.HttpStatus;
 import net.neoforged.camelot.config.OAuthConfiguration;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,6 +25,8 @@ import java.util.stream.Collectors;
  * A client for handling OAuth web authorization.
  */
 public class OAuthClient {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OAuthClient.class);
+
     private final String authorizeUrl, tokenUrl;
     private final String clientId, clientSecret;
     private final Supplier<String> redirectUri;
@@ -65,14 +70,21 @@ public class OAuthClient {
         params.put("redirect_uri", redirectUri);
         params.put("scope", String.join(" ", scopes));
         final Instant requestedAt = Instant.now();
-        final JSONObject response = httpClient.send(HttpRequest.newBuilder(URI.create(tokenUrl))
+        final var response = httpClient.send(HttpRequest.newBuilder(URI.create(tokenUrl))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .header("Accept", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(params.entrySet().stream()
                         .map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.joining("&"))))
-                .build(), jsonObject()).body();
-        final String token = response.getString("access_token");
-        final long expiresIn = response.getLong("expires_in");
+                .build(), jsonObject());
+        final JSONObject responseBody = response.body();
+        if (response.statusCode() != HttpStatus.OK.getCode()) {
+            LOGGER.error("OAuth token request returned non-200 ({}) status code, with error '{}' ({}): {}", response.statusCode(),
+                    responseBody.getString("error"), responseBody.getString("error_description"), responseBody.toString(4));
+            throw new IOException("OAuth token request failed: " + responseBody.getString("error"));
+        }
+
+        final String token = responseBody.getString("access_token");
+        final long expiresIn = responseBody.getLong("expires_in");
         return new TokenResponse(token, requestedAt.plusSeconds(expiresIn));
     }
 
