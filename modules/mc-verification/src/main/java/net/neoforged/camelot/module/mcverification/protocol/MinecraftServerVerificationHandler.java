@@ -53,7 +53,7 @@ public class MinecraftServerVerificationHandler implements Callable<Void> {
 
         var serverId = new BigInteger(Crypt.digestData(SERVER_ID, keyPair.getPublic(), secretKey)).toString(16);
         var profile = service.createMinecraftSessionService()
-                .hasJoinedServer(requestedUsername, serverId, connection.getAddress());
+                .hasJoinedServer(requestedUsername, serverId, null);
 
         if (profile == null) {
             connection.disconnect("Failed to verify that you've connected to this server! Contact server moderators for assistance");
