@@ -24,6 +24,10 @@ dependencyResolutionManagement {
             name 'jitpack'
             url 'https://jitpack.io'
         }
+        maven {
+            name = 'Mojang'
+            url = 'https://libraries.minecraft.net/'
+        }
     }
 }
 

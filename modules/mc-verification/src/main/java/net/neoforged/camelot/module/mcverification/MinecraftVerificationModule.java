@@ -2,6 +2,8 @@ package net.neoforged.camelot.module.mcverification;
 
 import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.Cookie;
@@ -25,6 +27,9 @@ import net.neoforged.camelot.module.BanAppealModule;
 import net.neoforged.camelot.module.LoggingModule;
 import net.neoforged.camelot.module.WebServerModule;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.module.mcverification.protocol.Crypt;
+import net.neoforged.camelot.module.mcverification.protocol.MinecraftConnection;
+import net.neoforged.camelot.module.mcverification.protocol.MinecraftServerVerificationHandler;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Utils;
@@ -36,32 +41,39 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.awt.Color;
+import java.net.Proxy;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpTimeoutException;
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import static j2html.TagCreator.a;
 import static j2html.TagCreator.br;
 import static j2html.TagCreator.button;
+import static j2html.TagCreator.code;
 import static j2html.TagCreator.div;
 import static j2html.TagCreator.h1;
 import static j2html.TagCreator.h2;
 import static j2html.TagCreator.h5;
 import static j2html.TagCreator.hr;
 import static j2html.TagCreator.i;
+import static j2html.TagCreator.li;
 import static j2html.TagCreator.p;
 import static j2html.TagCreator.script;
 import static j2html.TagCreator.span;
 import static j2html.TagCreator.text;
 import static j2html.TagCreator.title;
+import static j2html.TagCreator.ul;
 
 @AutoService(CamelotModule.class)
 public class MinecraftVerificationModule extends CamelotModule.WithDatabase<MinecraftVerification> {
@@ -101,10 +113,20 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
     @Override
     public void setup(JDA jda) {
         discord = OAuthUtils.discord(config().getDiscordAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/discord"), OAuthScope.Discord.IDENTIFY);
-        microsoft = OAuthUtils.microsoft(config().getMicrosoftAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/microsoft"), OAuthScope.Microsoft.XBOX_LIVE);
+        if (config().getMicrosoftAuth() != null) {
+            microsoft = OAuthUtils.microsoft(config().getMicrosoftAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/microsoft"), OAuthScope.Microsoft.XBOX_LIVE);
+        }
 
         final McVerificationDAO dao = db().onDemand(McVerificationDAO.class);
         BotMain.EXECUTOR.scheduleAtFixedRate(() -> banNotVerified(jda, dao), 1, 1, TimeUnit.MINUTES);
+
+        if (config().getMinecraftServerPort() != 0) {
+            final ExecutorService mcExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                    .name("mc-verification-server-", 0)
+                    .uncaughtExceptionHandler((_, ex) -> BotMain.LOGGER.error("Error while handing server-based MC verification", ex))
+                    .factory());
+            setupMinecraftServer(config().getMinecraftServerPort(), mcExecutor);
+        }
     }
 
     private void banNotVerified(JDA jda, McVerificationDAO db) {
@@ -146,6 +168,63 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                 }
             }
         }
+    }
+
+    private void setupMinecraftServer(int port, ExecutorService executor) {
+        ServerSocket socket;
+        try {
+            socket = new ServerSocket(port);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+
+        var keyPair = Crypt.generateKeyPair();
+        var authService = new YggdrasilAuthenticationService(Proxy.NO_PROXY);
+
+        executor.submit(() -> {
+            while (true) {
+                var client = socket.accept();
+                var handler = new MinecraftServerVerificationHandler(new MinecraftConnection(client, keyPair), authService, keyPair, this::handleServerVerification);
+                executor.submit(handler);
+            }
+        });
+    }
+
+    private String handleServerVerification(String serverAddress, GameProfile profile) {
+        var addressPattern = Pattern.compile(config().getMinecraftServerAddress().split(":")[0]
+                .replace("<token>", "([a-z0-9]+)")
+                .replace(".", "\\."));
+        var matcher =  addressPattern.matcher(serverAddress);
+        if (!matcher.matches()) {
+            return "Server address incompatible. Contact server moderators for assistance";
+        }
+
+        var token = matcher.group(1);
+        var userInfo = db().withExtension(McVerificationDAO.class, db -> db.getByServerJoinToken(token));
+        if (userInfo == null) {
+            return "Unknown verification token (" + token + "). Verification may no longer be needed";
+        }
+
+        var guild = BotMain.get().getGuildById(userInfo.guild());
+        if (guild == null) {
+            return "Unknown guild " + userInfo.guild();
+        }
+
+        final var verificationInfo = db().withExtension(McVerificationDAO.class, db -> db.getVerificationInformation(userInfo.guild(), userInfo.user()));
+        if (verificationInfo == null) {
+            return "Verification not needed";
+        }
+
+        db().useExtension(McVerificationDAO.class, db -> db.delete(userInfo.guild(), userInfo.user()));
+
+        var user = guild.getJDA()
+                .retrieveUserById(userInfo.user())
+                .submit()
+                .join();
+
+        finishVerification(guild, userInfo.user(), verificationInfo.message(), profile.name(), profile.id());
+
+        return "Ownership for §6@" + user.getName() + "§r verified as §b" + profile.name() + "§r\nYou have been unmuted and may return to the server";
     }
 
     private void verifyOauth(Context ctx, String cookieName, OAuthClient client) throws Exception {
@@ -206,8 +285,8 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
         final String xboxToken = context.cookie("xbox_token");
         final long userId = getUser(discordToken).getLong("id");
 
-        final String targetMessage = db().withExtension(McVerificationDAO.class, db -> db.getTargetMessage(serverId, userId));
-        if (targetMessage == null) {
+        final var verificationInfo = db().withExtension(McVerificationDAO.class, db -> db.getVerificationInformation(serverId, userId));
+        if (verificationInfo == null) {
             context.result(new JSONObject().put("error", "Verification not needed").toString())
                     .status(HttpStatus.UNAUTHORIZED);
             return;
@@ -225,9 +304,13 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
         context.removeCookie("xbox_token");
         context.removeCookie("discord_token");
 
+        finishVerification(guild, userId, verificationInfo.message(), profile.name, profile.uuid);
+    }
+
+    private void finishVerification(Guild guild, long userId, String targetMessage, String name, UUID uuid) {
         ReferencingListener.decodeMessageLink(targetMessage)
                 .flatMap(msg -> msg.retrieve(BotMain.get()))
-                .ifPresent(m -> m.flatMap(msg -> msg.reply(STR."Ownership verified as [\{profile.name}](<https://mcuuid.net/?q=\{profile.uuid}>)!").setAllowedMentions(List.of()))
+                .ifPresent(m -> m.flatMap(msg -> msg.reply("Ownership verified as [" + name + "](<https://mcuuid.net/?q=" + uuid + ">)!").setAllowedMentions(List.of()))
                         .flatMap(_ -> guild.removeTimeout(UserSnowflake.fromId(userId)).reason("Minecraft ownership verified"))
                         .flatMap(_ -> guild.getJDA().retrieveUserById(userId))
                         .flatMap(user -> Utils.attemptDM(user, action -> action.sendMessageEmbeds(new EmbedBuilder()
@@ -239,9 +322,9 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                         .onSuccess(_ -> LoggingModule.MODERATION_LOGS.log(new EmbedBuilder()
                                 .setTitle("Verify Minecraft")
                                 .setColor(Color.GREEN)
-                                .setDescription(STR."<@\{userId}> has verified that they own a Minecraft Account")
-                                 .setTimestamp(Instant.now())
-                                .addField("Profile", "[" + profile.name + "](https://mcuuid.net/?q=" + profile.uuid + ")", true)
+                                .setDescription("<@" + userId + "> has verified that they own a Minecraft Account")
+                                .setTimestamp(Instant.now())
+                                .addField("Profile", "[" + name + "](https://mcuuid.net/?q=" + uuid + ")", true)
                                 .setFooter("User ID: " + userId)
                                 .build()))
                         .queue());
@@ -270,12 +353,17 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
             xboxToken = context.cookie("xbox_token");
         }
 
+        @Nullable
+        final McVerificationDAO.VerificationInformation verificationInfo;
+
         final DomContent discordStatus;
         if (discordToken == null) {
             discordStatus = span(span(" Please link your Discord account"));
+            verificationInfo = null;
         } else {
             final JSONObject self = getUser(discordToken);
-            if (db().withExtension(McVerificationDAO.class, db -> db.getTargetMessage(serverId, self.getLong("id"))) == null) {
+            verificationInfo = db().withExtension(McVerificationDAO.class, db -> db.getVerificationInformation(serverId, self.getLong("id")));
+            if (verificationInfo == null) {
                 context.html(WebServer.tag()
                                 .withTitle(title("You do not need to verify Minecraft ownership"))
                                 .withContent(div(h2("You do not need to verify Minecraft ownership")).withClass("px-4 py-5 my-5 text-center"))
@@ -289,7 +377,7 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
 
         final DomContent xboxStatus;
         if (xboxToken == null) {
-            xboxStatus = span(span(" Please link your Microsoft account"));
+            xboxStatus = span(span(" Link your Microsoft account"));
         } else {
             final var profile = acquireMCProfile(xboxToken);
             if (profile == null) {
@@ -303,6 +391,41 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
 
         final boolean canVerify = discordToken != null && xboxToken != null;
 
+        var verificationOptions = new ArrayList<String>();
+
+        final var verifyElements = new ArrayList<DomContent>();
+        verifyElements.add(div().withStyle("height: 3em"));
+
+        if (config().getMicrosoftAuth() != null) {
+            verificationOptions.add("log in with your Microsoft account");
+            verifyElements.add(a(i().withClasses("bi", "bi-microsoft"), xboxStatus).withCondHref(xboxToken == null, microsoft.getAuthorizationUrl(serverId))
+                    .withCondClass(xboxToken == null, "btn btn-lg px-4 gap-3 btn-primary")
+                    .withCondClass(xboxToken != null, "btn btn-lg px-4 gap-3 btn-success disabled"));
+        }
+
+        if (config().getMicrosoftAuth() != null && config().getMinecraftServerPort() != 0 && verificationInfo != null) {
+            verifyElements.add(br());
+            verifyElements.add(span("OR").withStyle("font-size: 200%").withClass("p-3"));
+            verifyElements.add(br());
+        }
+
+        if (config().getMinecraftServerPort() != 0 && verificationInfo != null) {
+            verificationOptions.add("join the Minecraft server below");
+            verifyElements.add(div(
+                    p(text("Join the Minecraft server at the following address: "), span(code(config().getMinecraftServerAddress().replace("<token>", verificationInfo.serverJoinToken())).withClass("p-1"))
+                            .withClass("border")).withClass("lead mb-1"),
+                    p("You can use any version of Minecraft, modded or otherwise.").withStyle("font-size: 100%").withClass("lead mb-1")
+            ));
+        }
+
+        if (config().getMicrosoftAuth() != null) {
+            verifyElements.add(hr());
+            verifyElements.add(div(
+                    button("Verify").withType("button").withId("verify").withClasses("bi btn btn-lg px-4 gap-3", canVerify ? "btn-primary" : "btn-secondary disabled")
+                            .withTitle(canVerify ? "Verify your Minecraft account" : "Please connect win Discord and Microsoft first")
+            ).withClass("d-grid gap-2 d-sm-flex justify-content-sm-center"));
+        }
+
         context.html(WebServer.tag()
                 .withTitle(title("Minecraft Account Verification"))
                 .withHead(script().withType("text/javascript").withSrc("/static/script/mcverify.js"))
@@ -310,22 +433,13 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                 .withContent(div(
                         h1("Minecraft Account Verification").withClass("display-5 fw-bold text-body-emphasis"),
                         div().withClass("col-lg-6 mx-auto"),
-                        p(text("In order to verify that you own a Minecraft account, please log in with both your Microsoft Account and your Discord Account"),
+                        p(text("In order to verify that you own a Minecraft account, please log in with your Discord Account and then " + String.join(" or ", verificationOptions)),
                                 br(),
                                 a("How does it work?").withClass("text-reset fw-bold").withHref("/minecraft/verify/info")).withClass("lead mb-4"),
-                        div(
-                                a(i().withClasses("bi", "bi-discord"), discordStatus).withCondHref(discordToken == null, discord.getAuthorizationUrl(serverId))
-                                        .withCondClass(discordToken == null, "btn btn-lg px-4 gap-3 btn-primary")
-                                        .withCondClass(discordToken != null, "btn btn-lg px-4 gap-3 btn-success disabled"),
-                                a(i().withClasses("bi", "bi-microsoft"), xboxStatus).withCondHref(xboxToken == null, microsoft.getAuthorizationUrl(serverId))
-                                        .withCondClass(xboxToken == null, "btn btn-lg px-4 gap-3 btn-primary")
-                                        .withCondClass(xboxToken != null, "btn btn-lg px-4 gap-3 btn-success disabled")
-                        ).withClass("d-grid gap-2 d-sm-flex justify-content-sm-center"),
-                        hr(),
-                        div(
-                                button("Verify").withType("button").withId("verify").withClasses("bi btn btn-lg px-4 gap-3", canVerify ? "btn-primary" : "btn-secondary disabled")
-                                        .withTitle(canVerify ? "Verify your Minecraft account" : "Please connect win Discord and Microsoft first")
-                        ).withClass("d-grid gap-2 d-sm-flex justify-content-sm-center")
+                        a(i().withClasses("bi", "bi-discord"), discordStatus).withCondHref(discordToken == null, discord.getAuthorizationUrl(serverId))
+                                .withCondClass(discordToken == null, "btn btn-lg px-4 gap-3 btn-primary")
+                                .withCondClass(discordToken != null, "btn btn-lg px-4 gap-3 btn-success disabled"),
+                        div(verifyElements.toArray(DomContent[]::new)).withCondHidden(discordToken == null)
                 ).withClass("px-4 py-5 my-5 text-center container"))
                 .create()
                 .render());
@@ -339,8 +453,12 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                         p("Piracy is not tolerated, and as such, to comply with the Discord Terms of Service, moderators may ask you to verify that you own a Minecraft account."),
                         p("This process is quick and can be done on mobile too."),
                         p("First, connect to Discord. We only request to be able to identify you so that we know your user ID. We cannot access your payment information or your email."),
-                        p("Second, connect to the Microsoft account your Minecraft account is linked to. We will not be given access to any personal or sensitive information when you connect."),
-                        p("Finally, if the Microsoft account has a Minecraft account, you will be able to click the Verify button. After that, you may go back to the server and continue what you were doing!"),
+                        p("Second, you will be given one or both of the options below:"),
+                        ul(
+                                li("Connect to the Microsoft account your Minecraft account is linked to. We will not be given access to any personal or sensitive information when you connect. If the Microsoft account has a Minecraft account, you will be able to click the Verify button."),
+                                li("Launch any version of Minecraft (vanilla or modded) and attempt to join the server at the given address.")
+                        ),
+                        p("After verifying that you own Minecraft using one of the aforementioned options you may go back to the server and continue what you were doing!"),
                         h5("How are the OAuth tokens stored?"),
                         p("The OAuth tokens are stored as cookies. After you verify, the cookies will be deleted. We do not store the tokens on our servers.")
                 ).withClass("px-4 py-5 my-5 container"))

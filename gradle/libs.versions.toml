@@ -13,6 +13,7 @@ annotations = { module = "org.jetbrains:annotations", version = "24.0.1" }
 args4j = { module = "args4j:args4j", version = "2.33" }
 assertj = { module = "org.assertj:assertj-core", version = "3.25.1" }
 autoservice = { module = "com.google.auto.service:auto-service", version = "1.0.1" }
+authlib = { module = "com.mojang:authlib", version = "7.0.61" }
 
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version = "1.58" }
 
