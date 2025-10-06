@@ -4,10 +4,11 @@ import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.selections.SelectOption;
+import net.dv8tion.jda.api.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.InteractiveCommand;
 import net.neoforged.camelot.config.module.Logging;
@@ -53,7 +54,7 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
                                 .toList());
 
                         event.reply("Please select the logging types to send to this channel.")
-                                .addActionRow(builder.build())
+                                .addComponents(ActionRow.of(builder.build()))
                                 .setEphemeral(true).queue();
                     }
 

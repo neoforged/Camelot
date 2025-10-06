@@ -76,7 +76,6 @@ public class BotMain {
     private static final List<GatewayIntent> INTENTS = Arrays.asList(
             GatewayIntent.GUILD_MESSAGES,               // For receiving messages.
             GatewayIntent.MESSAGE_CONTENT,              // For reading messages.
-            GatewayIntent.GUILD_EMOJIS_AND_STICKERS,    // For receiving emoji updates.
             GatewayIntent.GUILD_MESSAGE_REACTIONS,      // For reading message reactions. This should be removed after Actions are implemented.
             GatewayIntent.GUILD_MEMBERS,                // For reading online members, such as for resolving moderators by ID.
             GatewayIntent.DIRECT_MESSAGES,              // For receiving direct messages.

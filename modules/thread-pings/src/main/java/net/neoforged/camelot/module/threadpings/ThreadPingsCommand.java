@@ -3,6 +3,9 @@ package net.neoforged.camelot.module.threadpings;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
+import net.dv8tion.jda.api.components.selections.SelectMenu;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Role;
@@ -15,11 +18,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
-import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu.DefaultValue;
-import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu.SelectTarget;
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.utils.MiscUtil;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.InteractiveCommand;
@@ -115,18 +113,18 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
             event.getInteraction().getHook().editOriginal(buildMessage(channel.getAsMention(), pingsData.pingRoles(), pingsData.exemptRoles()))
                     .setComponents(ActionRow.of(
                                     EntitySelectMenu.create(getComponentId(channel.getId(), PING_ROLES_SELECT_MENU),
-                                                    SelectTarget.ROLE)
+                                                    EntitySelectMenu.SelectTarget.ROLE)
                                             .setPlaceholder("Select roles to be pinged")
-                                            .setDefaultValues(pingsData.pingRoles().stream().map(DefaultValue::from).toList())
+                                            .setDefaultValues(pingsData.pingRoles().stream().map(EntitySelectMenu.DefaultValue::from).toList())
                                             .setMinValues(0)
                                             .setMaxValues(SelectMenu.OPTIONS_MAX_AMOUNT)
                                             .build()
                             ),
                             ActionRow.of(
                                     EntitySelectMenu.create(getComponentId(channel.getId(), EXEMPT_ROLES_SELECT_MENU),
-                                                    SelectTarget.ROLE)
+                                                    EntitySelectMenu.SelectTarget.ROLE)
                                             .setPlaceholder("Select roles to be exempt from being pinged")
-                                            .setDefaultValues(pingsData.exemptRoles().stream().map(DefaultValue::from).toList())
+                                            .setDefaultValues(pingsData.exemptRoles().stream().map(EntitySelectMenu.DefaultValue::from).toList())
                                             .setMinValues(0)
                                             .setMaxValues(SelectMenu.OPTIONS_MAX_AMOUNT)
                                             .build()
@@ -156,9 +154,9 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
 
             event.getInteraction().getHook().editOriginal(buildMessage("this guild", roles, null))
                     .setComponents(ActionRow.of(
-                            EntitySelectMenu.create(getComponentId(guildId, PING_ROLES_SELECT_MENU), SelectTarget.ROLE)
+                            EntitySelectMenu.create(getComponentId(guildId, PING_ROLES_SELECT_MENU), EntitySelectMenu.SelectTarget.ROLE)
                                     .setPlaceholder("Select roles to be pinged")
-                                    .setDefaultValues(roles.stream().map(DefaultValue::from).toList())
+                                    .setDefaultValues(roles.stream().map(EntitySelectMenu.DefaultValue::from).toList())
                                     .setMinValues(0)
                                     .setMaxValues(SelectMenu.OPTIONS_MAX_AMOUNT)
                                     .build()

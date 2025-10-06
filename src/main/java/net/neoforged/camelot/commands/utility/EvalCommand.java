@@ -2,16 +2,18 @@ package net.neoforged.camelot.commands.utility;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
+import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
@@ -46,23 +48,23 @@ public class EvalCommand extends Command {
     @Override
     protected void execute(CommandEvent commandEvent) {
         commandEvent.getMessage().reply(new MessageCreateBuilder().setContent(commandEvent.getMember().getAsMention() + ", use the buttons below:")
-                .setActionRow(
+                .addComponents(ActionRow.of(
                         Button.of(ButtonStyle.PRIMARY, checkUser(commandEvent, event -> event.replyModal(Modal.create(EVAL_ID + commandEvent.getMessage().getId(), "Evaluate script")
-                                    .addActionRow(TextInput.create("args", "Arguments", TextInputStyle.SHORT)
+                                    .addComponents(Label.of("Arguments", TextInput.create("args", TextInputStyle.SHORT)
                                             .setRequired(false)
                                             .setPlaceholder("The arguments to evaluate the script with")
-                                            .build())
+                                            .build()))
                                 .build())
                                 .queue()).toString(), "Evaluate", Emojis.CMDLINE),
                         Button.of(ButtonStyle.SECONDARY, checkUser(commandEvent, event -> event.replyModal(Modal.create(ADD_TRICK_ID + commandEvent.getMessage().getId(), "Add trick")
-                                        .addActionRow(TextInput.create("names", "Trick names", TextInputStyle.SHORT)
+                                        .addComponents(Label.of("Trick names", TextInput.create("names", TextInputStyle.SHORT)
                                                 .setRequired(true)
                                                 .setPlaceholder("Space-separated names of the trick")
                                                 .setMinLength(1)
-                                                .build())
+                                                .build()))
                                         .build())
                                 .queue()).toString(), "Add trick", Emojis.ADD)
-                )
+                ))
                 .build())
                 .queue();
     }

@@ -2,6 +2,8 @@ package net.neoforged.camelot.module.mcverification;
 
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
@@ -10,7 +12,6 @@ import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.InteractiveCommand;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
@@ -20,7 +21,6 @@ import net.neoforged.camelot.util.DateUtils;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -78,7 +78,7 @@ public class VerifyMCCommand extends InteractiveCommand {
                 ").";
 
         event.reply(message)
-                .addActionRow(Button.danger(getComponentId("cancel", target), "Cancel"))
+                .addComponents(ActionRow.of(Button.danger(getComponentId("cancel", target), "Cancel")))
                 .flatMap(InteractionHook::retrieveOriginal)
                 .onSuccess(msg -> db.insert(
                         event.getGuild().getIdLong(), target.getIdLong(), msg.getJumpUrl(), Timestamp.from(Instant.now().plus(verificationDeadline))

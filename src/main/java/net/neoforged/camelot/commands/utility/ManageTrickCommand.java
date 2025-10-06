@@ -4,6 +4,9 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -13,14 +16,10 @@ import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
-import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.dv8tion.jda.internal.utils.Checks;
@@ -40,7 +39,6 @@ import net.neoforged.camelot.script.ScriptUtils;
 import net.neoforged.camelot.script.ScriptWriter;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.args4j.spi.SubCommand;
 
 import java.io.StringWriter;
 import java.util.List;
@@ -101,14 +99,14 @@ public class ManageTrickCommand extends SlashCommand {
         @Override
         protected void execute(SlashCommandEvent event) {
             event.replyModal(Modal.create(getComponentId(), "Add a new trick")
-                            .addActionRow(TextInput.create("names", "Trick names", TextInputStyle.SHORT)
+                            .addComponents(Label.of("Trick names", TextInput.create("names", TextInputStyle.SHORT)
                                     .setRequired(true)
                                     .setMinLength(1)
-                                    .build())
-                            .addActionRow(TextInput.create("script", "The trick script", TextInputStyle.PARAGRAPH)
+                                    .build()))
+                            .addComponents(Label.of("The trick script", TextInput.create("script", TextInputStyle.PARAGRAPH)
                                     .setRequired(true)
                                     .setMinLength(1)
-                                    .build())
+                                    .build()))
                             .build())
                     .queue();
         }
@@ -239,18 +237,18 @@ public class ManageTrickCommand extends SlashCommand {
         @Override
         protected void execute(SlashCommandEvent event) {
             event.replyModal(Modal.create(getComponentId(), "Add a new trick with a text reply")
-                            .addActionRow(TextInput.create("names", "Trick names", TextInputStyle.SHORT)
+                            .addComponents(Label.of("Trick names", TextInput.create("names", TextInputStyle.SHORT)
                                     .setRequired(true)
                                     .setMinLength(1)
-                                    .build())
-                            .addActionRow(TextInput.create("description", "Trick description", TextInputStyle.SHORT)
+                                    .build()))
+                            .addComponents(Label.of("Trick description", TextInput.create("description", TextInputStyle.SHORT)
                                     .setRequired(false)
                                     .setMaxLength(100)
-                                    .build())
-                            .addActionRow(TextInput.create("text", "The trick text reply", TextInputStyle.PARAGRAPH)
+                                    .build()))
+                            .addComponents(Label.of("The trick text reply", TextInput.create("text", TextInputStyle.PARAGRAPH)
                                     .setRequired(true)
                                     .setMinLength(1)
-                                    .build())
+                                    .build()))
                             .build())
                     .queue();
         }
@@ -374,11 +372,11 @@ public class ManageTrickCommand extends SlashCommand {
             }
 
             event.replyModal(Modal.create(getComponentId(trick.id()), "Update a trick")
-                            .addActionRow(TextInput.create("script", "The trick new script", TextInputStyle.PARAGRAPH)
+                            .addComponents(Label.of("The trick new script", TextInput.create("script", TextInputStyle.PARAGRAPH)
                                     .setRequired(true)
                                     .setMinLength(1)
                                     .setValue(trick.script())
-                                    .build())
+                                    .build()))
                             .build())
                     .queue();
         }

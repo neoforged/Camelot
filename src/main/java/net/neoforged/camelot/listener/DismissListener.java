@@ -1,5 +1,7 @@
 package net.neoforged.camelot.listener;
 
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -8,8 +10,6 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.interactions.Interaction;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,11 +26,11 @@ public final class DismissListener implements EventListener {
         if (!(gevent instanceof ButtonInteractionEvent event)) return;
 
         var button = event.getButton();
-        if (button.getId() == null || button.getId().isBlank()) {
+        if (button.getCustomId() == null || button.getCustomId().isBlank()) {
             return;
         }
 
-        final String[] idParts = button.getId().split("-");
+        final String[] idParts = button.getCustomId().split("-");
 
         if (!idParts[0].equals("dismiss")) {
             return;

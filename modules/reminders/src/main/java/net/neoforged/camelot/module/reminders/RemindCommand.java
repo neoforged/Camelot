@@ -4,6 +4,7 @@ import com.jagrosh.jdautilities.command.CooldownScope;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -61,7 +62,7 @@ public class RemindCommand extends SlashCommand {
                         userId, event.isFromType(ChannelType.PRIVATE) ? 0 : event.getChannel().getIdLong(), remTime.getEpochSecond(), event.getOption("content", OptionMapping::getAsString)
                 ));
                 event.deferReply().setContent("Successfully scheduled reminder on %s (%s)!".formatted(TimeFormat.DATE_TIME_LONG.format(remTime), TimeFormat.RELATIVE.format(remTime)))
-                        .addActionRow(DismissListener.createDismissButton())
+                        .addComponents(ActionRow.of(DismissListener.createDismissButton()))
                         .queue();
             } catch (NumberFormatException | IndexOutOfBoundsException e) {
                 event.deferReply(true).setContent("Invalid time provided!").queue();

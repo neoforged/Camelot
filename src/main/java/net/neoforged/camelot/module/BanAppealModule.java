@@ -11,6 +11,11 @@ import jakarta.mail.MessagingException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -23,11 +28,8 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
+import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.Result;
 import net.dv8tion.jda.internal.entities.UserImpl;
@@ -317,11 +319,11 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         final ThreadChannel thread = BotMain.get().getChannelById(MessageChannel.class, config().getAppealsChannels().get(guild.getIdLong()))
                 .sendMessageEmbeds(embed.build())
-                .addActionRow(
+                .addComponents(ActionRow.of(
                         Button.success("ban-appeals/approve/" + selfId, "Approve"),
                         Button.danger("ban-appeals/reject/" + selfId, "Reject")
-                )
-                .addActionRow(Button.secondary("ban-appeals/followup/" + selfId, "Follow up with a question"))
+                ))
+                .addComponents(ActionRow.of(Button.secondary("ban-appeals/followup/" + selfId, "Follow up with a question")))
                 .flatMap(msg -> msg.createThreadChannel("Discussion of appeal of " + user.getEffectiveName()))
                 .complete();
 
@@ -446,7 +448,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
     }
 
     private void onButton(ButtonInteractionEvent event) {
-        final String id = event.getButton().getId();
+        final String id = event.getButton().getCustomId();
         if (id == null || !id.startsWith("ban-appeals/")) return;
         final String[] split = id.split("/");
 
@@ -461,16 +463,16 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         switch (split[1]) {
             case "followup" -> event.replyModal(Modal.create("ban-appeals/followup/" + userId, "Send reply")
-                            .addActionRow(TextInput.create("reply", "Reply", TextInputStyle.PARAGRAPH).setRequired(true).build())
+                            .addComponents(Label.of("Reply", TextInput.create("reply", TextInputStyle.PARAGRAPH).setRequired(true).build()))
                             .build())
                     .queue();
             case "reject" -> event.replyModal(Modal.create("ban-appeals/reject/" + userId, "Reject appeal")
-                            .addActionRow(TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH).setRequired(true).build())
-                            .addActionRow(TextInput.create("blockdays", "Block days", TextInputStyle.SHORT).setPlaceholder("The amount of days to block the user from re-sending an appeal for").build())
+                            .addComponents(Label.of("Reason", TextInput.create("reason", TextInputStyle.PARAGRAPH).setRequired(true).build()))
+                            .addComponents(Label.of("Block days", "The amount of days to block the user from re-sending an appeal for", TextInput.create("blockdays", TextInputStyle.SHORT).setRequired(false).build()))
                             .build())
                     .queue();
             case "approve" -> event.replyModal(Modal.create("ban-appeals/approve/" + userId, "Approve appeal")
-                    .addActionRow(TextInput.create("message", "Message", TextInputStyle.PARAGRAPH).setPlaceholder("Optional message sent to the appellee accompanying their invite to join the server").setRequired(false).build())
+                    .addComponents(Label.of("Message", "Optional message sent to the appellee accompanying their invite to join the server", TextInput.create("message", TextInputStyle.PARAGRAPH).setRequired(false).build()))
                     .build())
                     .queue();
         }

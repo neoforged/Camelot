@@ -99,7 +99,7 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
                             }
 
                             final var url = gist.create().getHtmlUrl().toString();
-                            it.reply(STR."Created Gist at the request of <@\{event.getUserIdLong()}>: <\{url}>")
+                            it.reply("Created Gist at the request of " + event.getUser().getAsMention() + ": <" + url + ">")
                                     .setAllowedMentions(List.of())
                                     .flatMap(_ -> event.getReaction().clearReactions())
                                     .queue();

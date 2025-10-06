@@ -6,6 +6,7 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -207,7 +208,7 @@ public class QuoteCommand extends SlashCommand {
                             .mentionRepliedUser(false))
                     .thenAccept(action -> {
                         if (!buttons.isEmpty()) {
-                            action.setActionRow(buttons);
+                            action.setComponents(ActionRow.of(buttons));
                         }
                         action.queue();
                     });

@@ -2,12 +2,13 @@ package net.neoforged.camelot.commands;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
@@ -79,7 +80,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
                 .thenApply(ed -> event.getHook().sendMessage(MessageCreateData.fromEditData(ed)))
                 .thenAccept(action -> {
                     if (!buttons.isEmpty()) {
-                        action.addActionRow(buttons);
+                        action.addComponents(ActionRow.of(buttons));
                     }
                     action.queue();
                 });
@@ -118,7 +119,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
      * @param data  the button data
      */
     protected final void onButton(final ButtonInteractionEvent event, final T data) {
-        final String[] split = event.getButton().getId().split("/");
+        final String[] split = event.getButton().getCustomId().split("/");
         int currentPage = Integer.parseInt(split[1]);
         event.deferEdit().queue();
 
@@ -133,14 +134,14 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
                 .thenApply(event.getMessage()::editMessage)
                 .thenAccept(msg -> {
                     if (!buttons.isEmpty()) {
-                        msg.setActionRow(buttons);
+                        msg.setComponents(ActionRow.of(buttons));
                     }
                     msg.queue();
                 });
     }
 
-    protected List<ItemComponent> createButtons(String id, int currentPage, int itemAmount) {
-        final List<ItemComponent> components = new ArrayList<>();
+    protected List<ActionRowChildComponent> createButtons(String id, int currentPage, int itemAmount) {
+        final List<ActionRowChildComponent> components = new ArrayList<>();
         if (currentPage != 0) {
             components.add(Button.secondary(id + "/" + currentPage + "/prev", PREV_EMOJI));
         }

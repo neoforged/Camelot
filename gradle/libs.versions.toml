@@ -2,7 +2,7 @@
 graal = "22.2.0"
 groovy = "4.0.21"
 jdbi = "3.32.0"
-jackson = "2.13.3"
+jackson = "2.20.0"
 jjwt = "0.10.5"
 junit = "5.10.0"
 
@@ -17,12 +17,13 @@ authlib = { module = "com.mojang:authlib", version = "7.0.61" }
 
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version = "1.58" }
 
-chewtils = { module = "com.github.matyrobbrt:JDA-Chewtils", version = "65ad10a" }
+# TODO - switch back to the normal maven one once https://github.com/Chew/JDA-Chewtils/pull/93 is merged
+chewtils = { module = "com.github.Chew:JDA-Chewtils", version = "39a83bd8" }
 
 fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.12" }
 flyway = { module = "org.flywaydb:flyway-core", version = "8.5.13" }
 
-githubapi = { module = "org.kohsuke:github-api", version = "1.313" }
+githubapi = { module = "org.kohsuke:github-api", version = "1.330" }
 graal-js = { module = "org.graalvm.js:js", version.ref = "graal" }
 graal-js-scriptengine = { module = "org.graalvm.js:js-scriptengine", version.ref = "graal" }
 
@@ -31,7 +32,7 @@ groovy-contracts = { module = "org.apache.groovy:groovy-contracts", version.ref 
 
 guava = { module = "com.google.guava:guava", version = "30.1.1-jre" }
 
-jda = { module = "net.dv8tion:JDA", version = "5.5.1" }
+jda = { module = "net.dv8tion:JDA", version = "6.0.0" }
 
 jdbi-core = { module = "org.jdbi:jdbi3-core", version.ref = "jdbi" }
 jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }

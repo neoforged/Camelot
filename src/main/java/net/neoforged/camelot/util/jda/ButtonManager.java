@@ -2,10 +2,10 @@ package net.neoforged.camelot.util.jda;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.neoforged.camelot.BotMain;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,8 +33,8 @@ public class ButtonManager implements EventListener {
     public void onEvent(@NotNull GenericEvent gevent) {
         if (!(gevent instanceof ButtonInteractionEvent event)) return;
         final Button button = event.getButton();
-        if (button.getId() == null) return;
-        final String[] split = button.getId().split("/");
+        if (button.getCustomId() == null) return;
+        final String[] split = button.getCustomId().split("/");
         try {
             final UUID id = UUID.fromString(split[0]);
             final Consumer<ButtonInteractionEvent> cons = buttons.getIfPresent(id);

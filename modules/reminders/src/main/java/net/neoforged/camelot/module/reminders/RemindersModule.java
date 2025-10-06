@@ -10,6 +10,12 @@ import com.jagrosh.jdautilities.command.MessageContextMenuEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -17,14 +23,8 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
+import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
@@ -113,16 +113,14 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
                         BASE_REMIND_MESSAGE + "/" + event.getTarget().getId(),
                         "Add reminder"
                 )
-                        .addActionRow(TextInput.create(
+                        .addComponents(Label.of("Remind in", "Example: 12h30m", TextInput.create(
                                 "time",
-                                "Remind in",
                                 TextInputStyle.SHORT
-                        ).setPlaceholder("12h30m").setRequired(true).setMinLength(2).build())
-                        .addActionRow(TextInput.create(
+                        ).setRequired(true).setMinLength(2).build()))
+                        .addComponents(Label.of("Reminder text", TextInput.create(
                                 "text",
-                                "Reminder text",
                                 TextInputStyle.PARAGRAPH
-                        ).setRequired(false).build())
+                        ).setRequired(false).build()))
                         .build()).queue();
             }
         });
@@ -143,14 +141,14 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
                             (url + " " + Optional.ofNullable(event.getValue("text")).map(ModalMapping::getAsString).orElse("")).trim()
                     ));
                     event.deferReply().setContent("> -# Reminder for " + url + "\nSuccessfully scheduled reminder on %s (%s)!".formatted(TimeFormat.DATE_TIME_LONG.format(remTime), TimeFormat.RELATIVE.format(remTime)))
-                            .addActionRow(DismissListener.createDismissButton())
+                            .addComponents(ActionRow.of(DismissListener.createDismissButton()))
                             .queue();
                 }
             }
         }));
 
         snoozeButtons = ActionRow.partitionOf(config().getSnoozeDurations().stream().map(duration -> Button.of(ButtonStyle.SECONDARY, SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), DateUtils.formatDuration(duration), SNOOZE_EMOJI))
-                .toArray(ItemComponent[]::new));
+                .toList());
 
         db().useExtension(RemindersDAO.class, db -> db.getAllReminders()
                 .forEach(reminder -> {
@@ -167,9 +165,9 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
     public void registerListeners(JDABuilder builder) {
         builder.addEventListeners((EventListener) (gevent) -> {
             if (!(gevent instanceof ButtonInteractionEvent event)) return;
-            if (event.getButton().getId() == null || !event.getButton().getId().startsWith(SNOOZE_BUTTON_ID)) return;
+            if (event.getButton().getCustomId() == null || !event.getButton().getCustomId().startsWith(SNOOZE_BUTTON_ID)) return;
 
-            final int snoozeSecs = Integer.parseInt(event.getButton().getId().substring(SNOOZE_BUTTON_ID.length() + 1));
+            final int snoozeSecs = Integer.parseInt(event.getButton().getCustomId().substring(SNOOZE_BUTTON_ID.length() + 1));
             final Reminder reminder = snoozable.getIfPresent(event.getMessage().getIdLong());
             if (reminder == null) {
                 event.reply("This button has expired!").setEphemeral(true).queue();
@@ -274,7 +272,7 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
                 )
                 .setAllowedMentions(ALLOWED_MENTIONS)
                 .addComponents(snoozeButtons)
-                .addActionRow(DismissListener.createDismissButton(user))
+                .addComponents(ActionRow.of(DismissListener.createDismissButton(user)))
                 .setSuppressedNotifications(false)
                 .build();
     }
