@@ -3,13 +3,18 @@ package net.neoforged.camelot.commands;
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.SlashCommand;
+import net.dv8tion.jda.api.entities.Guild;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.api.config.ConfigManager;
+import net.neoforged.camelot.api.config.type.OptionRegistrar;
+import net.neoforged.camelot.api.config.type.StringOption;
 import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.information.McAgeCommand;
 import net.neoforged.camelot.commands.information.VersioningCommand;
 import net.neoforged.camelot.commands.utility.PingCommand;
 import net.neoforged.camelot.commands.utility.ShutdownCommand;
 import net.neoforged.camelot.config.CamelotConfig;
+import net.neoforged.camelot.module.BuiltInModule;
 
 /**
  * The place where all control flow for commands converges.
@@ -31,12 +36,16 @@ public class Commands {
      * Register and setup every valid command.
      * To remove a command from the bot, simply comment the line where it is added.
      */
-    public static CommandClient init() {
+    public static CommandClient init(ConfigManager<Guild> manager) {
+        final var prefix = BotMain.getModule(BuiltInModule.class).commandPrefix;
+
         final var builder = new CommandClientBuilder()
                 .setOwnerId(String.valueOf(CamelotConfig.getInstance().getOwner()))
-                .setPrefix(CamelotConfig.getInstance().getPrefix())
+                .setPrefixFunction(event -> prefix.get(event.getGuild()))
                 .setActivity(null)
                 .useHelpBuilder(false) // We use the slash command instead
+
+                .addSlashCommand(new GuildConfigCommand(manager))
 
                 .addSlashCommand(new PingCommand())
                 .addSlashCommand(new HelpCommand(BotMain.BUTTON_MANAGER))

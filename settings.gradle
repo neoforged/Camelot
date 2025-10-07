@@ -34,6 +34,7 @@ dependencyResolutionManagement {
 rootProject.name = 'Camelot'
 
 include ':config'
+include ':config-api'
 
 include ':modules:info-channels'
 include ':modules:file-preview'

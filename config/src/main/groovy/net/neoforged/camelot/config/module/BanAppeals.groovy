@@ -1,7 +1,6 @@
 package net.neoforged.camelot.config.module
 
 import groovy.transform.CompileStatic
-import groovy.transform.NamedParam
 import net.neoforged.camelot.config.ConfigUtils
 import net.neoforged.camelot.config.MailConfiguration
 import net.neoforged.camelot.config.OAuthConfiguration
@@ -17,25 +16,6 @@ import java.awt.Color
 class BanAppeals extends ModuleConfiguration {
     {
         enabled = false
-    }
-
-    /**
-     * A guild->channel map of channels to send appeals to.
-     */
-    Map<Long, Long> appealsChannels = [:]
-
-    /**
-     * Configure the appeals channel of a guild.
-     * Example: {@code appealsChannel(guild: 123L, channel: 124L)}
-     * @param args the arguments. Must have a guild and a channel parameter
-     */
-    void appealsChannel(@NamedParam(value = 'guild', type = Long, required = true) @NamedParam(value = 'channel', type = Long, required = true) Map args) {
-        if (!args.guild) {
-            throw new IllegalArgumentException('Missing mandatory guild parameter')
-        } else if (!args.channel) {
-            throw new IllegalArgumentException('Missing mandatory channel parameter')
-        }
-        appealsChannels[args.guild as long] = args.channel as long
     }
 
     final OAuthConfiguration discordAuth = new OAuthConfiguration()

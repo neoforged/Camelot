@@ -4,11 +4,17 @@ import groovy.lang.GroovyShell;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.dv8tion.jda.api.utils.messages.MessageRequest;
+import net.neoforged.camelot.api.config.ConfigManager;
+import net.neoforged.camelot.api.config.storage.ConfigStorage;
+import net.neoforged.camelot.api.config.type.OptionBuilder;
+import net.neoforged.camelot.api.config.type.OptionBuilderFactory;
+import net.neoforged.camelot.api.config.type.OptionRegistrar;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.config.CamelotConfig;
 import net.neoforged.camelot.config.module.GHAuth;
@@ -16,6 +22,7 @@ import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.configuration.ConfigMigrator;
 import net.neoforged.camelot.db.transactionals.StatsDAO;
+import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.StatsModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
@@ -76,6 +83,7 @@ public class BotMain {
     private static final List<GatewayIntent> INTENTS = Arrays.asList(
             GatewayIntent.GUILD_MESSAGES,               // For receiving messages.
             GatewayIntent.MESSAGE_CONTENT,              // For reading messages.
+            GatewayIntent.GUILD_EXPRESSIONS,            // For reading emojis and stickers
             GatewayIntent.GUILD_MESSAGE_REACTIONS,      // For reading message reactions. This should be removed after Actions are implemented.
             GatewayIntent.GUILD_MEMBERS,                // For reading online members, such as for resolving moderators by ID.
             GatewayIntent.DIRECT_MESSAGES,              // For receiving direct messages.
@@ -263,8 +271,58 @@ public class BotMain {
             throw new RuntimeException("Encountered exception setting up database connections:", exception);
         }
 
+        var manager = ConfigManager.create(
+                ConfigStorage.sql(Database.config(), "guild_configuration", Guild::getId), Guild::getId
+        );
+        botBuilder.addEventListeners(manager);
+
+        var moduleRegistrar = manager.registrar()
+                .pushGroup("modules")
+                .setGroupDisplayName("Modules")
+                .setGroupDescription("Configuration related to specific modules");
+
+        forEachModule(module -> module.acceptParameter(BuiltInModule.GUILD_CONFIG, new OptionRegistrar<>() {
+            @Override
+            public OptionRegistrar<Guild> pushGroup(String path) {
+                return registrar().pushGroup(path);
+            }
+
+            @Override
+            public OptionRegistrar<Guild> setGroupDisplayName(String displayName) {
+                return registrar().setGroupDisplayName(displayName);
+            }
+
+            @Override
+            public OptionRegistrar<Guild> setGroupDescription(String description) {
+                return registrar().setGroupDescription(description);
+            }
+
+            @Override
+            public <T, B extends OptionBuilder<Guild, T, B>> B option(String id, OptionBuilderFactory<Guild, T, B> factory) {
+                return registrar().option(id, factory);
+            }
+
+            @Override
+            public OptionRegistrar<Guild> popGroup() {
+                return registrar().popGroup();
+            }
+
+            private OptionRegistrar<Guild> registrar;
+            private OptionRegistrar<Guild> registrar() {
+                if (registrar == null) {
+                    if (module instanceof BuiltInModule) {
+                        registrar = manager.registrar();
+                    } else {
+                        registrar = moduleRegistrar.pushGroup(module.id())
+                                .setGroupDescription("Configuration of the " + module.id() + " module");
+                    }
+                }
+                return registrar;
+            }
+        }));
+
         forEachModule(module -> module.registerListeners(botBuilder));
-        botBuilder.addEventListeners(Commands.init());
+        botBuilder.addEventListeners(Commands.init(manager));
         botBuilder.addEventListeners(Commands.get().getSlashCommands().stream()
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)

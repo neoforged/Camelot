@@ -4,7 +4,6 @@ camelot {
     final secrets = loadProperties('secrets.properties')
 
     token = secret(env('BOT_TOKEN'))
-    prefix = '!'
 
     module(Tricks) {
         prefixEnabled = true

@@ -82,6 +82,8 @@ configurations {
 dependencies {
     implementation project(':config')
 
+    api project(':config-api')
+
     api libs.chewtils
     api libs.jda
     implementation libs.trove4j

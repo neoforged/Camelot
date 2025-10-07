@@ -28,11 +28,6 @@ class CamelotConfig {
     String token
 
     /**
-     * The prefix used by the bot for text commands
-     */
-    String prefix
-
-    /**
      * The owner of the bot - the user with this ID will be able to use owner-only commands
      */
     long owner

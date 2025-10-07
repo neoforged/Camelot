@@ -966,8 +966,9 @@ public class ManageTrickCommand extends SlashCommand {
      * {@return if the given {@code member} is a trick manager
      */
     private static boolean isManager(Member member) {
+        var masters = BotMain.getModule(TricksModule.class).trickMasterRoles.get(member.getGuild());
         return member.hasPermission(Permission.MODERATE_MEMBERS) ||
-                member.getRoles().stream().anyMatch(role -> role.getIdLong() == BotMain.getModule(TricksModule.class).config().getTrickMasterRole());
+                member.getRoles().stream().anyMatch(role -> masters.contains(role.getIdLong()));
     }
 
     /**
