@@ -319,7 +319,7 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                                 .setColor(ModLogEntry.Type.UNMUTE.getColor())
                                 .setTimestamp(Instant.now())
                                 .build())))
-                        .onSuccess(_ -> LoggingModule.MODERATION_LOGS.log(new EmbedBuilder()
+                        .onSuccess(_ -> LoggingModule.MODERATION_LOGS.log(guild, new EmbedBuilder()
                                 .setTitle("Verify Minecraft")
                                 .setColor(Color.GREEN)
                                 .setDescription("<@" + userId + "> has verified that they own a Minecraft Account")

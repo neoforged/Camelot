@@ -9,9 +9,9 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
-import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.log.message.MessageCache;
 import net.neoforged.camelot.log.message.MessageData;
+import net.neoforged.camelot.module.LoggingModule;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class MessageLogging extends LoggingHandler {
     private final MessageCache cache;
 
     public MessageLogging(JDA jda) {
-        super(jda, LoggingChannelsDAO.Type.MESSAGES);
+        super(jda, LoggingModule.Type.MESSAGES);
         this.cache = new MessageCache(
                 Caffeine.newBuilder()
                         .maximumSize(250_000)
@@ -40,7 +40,7 @@ public class MessageLogging extends LoggingHandler {
 
     public void onMessageDelete(final MessageDeleteEvent event, final MessageData data) {
         if (!event.isFromGuild() || data.content().isBlank()) return;
-        if (logging.getChannels().contains(event.getChannel().getIdLong())) return; // Don't log in event channels
+        if (logging.getChannels(event.getGuild()).contains(event.getChannel().getIdLong())) return; // Don't log in event channels
 
         final var msgSplit = data.content().split(" ");
         if (msgSplit.length == 1) {
@@ -61,14 +61,14 @@ public class MessageLogging extends LoggingHandler {
         if (interaction != null) {
             embedBuilder.addField("Interaction Author: ", "<@%s> (%s)".formatted(interaction, interaction), true);
         }
-        log(embedBuilder);
+        log(event.getGuild(), embedBuilder);
     }
 
     public void onMessageUpdate(final MessageUpdateEvent event, MessageData data) {
         final var newMessage = event.getMessage();
         if (!event.isFromGuild() || (newMessage.getContentRaw().isBlank() && newMessage.getAttachments().isEmpty()))
             return;
-        if (logging.getChannels().contains(event.getChannel().getIdLong())) return; // Don't log in event channels
+        if (logging.getChannels(event.getGuild()).contains(event.getChannel().getIdLong())) return; // Don't log in event channels
 
         if (newMessage.getContentRaw().equals(data.content())) {
             return;
@@ -85,7 +85,7 @@ public class MessageLogging extends LoggingHandler {
         if (interaction != null) {
             embedBuilder.addField("Interaction Author: ", "<@%s> (%s)".formatted(interaction, interaction), true);
         }
-        log(embedBuilder);
+        log(event.getGuild(), embedBuilder);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class MessageLogging extends LoggingHandler {
         cache.onEvent(gevent);
 
         if (gevent instanceof MessageBulkDeleteEvent event) {
-            log(new EmbedBuilder()
+            log(event.getGuild(), new EmbedBuilder()
                     .setDescription("%s messages have been bulk deleted in %s!"
                             .formatted(event.getMessageIds().size(), event.getChannel().getAsMention()))
                     .setTimestamp(Instant.now()));

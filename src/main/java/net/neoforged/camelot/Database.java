@@ -6,7 +6,6 @@ import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.db.api.CallbackConfig;
 import net.neoforged.camelot.db.api.StringSearch;
 import net.neoforged.camelot.db.impl.PostCallbackDecorator;
-import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.module.BuiltInModule;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.callback.Callback;
@@ -109,19 +108,6 @@ public class Database {
                 return this;
             }
         });
-
-        callbacks.put(BuiltInModule.DatabaseSource.MAIN, schemaMigrationCallback(14, connection -> {
-            LOGGER.info("Migrating logging channels from main.db to configuration.db");
-            try (var stmt = connection.createStatement()) {
-                // So uh, while the type in the table is meant to be an int, it was actually a string. The new DB also stores a string
-                var rs = stmt.executeQuery("select type, channel from logging_channels");
-                config.useExtension(LoggingChannelsDAO.class, extension -> {
-                    while (rs.next()) {
-                        extension.insert(rs.getLong(2), LoggingChannelsDAO.Type.valueOf(rs.getString(1)));
-                    }
-                });
-            }
-        }));
 
         config = createDatabaseConnection(dir.resolve("configuration.db"), "Camelot DB config", flyway -> flyway
                 .locations("classpath:db/config")

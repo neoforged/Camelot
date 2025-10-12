@@ -1,26 +1,25 @@
 package net.neoforged.camelot.module;
 
 import com.google.auto.service.AutoService;
-import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.components.actionrow.ActionRow;
-import net.dv8tion.jda.api.components.selections.SelectOption;
-import net.dv8tion.jda.api.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
-import net.neoforged.camelot.Database;
-import net.neoforged.camelot.commands.InteractiveCommand;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.type.EntityOption;
 import net.neoforged.camelot.config.module.Logging;
-import net.neoforged.camelot.db.transactionals.LoggingChannelsDAO;
 import net.neoforged.camelot.log.ChannelLogging;
 import net.neoforged.camelot.log.JoinsLogging;
 import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.api.CamelotModule;
 
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import java.util.EnumMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The module controlling logging.
@@ -28,56 +27,27 @@ import java.util.stream.Stream;
 @AutoService(CamelotModule.class)
 public class LoggingModule extends CamelotModule.Base<Logging> {
     /** The channel in which moderation logs will be sent. */
-    public static Logger MODERATION_LOGS = embeds -> {};
+    public static Logger MODERATION_LOGS = (guild, embeds) -> {};
+
+    public final Map<Type, ConfigOption<Guild, Set<Long>>> channelOptions = new EnumMap<>(Type.class);
 
     public LoggingModule() {
         super(Logging.class);
-        accept(BuiltInModule.CONFIGURATION_COMMANDS, builder -> builder
-                .accept(new InteractiveCommand() {
-                    {
-                        this.name = "logging";
-                        this.help = "Configure logging";
-                    }
+        accept(BuiltInModule.GUILD_CONFIG, registrar -> {
+            registrar.setGroupDisplayName("Logging");
 
-                    @Override
-                    protected void execute(SlashCommandEvent event) {
-                        var types = Database.config().withExtension(LoggingChannelsDAO.class, db -> db.getTypesForChannel(event.getChannel().getIdLong()));
-                        var builder = StringSelectMenu.create(getComponentId())
-                                .setMaxValues(LoggingChannelsDAO.Type.values().length)
-                                .setMinValues(0);
-
-                        builder.addOptions(Stream.of(LoggingChannelsDAO.Type.values())
-                                .map(type -> SelectOption.of(type.displayName, type.name())
-                                        .withDescription(type.description)
-                                        .withEmoji(type.emoji)
-                                        .withDefault(types.contains(type)))
-                                .toList());
-
-                        event.reply("Please select the logging types to send to this channel.")
-                                .addComponents(ActionRow.of(builder.build()))
-                                .setEphemeral(true).queue();
-                    }
-
-                    @Override
-                    protected void onStringSelect(StringSelectInteractionEvent event, String[] arguments) {
-                        Database.config().useExtension(LoggingChannelsDAO.class, db -> {
-                            db.removeAll(event.getChannelIdLong());
-                            event.getValues().stream()
-                                    .map(LoggingChannelsDAO.Type::valueOf)
-                                    .forEach(type -> db.insert(event.getChannelIdLong(), type));
-                        });
-                        event.reply("Logging configuration updated!")
-                                .setEphemeral(true)
-                                .delay(4, TimeUnit.SECONDS)
-                                .flatMap(_ -> event.getHook().deleteOriginal())
-                                .queue();
-                    }
-                }));
+            for (Type type : Type.values()) {
+                channelOptions.put(type, registrar.option("channel_" + type.name().toLowerCase(Locale.ROOT), EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
+                        .setDisplayName(type.displayName + " Logging Channels")
+                        .setDescription(type.emoji.getFormatted() + " The channels in which to log " + type.description)
+                        .register());
+            }
+        });
     }
 
     @Override
     public void setup(JDA jda) {
-        MODERATION_LOGS = new ChannelLogging(jda, LoggingChannelsDAO.Type.MODERATION)::log;
+        MODERATION_LOGS = new ChannelLogging(jda, Type.MODERATION)::log;
         jda.addEventListener(new JoinsLogging(jda), new MessageLogging(jda));
     }
 
@@ -91,7 +61,22 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
         return "logging";
     }
 
+    public enum Type {
+        MODERATION("Moderation", "moderation events, such as bans and warnings", "🔨"),
+        JOINS("Joins", "join and leave events", "🚪"),
+        MESSAGES("Messages", "message events (edit, delete)", "💬");
+
+        public final String displayName, description;
+        public final Emoji emoji;
+
+        Type(String displayName, String description, String emoji) {
+            this.displayName = displayName;
+            this.description = description;
+            this.emoji = Emoji.fromUnicode(emoji);
+        }
+    }
+
     public interface Logger {
-        void log(MessageEmbed... embeds);
+        void log(Guild guild, MessageEmbed... embeds);
     }
 }

@@ -110,7 +110,7 @@ public class ModerationActionRecorder implements EventListener {
      */
     public static void log(ModLogEntry entry, User user) {
         entry.format(user.getJDA())
-                .thenAccept(caseData -> LoggingModule.MODERATION_LOGS.log(new EmbedBuilder()
+                .thenAccept(caseData -> LoggingModule.MODERATION_LOGS.log(user.getJDA().getGuildById(entry.guild()), new EmbedBuilder()
                         .setTitle("%s has been %s".formatted(Utils.getName(user), entry.type().getAction()))
                         .setDescription("Case information below:")
                         .addField(caseData)
