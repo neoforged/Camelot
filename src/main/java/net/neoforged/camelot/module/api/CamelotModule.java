@@ -137,7 +137,7 @@ public interface CamelotModule<C extends ModuleConfiguration> {
             return configType;
         }
 
-        protected Bot bot() {
+        public Bot bot() {
             return bot;
         }
     }

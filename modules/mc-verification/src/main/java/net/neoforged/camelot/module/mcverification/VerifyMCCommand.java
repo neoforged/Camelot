@@ -30,9 +30,11 @@ import java.util.List;
  * If they don't verify until the deadline, they will be banned for a configurable amount of time.
  */
 public class VerifyMCCommand extends InteractiveCommand {
+    private final MinecraftVerificationModule module;
     private final McVerificationDAO db;
-    public VerifyMCCommand(McVerificationDAO db) {
-        this.db = db;
+    public VerifyMCCommand(MinecraftVerificationModule module) {
+        this.module = module;
+        this.db = module.db().onDemand(McVerificationDAO.class);
 
         this.name = "verify-mc";
         this.help = "Request an user to verify Minecraft ownership";
@@ -69,12 +71,12 @@ public class VerifyMCCommand extends InteractiveCommand {
             return;
         }
 
-        var verificationDeadline = BotMain.getModule(MinecraftVerificationModule.class).config().getVerificationDeadline();
+        var verificationDeadline = module.config().getVerificationDeadline();
 
         String message = target.getAsMention() + ", please verify that you own a Minecraft account. Failure to do so within " +
                 DateUtils.formatDuration(verificationDeadline) +
                 " will result in a ban.\n\nYou can verify by accessing [this form](" +
-                BotMain.getModule(WebServerModule.class).makeLink("/minecraft/" + event.getGuild().getId() + "/verify") +
+                module.bot().getModule(WebServerModule.class).makeLink("/minecraft/" + event.getGuild().getId() + "/verify") +
                 ").";
 
         event.reply(message)

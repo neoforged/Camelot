@@ -1,6 +1,5 @@
 package net.neoforged.camelot.module.threadpings;
 
-import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
@@ -19,7 +18,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.utils.MiscUtil;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.InteractiveCommand;
 import net.neoforged.camelot.module.threadpings.db.ThreadPingsDAO;
 import net.neoforged.camelot.module.threadpings.db.ThreadPingsExemptionsDAO;
@@ -41,7 +39,9 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
     private static final String PING_ROLES_SELECT_MENU = "ping";
     private static final String EXEMPT_ROLES_SELECT_MENU = "exempt";
 
-    public ThreadPingsCommand() {
+    protected final ThreadPingsModule module;
+    public ThreadPingsCommand(ThreadPingsModule module) {
+        this.module = module;
         this.subcommandGroup = GROUP_DATA;
     }
 
@@ -61,9 +61,9 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
         final GuildChannel channel = event.getJDA().getGuildChannelById(channelId);
         if (!isGuildId && channel == null) {
             LOGGER.info("Received interaction for non-existent channel {}; deleting associated pings from database", channelId);
-            BotMain.getModule(ThreadPingsModule.class).db().useExtension(ThreadPingsDAO.class,
+            module.db().useExtension(ThreadPingsDAO.class,
                     threadPings -> threadPings.clearChannel(channelId));
-            BotMain.getModule(ThreadPingsModule.class).db().useExtension(ThreadPingsExemptionsDAO.class,
+            module.db().useExtension(ThreadPingsExemptionsDAO.class,
                     threadPingsExemption -> threadPingsExemption.clearChannel(channelId));
             return;
         }
@@ -76,10 +76,10 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
                 .toList();
 
         if (menu.equals(PING_ROLES_SELECT_MENU)) {
-            BotMain.getModule(ThreadPingsModule.class).db().useExtension(ThreadPingsDAO.class, threadPings ->
+            module.db().useExtension(ThreadPingsDAO.class, threadPings ->
                     applyNewRoles(channelId, roleIds, threadPings::query, threadPings::add, threadPings::remove));
         } else if (menu.equals(EXEMPT_ROLES_SELECT_MENU)) {
-            BotMain.getModule(ThreadPingsModule.class).db().useExtension(ThreadPingsExemptionsDAO.class, threadPingsExemption ->
+            module.db().useExtension(ThreadPingsExemptionsDAO.class, threadPingsExemption ->
                     applyNewRoles(channelId, roleIds, threadPingsExemption::query, threadPingsExemption::add, threadPingsExemption::remove));
         }
 
@@ -95,7 +95,8 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
     }
 
     public static class ConfigureChannel extends ThreadPingsCommand {
-        public ConfigureChannel() {
+        public ConfigureChannel(ThreadPingsModule module) {
+            super(module);
             this.name = "configure-channel";
             this.help = "Configure roles to be pinged in threads made under a channel";
             this.options = List.of(
@@ -108,7 +109,7 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
             final @Nullable GuildChannelUnion channel = executeChannelCommon(event);
             if (channel == null) return;
 
-            final ChannelPingsData pingsData = ThreadPingsCommand.fetchPingsData(channel.getIdLong(), event.getJDA());
+            final ChannelPingsData pingsData = fetchPingsData(channel.getIdLong(), event.getJDA());
 
             event.getInteraction().getHook().editOriginal(buildMessage(channel.getAsMention(), pingsData.pingRoles(), pingsData.exemptRoles()))
                     .setComponents(ActionRow.of(
@@ -134,7 +135,8 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
     }
 
     public static class ConfigureGuild extends ThreadPingsCommand {
-        public ConfigureGuild() {
+        public ConfigureGuild(ThreadPingsModule module) {
+            super(module);
             this.name = "configure-guild";
             this.help = "Configure roles to be pinged in threads made under this guild";
         }
@@ -145,7 +147,7 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
             assert event.getGuild() != null;
             final long guildId = event.getGuild().getIdLong();
 
-            final List<Role> roles = BotMain.getModule(ThreadPingsModule.class).db().withExtension(ThreadPingsDAO.class,
+            final List<Role> roles = module.db().withExtension(ThreadPingsDAO.class,
                             threadPings -> threadPings.query(guildId))
                     .stream()
                     .map(id -> event.getJDA().getRoleById(id))
@@ -165,8 +167,9 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
         }
     }
 
-    public static class View extends SlashCommand {
-        public View() {
+    public static class View extends ThreadPingsCommand {
+        public View(ThreadPingsModule module) {
+            super(module);
             this.name = "view";
             this.help = "View roles to be pinged in threads made under a channel";
             this.options = List.of(
@@ -198,7 +201,7 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
                 categoryExemptRoles = List.of();
             }
 
-            final FilteredRoles guildPings = filterRoles(BotMain.getModule(ThreadPingsModule.class).db().withExtension(ThreadPingsDAO.class,
+            final FilteredRoles guildPings = filterRoles(module.db().withExtension(ThreadPingsDAO.class,
                     threadPings -> threadPings.query(channel.getGuild().getIdLong())), event.getJDA());
             guildRoles = guildPings.known();
 
@@ -294,12 +297,12 @@ public abstract class ThreadPingsCommand extends InteractiveCommand {
         return channel;
     }
 
-    private static ChannelPingsData fetchPingsData(long channelId, JDA jda) {
-        final var rawPingRoles = BotMain.getModule(ThreadPingsModule.class).db().withExtension(ThreadPingsDAO.class,
+    ChannelPingsData fetchPingsData(long channelId, JDA jda) {
+        final var rawPingRoles = module.db().withExtension(ThreadPingsDAO.class,
                 threadPings -> threadPings.query(channelId));
         final FilteredRoles pingRoles = filterRoles(rawPingRoles, jda);
 
-        final var rawExemptRoles = BotMain.getModule(ThreadPingsModule.class).db().withExtension(ThreadPingsExemptionsDAO.class,
+        final var rawExemptRoles = module.db().withExtension(ThreadPingsExemptionsDAO.class,
                 threadPingsExemptions -> threadPingsExemptions.query(channelId));
         final FilteredRoles exemptRoles = filterRoles(rawExemptRoles, jda);
 

@@ -108,14 +108,14 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommand(new VerifyMCCommand(db().onDemand(McVerificationDAO.class)));
+        builder.addSlashCommand(new VerifyMCCommand(this));
     }
 
     @Override
     public void setup(JDA jda) {
-        discord = OAuthUtils.discord(config().getDiscordAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/discord"), OAuthScope.Discord.IDENTIFY);
+        discord = OAuthUtils.discord(config().getDiscordAuth()).fork(() -> bot().getModule(WebServerModule.class).makeLink("/minecraft/verify/discord"), OAuthScope.Discord.IDENTIFY);
         if (config().getMicrosoftAuth() != null) {
-            microsoft = OAuthUtils.microsoft(config().getMicrosoftAuth()).fork(() -> BotMain.getModule(WebServerModule.class).makeLink("/minecraft/verify/microsoft"), OAuthScope.Microsoft.XBOX_LIVE);
+            microsoft = OAuthUtils.microsoft(config().getMicrosoftAuth()).fork(() -> bot().getModule(WebServerModule.class).makeLink("/minecraft/verify/microsoft"), OAuthScope.Microsoft.XBOX_LIVE);
         }
 
         final McVerificationDAO dao = db().onDemand(McVerificationDAO.class);
@@ -146,8 +146,8 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                                         .setColor(ModLogEntry.Type.BAN.getColor())
                                         .setTimestamp(Instant.now());
 
-                                if (BotMain.getModule(BanAppealModule.class) != null) {
-                                    message.appendDescription("\nYou may appeal the ban at " + BotMain.getModule(WebServerModule.class)
+                                if (bot().getModule(BanAppealModule.class) != null) {
+                                    message.appendDescription("\nYou may appeal the ban at " + bot().getModule(WebServerModule.class)
                                             .makeLink("/ban-appeals/" + guild.getId()) + ".");
                                 }
 
