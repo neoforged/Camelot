@@ -1,6 +1,5 @@
 package net.neoforged.camelot.module.mcverification;
 
-import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
@@ -17,6 +16,8 @@ import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
@@ -75,12 +76,12 @@ import static j2html.TagCreator.text;
 import static j2html.TagCreator.title;
 import static j2html.TagCreator.ul;
 
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class MinecraftVerificationModule extends CamelotModule.WithDatabase<MinecraftVerification> {
     private OAuthClient microsoft, discord;
 
-    public MinecraftVerificationModule() {
-        super(MinecraftVerification.class);
+    public MinecraftVerificationModule(ModuleProvider.Context context) {
+        super(context, MinecraftVerification.class);
         accept(WebServerModule.SERVER, javalin -> {
             javalin.get("/minecraft/<serverId>/verify", this::onVerifyRoot);
             javalin.post("/minecraft/<serverId>/verify", this::onVerifyPost);

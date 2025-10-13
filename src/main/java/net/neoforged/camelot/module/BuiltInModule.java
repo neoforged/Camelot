@@ -1,56 +1,42 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.api.config.type.OptionRegistrar;
-import net.neoforged.camelot.api.config.type.StringOption;
+import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.util.Emojis;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 /**
  * A module that provides builtin objects and arguments.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltIn> {
     public static final ParameterType<ConfigCommandBuilder> CONFIGURATION_COMMANDS = ParameterType.get("configuration_commands", ConfigCommandBuilder.class);
     public static final ParameterType<MigrationCallbackBuilder> DB_MIGRATION_CALLBACKS = ParameterType.get("db_migration_callbacks", MigrationCallbackBuilder.class);
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public static final ParameterType<OptionRegistrar<Guild>> GUILD_CONFIG = ParameterType.get("guild_config", (Class)OptionRegistrar.class);
 
-    public ConfigOption<Guild, String> commandPrefix;
-
-    public BuiltInModule() {
-        super(ModuleConfiguration.BuiltIn.class);
-        accept(GUILD_CONFIG, reg -> {
-            commandPrefix = reg.option("command_prefix", StringOption::builder)
-                    .setDisplayName("Command prefix")
-                    .setDescription("The command prefix the bot will respond to in this server.", "If not set, the bot will not reply to message commands in this server.")
-                    .setDefaultValue("!")
-                    .setMaxLength(3) // Technically not required to be under a length but this is just a sanity check
-                    .register();
-        });
+    public BuiltInModule(ModuleProvider.Context context) {
+        super(context, ModuleConfiguration.BuiltIn.class);
     }
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
         var kids = new ArrayList<SlashCommand>();
-        BotMain.propagateParameter(CONFIGURATION_COMMANDS, new ConfigCommandBuilder() {
+        bot().propagateParameter(CONFIGURATION_COMMANDS, new ConfigCommandBuilder() {
             @Override
             public ConfigCommandBuilder accept(SlashCommand... child) {
                 kids.addAll(Arrays.asList(child));
@@ -80,6 +66,15 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
     @Override
     public void registerListeners(JDABuilder builder) {
         builder.addEventListeners(BotMain.BUTTON_MANAGER, Emojis.MANAGER, new DismissListener());
+    }
+
+    @Override
+    public void init() {
+        try {
+            Database.init(bot());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

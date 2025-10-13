@@ -1,7 +1,8 @@
 package net.neoforged.camelot.module.threadpings;
 
-import com.google.auto.service.AutoService;
 import net.dv8tion.jda.api.JDABuilder;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.ThreadPings;
 import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
@@ -15,10 +16,10 @@ import net.neoforged.camelot.module.threadpings.db.ThreadPingsDAO;
  * @see ThreadPingsListener
  * @see ThreadPingsDAO
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class ThreadPingsModule extends CamelotModule.WithDatabase<ThreadPings> {
-    public ThreadPingsModule() {
-        super(ThreadPings.class);
+    public ThreadPingsModule(ModuleProvider.Context context) {
+        super(context, ThreadPings.class);
         accept(BuiltInModule.CONFIGURATION_COMMANDS, configCommandBuilder -> configCommandBuilder
                 .accept(new ThreadPingsCommand.ConfigureChannel(), new ThreadPingsCommand.ConfigureGuild(), new ThreadPingsCommand.View()));
 

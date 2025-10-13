@@ -1,12 +1,13 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.EntityOption;
 import net.neoforged.camelot.config.module.Logging;
@@ -24,25 +25,25 @@ import java.util.Set;
 /**
  * The module controlling logging.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class LoggingModule extends CamelotModule.Base<Logging> {
     /** The channel in which moderation logs will be sent. */
     public static Logger MODERATION_LOGS = (guild, embeds) -> {};
 
     public final Map<Type, ConfigOption<Guild, Set<Long>>> channelOptions = new EnumMap<>(Type.class);
 
-    public LoggingModule() {
-        super(Logging.class);
-        accept(BuiltInModule.GUILD_CONFIG, registrar -> {
-            registrar.setGroupDisplayName("Logging");
+    public LoggingModule(ModuleProvider.Context context) {
+        super(context, Logging.class);
 
-            for (Type type : Type.values()) {
-                channelOptions.put(type, registrar.option("channel_" + type.name().toLowerCase(Locale.ROOT), EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
-                        .setDisplayName(type.displayName + " Logging Channels")
-                        .setDescription(type.emoji.getFormatted() + " The channels in which to log " + type.description)
-                        .register());
-            }
-        });
+        var registrar = context.guildConfigs();
+        registrar.setGroupDisplayName("Logging");
+
+        for (Type type : Type.values()) {
+            channelOptions.put(type, registrar.option("channel_" + type.name().toLowerCase(Locale.ROOT), EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
+                    .setDisplayName(type.displayName + " Logging Channels")
+                    .setDescription(type.emoji.getFormatted() + " The channels in which to log " + type.description)
+                    .register());
+        }
     }
 
     @Override

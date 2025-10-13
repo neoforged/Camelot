@@ -1,7 +1,8 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.Statistics;
 import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.module.api.CamelotModule;
@@ -10,10 +11,10 @@ import org.jdbi.v3.core.extension.ExtensionConsumer;
 /**
  * The module used to track statistics.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class StatsModule extends CamelotModule.Base<Statistics> {
-    public StatsModule() {
-        super(Statistics.class);
+    public StatsModule(ModuleProvider.Context context) {
+        super(context, Statistics.class);
     }
 
     @Override

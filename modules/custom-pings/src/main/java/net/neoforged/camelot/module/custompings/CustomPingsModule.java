@@ -1,15 +1,14 @@
 package net.neoforged.camelot.module.custompings;
 
-import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
-import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.CustomPings;
-import net.neoforged.camelot.db.impl.PostCallbackDecorator;
 import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.custompings.db.PingsCallbacks;
@@ -17,12 +16,11 @@ import net.neoforged.camelot.module.custompings.db.PingsDAO;
 
 import java.util.Objects;
 
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
-    public static volatile boolean isMigrating;
 
-    public CustomPingsModule() {
-        super(CustomPings.class);
+    public CustomPingsModule(ModuleProvider.Context context) {
+        super(context, CustomPings.class);
         accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
                 .add(BuiltInModule.DatabaseSource.PINGS, 4, stmt -> {
                     logger.info("Moving custom ping threads from pings.db to custom-pings.db");

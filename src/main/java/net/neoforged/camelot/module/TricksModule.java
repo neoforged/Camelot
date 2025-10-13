@@ -1,6 +1,5 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
@@ -14,6 +13,8 @@ import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.BooleanOption;
 import net.neoforged.camelot.api.config.type.EntityOption;
@@ -35,29 +36,28 @@ import java.util.Set;
 /**
  * The module for tricks.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class TricksModule extends CamelotModule.Base<Tricks> {
     public record CompilingScript(ScriptContext context, ScriptObject object) {}
     public static final ParameterType<CompilingScript> COMPILING_SCRIPT = ParameterType.get("compilingscript", CompilingScript.class);
 
-    private ConfigOption<Guild, Boolean> messageCommandTricks;
-    public ConfigOption<Guild, Set<Long>> trickMasterRoles;
+    private final ConfigOption<Guild, Boolean> messageCommandTricks;
+    public final ConfigOption<Guild, Set<Long>> trickMasterRoles;
 
-    public TricksModule() {
-        super(Tricks.class);
-        accept(BuiltInModule.GUILD_CONFIG, reg -> {
-            reg.setGroupDisplayName("Tricks");
-            messageCommandTricks = reg.option("message_command_tricks", BooleanOption::builder)
-                    .setDefaultValue(false)
-                    .setDisplayName("Tricks as message commands")
-                    .setDescription("Whether tricks can be invoked via message commands (with the prefix).", "If disabled, tricks can only be invoked via the /trick slash command or by promoting them to individual slash commands.")
-                    .register();
+    public TricksModule(ModuleProvider.Context context) {
+        super(context, Tricks.class);
+        var reg = context.guildConfigs();
+        reg.setGroupDisplayName("Tricks");
+        messageCommandTricks = reg.option("message_command_tricks", BooleanOption::builder)
+                .setDefaultValue(false)
+                .setDisplayName("Tricks as message commands")
+                .setDescription("Whether tricks can be invoked via message commands (with the prefix).", "If disabled, tricks can only be invoked via the /trick slash command or by promoting them to individual slash commands.")
+                .register();
 
-            trickMasterRoles = reg.option("trick_masters", EntityOption.builder(EntitySelectMenu.SelectTarget.ROLE))
-                    .setDisplayName("Trick Master Roles")
-                    .setDescription("Roles which have trick master permissions.", "Trick masters can bypass permission checks and modify any trick. Additionally, they can promote tricks to slash command tricks.")
-                    .register();
-        });
+        trickMasterRoles = reg.option("trick_masters", EntityOption.builder(EntitySelectMenu.SelectTarget.ROLE))
+                .setDisplayName("Trick Master Roles")
+                .setDescription("Roles which have trick master permissions.", "Trick masters can bypass permission checks and modify any trick. Additionally, they can promote tricks to slash command tricks.")
+                .register();
     }
 
     /**
@@ -108,6 +108,6 @@ public class TricksModule extends CamelotModule.Base<Tricks> {
 
     @Override
     public void setup(JDA jda) {
-        jda.addEventListener(new TrickListener(messageCommandTricks, BotMain.getModule(BuiltInModule.class).commandPrefix, this));
+        jda.addEventListener(new TrickListener(messageCommandTricks, bot().commandPrefix, this));
     }
 }

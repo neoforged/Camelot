@@ -1,12 +1,13 @@
 package net.neoforged.camelot.module.filepreview;
 
-import com.google.auto.service.AutoService;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.messages.MessageSnapshot;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.FilePreview;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.util.Emojis;
@@ -22,10 +23,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
-    public FilePreviewModule() {
-        super(FilePreview.class);
+    public FilePreviewModule(ModuleProvider.Context context) {
+        super(context, FilePreview.class);
     }
 
     private static final Emoji EMOJI = Emojis.MANAGER.getLazyEmoji("gist");

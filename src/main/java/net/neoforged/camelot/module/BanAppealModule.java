@@ -1,6 +1,5 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import com.google.common.primitives.Ints;
 import io.javalin.http.Context;
 import io.javalin.http.Cookie;
@@ -36,6 +35,8 @@ import net.dv8tion.jda.api.utils.Result;
 import net.dv8tion.jda.internal.entities.UserImpl;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.EntityOption;
 import net.neoforged.camelot.config.module.BanAppeals;
@@ -93,13 +94,13 @@ import static j2html.TagCreator.*;
  *     </li>
  * </ul>
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
-    private ConfigOption<Guild, Set<Long>> appealsChannel;
+    private final ConfigOption<Guild, Set<Long>> appealsChannel;
 
-    public BanAppealModule() {
-        super(BanAppeals.class);
+    public BanAppealModule(ModuleProvider.Context context) {
+        super(context, BanAppeals.class);
         accept(WebServerModule.SERVER, javalin -> {
             javalin.get("/ban-appeals/discord", this::verifyOauth);
             javalin.get("/ban-appeals/<serverId>", this::onAccess);
@@ -107,14 +108,13 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
             javalin.post("/ban-appeals/<serverId>", this::onSubmitAppeal);
         });
 
-        accept(BuiltInModule.GUILD_CONFIG, reg -> {
-            reg.setGroupDisplayName("Ban Appeals");
-            appealsChannel = reg.option("appeals_channel", EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
-                    .setMaxValues(1)
-                    .setDisplayName("Appeals channel")
-                    .setDescription("The channel ban appeals are sent to.", "If left unconfigured, ban appeals are disabled for this server.")
-                    .register();
-        });
+        var reg = context.guildConfigs();
+        reg.setGroupDisplayName("Ban Appeals");
+        appealsChannel = reg.option("appeals_channel", EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
+                .setMaxValues(1)
+                .setDisplayName("Appeals channel")
+                .setDescription("The channel ban appeals are sent to.", "If left unconfigured, ban appeals are disabled for this server.")
+                .register();
     }
 
     private OAuthClient client;

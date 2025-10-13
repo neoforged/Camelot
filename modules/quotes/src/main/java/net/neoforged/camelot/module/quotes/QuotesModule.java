@@ -1,6 +1,5 @@
 package net.neoforged.camelot.module.quotes;
 
-import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.MessageContextMenu;
 import com.jagrosh.jdautilities.command.MessageContextMenuEvent;
@@ -10,12 +9,14 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.Quotes;
 import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.TricksModule;
+import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.quotes.db.Quote;
 import net.neoforged.camelot.module.quotes.db.QuotesDAO;
-import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.script.ScriptObject;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +43,10 @@ import static net.neoforged.camelot.util.ImageUtils.drawUserAvatar;
 /**
  * The module that handles quotes.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
-    public QuotesModule() {
-        super(Quotes.class);
+    public QuotesModule(ModuleProvider.Context context) {
+        super(context, Quotes.class);
         accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
                 .add(BuiltInModule.DatabaseSource.MAIN, 16, stmt -> {
                     logger.info("Migrating quote authors from main.db to quotes.db");

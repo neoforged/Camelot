@@ -1,8 +1,9 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.BooleanOption;
 import net.neoforged.camelot.config.module.Counters;
@@ -12,19 +13,18 @@ import net.neoforged.camelot.module.api.CamelotModule;
 /**
  * The module for counters.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class CountersModule extends CamelotModule.Base<Counters> {
-    private ConfigOption<Guild, Boolean> enabled;
+    private final ConfigOption<Guild, Boolean> enabled;
 
-    public CountersModule() {
-        super(Counters.class);
-        accept(BuiltInModule.GUILD_CONFIG, reg ->
-                enabled = reg.setGroupDisplayName("Counters")
-                        .option("enabled", BooleanOption::builder)
-                        .setDisplayName("Enabled")
-                        .setDescription("Whether counters are enabled in this server.")
-                        .setDefaultValue(true)
-                        .register());
+    public CountersModule(ModuleProvider.Context context) {
+        super(context, Counters.class);
+        enabled = context.guildConfigs().setGroupDisplayName("Counters")
+                .option("enabled", BooleanOption::builder)
+                .setDisplayName("Enabled")
+                .setDescription("Whether counters are enabled in this server.")
+                .setDefaultValue(true)
+                .register();
     }
 
     @Override

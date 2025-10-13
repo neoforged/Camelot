@@ -11,4 +11,5 @@ dependencies {
     library(libs.j2html)
     library(libs.bundles.database)
     library(libs.authlib)
+    library(libs.guava)
 }

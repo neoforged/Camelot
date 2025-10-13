@@ -1,6 +1,5 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -9,6 +8,8 @@ import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.commands.moderation.BanCommand;
 import net.neoforged.camelot.commands.moderation.KickCommand;
 import net.neoforged.camelot.commands.moderation.ModLogsCommand;
@@ -28,10 +29,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * The module that provides moderation commands.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class ModerationModule extends CamelotModule.Base<Moderation> {
-    public ModerationModule() {
-        super(Moderation.class);
+    public ModerationModule(ModuleProvider.Context context) {
+        super(context, Moderation.class);
     }
 
     @Override

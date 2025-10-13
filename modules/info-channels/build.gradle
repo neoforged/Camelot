@@ -9,4 +9,5 @@ camelotModule {
 dependencies {
     library(libs.bundles.database)
     library(libs.bundles.jackson)
+    library(libs.guava)
 }

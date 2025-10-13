@@ -18,7 +18,7 @@ dependencies {
     "configOut"(compileOnly(sourceSets.config.output))
     "configOutSrc"(sourceSets.config.allSource)
 
-    compileOnly(annotationProcessor(libs.autoservice.get()))
+    compileOnly(annotationProcessor(project(':annotation-processor')))
 
     implementation(project(':'))
 }

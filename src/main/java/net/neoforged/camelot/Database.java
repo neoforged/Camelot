@@ -82,7 +82,7 @@ public class Database {
     /**
      * Initialises the databases.
      */
-    static void init() throws IOException {
+    public static void init(Bot bot) throws IOException {
         final Path dir = Path.of("data");
         Files.createDirectories(dir);
 
@@ -97,7 +97,7 @@ public class Database {
         }
 
         final ListMultimap<BuiltInModule.DatabaseSource, Callback> callbacks = MultimapBuilder.ListMultimapBuilder.enumKeys(BuiltInModule.DatabaseSource.class).arrayListValues().build();
-        BotMain.propagateParameter(BuiltInModule.DB_MIGRATION_CALLBACKS, new BuiltInModule.MigrationCallbackBuilder() {
+        bot.propagateParameter(BuiltInModule.DB_MIGRATION_CALLBACKS, new BuiltInModule.MigrationCallbackBuilder() {
             @Override
             public BuiltInModule.MigrationCallbackBuilder add(BuiltInModule.DatabaseSource source, int version, BuiltInModule.StatementConsumer consumer) {
                 callbacks.put(source, schemaMigrationCallback(version, connection -> {
@@ -135,7 +135,7 @@ public class Database {
         stats = createDatabaseConnection(dir.resolve("stats.db"), "stats");
     }
 
-    private static Jdbi createDatabaseConnection(Path dbPath, String flywayLocation) {
+    public static Jdbi createDatabaseConnection(Path dbPath, String flywayLocation) {
         return createDatabaseConnection(dbPath, "Camelot DB", fluentConfiguration -> fluentConfiguration
                 .locations("classpath:db/" + flywayLocation));
     }

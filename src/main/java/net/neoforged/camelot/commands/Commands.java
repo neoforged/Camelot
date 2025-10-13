@@ -4,17 +4,16 @@ import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import net.dv8tion.jda.api.entities.Guild;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.api.config.ConfigManager;
-import net.neoforged.camelot.api.config.type.OptionRegistrar;
-import net.neoforged.camelot.api.config.type.StringOption;
+import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.commands.information.HelpCommand;
 import net.neoforged.camelot.commands.information.McAgeCommand;
 import net.neoforged.camelot.commands.information.VersioningCommand;
 import net.neoforged.camelot.commands.utility.PingCommand;
 import net.neoforged.camelot.commands.utility.ShutdownCommand;
 import net.neoforged.camelot.config.CamelotConfig;
-import net.neoforged.camelot.module.BuiltInModule;
 
 /**
  * The place where all control flow for commands converges.
@@ -36,9 +35,7 @@ public class Commands {
      * Register and setup every valid command.
      * To remove a command from the bot, simply comment the line where it is added.
      */
-    public static CommandClient init(ConfigManager<Guild> manager) {
-        final var prefix = BotMain.getModule(BuiltInModule.class).commandPrefix;
-
+    public static CommandClient init(Bot bot, ConfigManager<Guild> manager, ConfigOption<Guild, String> prefix) {
         final var builder = new CommandClientBuilder()
                 .setOwnerId(String.valueOf(CamelotConfig.getInstance().getOwner()))
                 .setPrefixFunction(event -> prefix.get(event.getGuild()))
@@ -54,7 +51,7 @@ public class Commands {
                 // Information commands
                 .addSlashCommands(new McAgeCommand(), new VersioningCommand());
 
-        BotMain.forEachModule(module -> module.registerCommands(builder));
+        bot.forEachModule(module -> module.registerCommands(builder));
 
         commands = builder.build();
 

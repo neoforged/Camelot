@@ -116,7 +116,7 @@ dependencies {
     implementation libs.angusmail
     implementation libs.json
 
-    compileOnly(annotationProcessor(libs.autoservice.get()))
+    compileOnly(annotationProcessor(project(':annotation-processor')))
 
     compileOnlyApi(libs.annotations)
 

@@ -3,7 +3,9 @@ package net.neoforged.camelot.module.api;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.config.CamelotConfig;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import org.flywaydb.core.api.Location;
@@ -99,11 +101,14 @@ public interface CamelotModule<C extends ModuleConfiguration> {
      */
     abstract class Base<C extends ModuleConfiguration> implements CamelotModule<C> {
         protected final Logger logger;
+        private final Bot bot;
         private final Class<C> configType;
         private final Map<ParameterType<?>, Consumer<?>> parameters = new IdentityHashMap<>();
         private C config;
 
-        protected Base(Class<C> configType) {
+        protected Base(ModuleProvider.Context context, Class<C> configType) {
+            context.set(this);
+            this.bot = context.bot();
             this.configType = configType;
             logger = LoggerFactory.getLogger(getClass());
         }
@@ -131,6 +136,10 @@ public interface CamelotModule<C extends ModuleConfiguration> {
         public Class<C> configType() {
             return configType;
         }
+
+        protected Bot bot() {
+            return bot;
+        }
     }
 
     /**
@@ -144,12 +153,12 @@ public interface CamelotModule<C extends ModuleConfiguration> {
 
         private Jdbi db;
 
-        protected WithDatabase(Class<C> configType) {
-            this(configType, null, null);
+        protected WithDatabase(ModuleProvider.Context context, Class<C> configType) {
+            this(context, configType, null, null);
         }
 
-        protected WithDatabase(Class<C> configType, String dbId, Location migrationLocation) {
-            super(configType);
+        protected WithDatabase(ModuleProvider.Context context, Class<C> configType, String dbId, Location migrationLocation) {
+            super(context, configType);
             this.dbId = dbId == null ? id() : dbId;
             this.migrationLocation = migrationLocation == null ? new Location("classpath:" + getClass().getPackageName().replace(".", "/") + "/db/schema") : migrationLocation;
         }

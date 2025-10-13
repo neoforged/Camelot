@@ -1,9 +1,10 @@
 package net.neoforged.camelot.module.infochannels;
 
-import com.google.auto.service.AutoService;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.InfoChannels;
 import net.neoforged.camelot.db.schemas.GithubLocation;
 import net.neoforged.camelot.module.BuiltInModule;
@@ -19,10 +20,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Info channels module.
  */
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class InfoChannelsModule extends CamelotModule.WithDatabase<InfoChannels> {
-    public InfoChannelsModule() {
-        super(InfoChannels.class);
+    public InfoChannelsModule(ModuleProvider.Context context) {
+        super(context, InfoChannels.class);
 
         accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
                 .add(BuiltInModule.DatabaseSource.MAIN, 15, stmt -> {

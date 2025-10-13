@@ -1,11 +1,11 @@
 package net.neoforged.camelot.module;
 
-import com.google.auto.service.AutoService;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import io.javalin.http.staticfiles.Location;
 import net.dv8tion.jda.api.JDA;
-import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.server.WebServer;
@@ -14,14 +14,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.config.module.WebServer> {
     public static final ParameterType<Javalin> SERVER = ParameterType.get("server", Javalin.class);
 
     private WebServer webServer;
 
-    public WebServerModule() {
-        super(net.neoforged.camelot.config.module.WebServer.class);
+    public WebServerModule(ModuleProvider.Context context) {
+        super(context, net.neoforged.camelot.config.module.WebServer.class);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.co
             });
         }), config().getPort());
 
-        BotMain.forEachModule(module -> module.acceptParameter(SERVER, webServer.javalin));
+        bot().forEachModule(module -> module.acceptParameter(SERVER, webServer.javalin));
 
         this.webServer.run();
     }

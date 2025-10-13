@@ -33,6 +33,8 @@ dependencyResolutionManagement {
 
 rootProject.name = 'Camelot'
 
+include ':annotation-processor'
+
 include ':config'
 include ':config-api'
 

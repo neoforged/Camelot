@@ -2,7 +2,6 @@ package net.neoforged.camelot.module.reminders;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.auto.service.AutoService;
 import com.google.common.base.Suppliers;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.MessageContextMenu;
@@ -30,6 +29,8 @@ import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.ModuleProvider;
+import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.Reminders;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.listener.ReferencingListener;
@@ -54,13 +55,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-@AutoService(CamelotModule.class)
+@RegisterCamelotModule
 public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
     public static final Supplier<ScheduledExecutorService> EXECUTOR = Suppliers.memoize(() ->
             Executors.newScheduledThreadPool(1, Utils.daemonGroup("Reminders")));
 
-    public RemindersModule() {
-        super(Reminders.class);
+    public RemindersModule(ModuleProvider.Context context) {
+        super(context, Reminders.class);
 
         accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
                 .add(BuiltInModule.DatabaseSource.MAIN, 17, statement -> {
