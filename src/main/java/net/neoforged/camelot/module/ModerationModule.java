@@ -14,7 +14,10 @@ import net.neoforged.camelot.commands.moderation.UnbanCommand;
 import net.neoforged.camelot.commands.moderation.UnmuteCommand;
 import net.neoforged.camelot.commands.moderation.WarnCommand;
 import net.neoforged.camelot.config.module.Moderation;
+import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.services.ModerationRecorderService;
+import net.neoforged.camelot.services.ServiceRegistrar;
 
 /**
  * The module that provides moderation commands.
@@ -28,6 +31,11 @@ public class ModerationModule extends CamelotModule.Base<Moderation> {
     @Override
     public String id() {
         return "moderation";
+    }
+
+    @Override
+    public void registerServices(ServiceRegistrar registrar) {
+        registrar.register(ModerationRecorderService.class, new ModerationActionRecorder());
     }
 
     @Override

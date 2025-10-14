@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.GuildAuditLogEntryCreateEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.neoforged.camelot.Bot;
+import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.services.ModerationRecorderService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,10 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 /**
- * Listens to moderation events and notifies the registered {@link ModerationRecorderService ModerationRecorderServices}.
+ * An event listener that listens for the {@link GuildAuditLogEntryCreateEvent} event, automatically reporting
+ * any manual actions in the {@link ModLogsDAO mod log} to the {@link ModerationRecorderService ModerationRecorderServices}.<br>
+ * A "manual action" is an action with an unspecified reason or with a reason that starts with {@code "rec: "}.
+ * This is to avoid recording actions which have been already recorded by the bot (e.g. bans done through the command)
  */
 public final class ModerationListener implements EventListener {
     private final Collection<ModerationRecorderService> recorders;

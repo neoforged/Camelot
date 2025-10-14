@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.utils.TimeFormat;
+import net.neoforged.camelot.util.ModerationUtil;
 import net.neoforged.camelot.util.Utils;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -155,13 +156,13 @@ public final class ModLogEntry {
      */
     public enum Type {
         WARN("warned", false, 0x00BFFF),
-        KICK("kicked", false, 0xFFFFE0),
+        KICK("kicked", false, ModerationUtil.Kick.COLOUR),
 
-        MUTE("muted", true, 0xD3D3D3),
-        UNMUTE("un-muted", false, 0xFFFFFF),
+        MUTE("muted", true, ModerationUtil.Timeout.COLOUR),
+        UNMUTE("un-muted", false, ModerationUtil.RemoveTimeout.COLOUR),
 
-        BAN("banned", true, 0xFF0000),
-        UNBAN("un-banned", false, 0x32CD32),
+        BAN("banned", true, ModerationUtil.Ban.COLOUR),
+        UNBAN("un-banned", false, ModerationUtil.Unban.COLOUR),
 
         NOTE("noted", false, 0x00FFFF) {
             @Override

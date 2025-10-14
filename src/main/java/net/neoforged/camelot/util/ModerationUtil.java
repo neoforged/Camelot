@@ -206,11 +206,21 @@ public final class ModerationUtil {
         }
     }
 
-    public record Ban(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason, @Nullable Duration duration, @Nullable Duration deletionTimeframe) implements ModerationAction {}
-    public record Unban(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason) implements ModerationAction {}
-    public record Kick(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason) implements ModerationAction {}
-    public record Timeout(Guild guild, UserSnowflake member, UserSnowflake moderator, Duration duration, String reason) implements ModerationAction {}
-    public record RemoveTimeout(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason) implements ModerationAction {}
+    public record Ban(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason, @Nullable Duration duration, @Nullable Duration deletionTimeframe) implements ModerationAction {
+        public static final int COLOUR = 0xFF0000;
+    }
+    public record Unban(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason) implements ModerationAction {
+        public static final int COLOUR = 0x32CD32;
+    }
+    public record Kick(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason) implements ModerationAction {
+        public static final int COLOUR = 0xFFFFE0;
+    }
+    public record Timeout(Guild guild, UserSnowflake member, UserSnowflake moderator, Duration duration, String reason) implements ModerationAction {
+        public static final int COLOUR = 0xD3D3D3;
+    }
+    public record RemoveTimeout(Guild guild, UserSnowflake member, UserSnowflake moderator, String reason) implements ModerationAction {
+        public static final int COLOUR = 0xFFFFFF;
+    }
 
     private void record(Consumer<ModerationRecorderService> action) {
         recorders.forEach(action);

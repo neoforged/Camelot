@@ -21,13 +21,13 @@ import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.module.BanAppealModule;
-import net.neoforged.camelot.module.LoggingModule;
 import net.neoforged.camelot.module.WebServerModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.mcverification.protocol.Crypt;
 import net.neoforged.camelot.module.mcverification.protocol.MinecraftConnection;
 import net.neoforged.camelot.module.mcverification.protocol.MinecraftServerVerificationHandler;
 import net.neoforged.camelot.server.WebServer;
+import net.neoforged.camelot.services.ModerationRecorderService;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.oauth.OAuthClient;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.awt.Color;
 import java.net.Proxy;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -312,14 +311,8 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                                 .setColor(ModLogEntry.Type.UNMUTE.getColor())
                                 .setTimestamp(Instant.now())
                                 .build())))
-                        .onSuccess(_ -> LoggingModule.MODERATION_LOGS.log(guild, new EmbedBuilder()
-                                .setTitle("Verify Minecraft")
-                                .setColor(Color.GREEN)
-                                .setDescription("<@" + userId + "> has verified that they own a Minecraft Account")
-                                .setTimestamp(Instant.now())
-                                .addField("Profile", "[" + name + "](https://mcuuid.net/?q=" + uuid + ")", true)
-                                .setFooter("User ID: " + userId)
-                                .build()))
+                        .onSuccess(_ -> bot().forEachService(ModerationRecorderService.class, service ->
+                                service.onMinecraftOwnershipVerified(guild, userId, name, uuid)))
                         .queue());
     }
 

@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Guild;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.UUID;
 
 /**
  * A service used to listen to different moderation actions being taken.
@@ -86,5 +87,16 @@ public interface ModerationRecorderService extends CamelotService {
      * @param warn      the warning
      */
     default void onWarningAdded(Guild guild, long member, long moderator, String warn) {
+    }
+
+    /**
+     * Called when the {@code member} has completed Minecraft ownership verification.
+     *
+     * @param guild         the guild for which the member has completed verification
+     * @param member        the member that has completed verification
+     * @param minecraftName the username of the Minecraft account they've linked
+     * @param minecraftUuid the uuid of the Minecraft account they've linked
+     */
+    default void onMinecraftOwnershipVerified(Guild guild, long member, String minecraftName, UUID minecraftUuid) {
     }
 }

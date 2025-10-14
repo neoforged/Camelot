@@ -2,13 +2,13 @@ package net.neoforged.camelot.log;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.api.hooks.EventListener;
 import net.neoforged.camelot.log.message.MessageCache;
 import net.neoforged.camelot.log.message.MessageData;
 import net.neoforged.camelot.module.LoggingModule;
@@ -19,15 +19,15 @@ import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 // TODO  - split messages that are too long
-public class MessageLogging extends LoggingHandler {
+public class MessageLogging extends ChannelLogging implements EventListener {
 
     public static final java.awt.Color GRAY_CHATEAOU = new java.awt.Color(0x979C9F);
     public static final java.awt.Color VIVID_VIOLET = new java.awt.Color(0x71368A);
 
     private final MessageCache cache;
 
-    public MessageLogging(JDA jda) {
-        super(jda, LoggingModule.Type.MESSAGES);
+    public MessageLogging(LoggingModule loggingModule) {
+        super(loggingModule, LoggingModule.Type.MESSAGES);
         this.cache = new MessageCache(
                 Caffeine.newBuilder()
                         .maximumSize(250_000)
@@ -40,7 +40,7 @@ public class MessageLogging extends LoggingHandler {
 
     public void onMessageDelete(final MessageDeleteEvent event, final MessageData data) {
         if (!event.isFromGuild() || data.content().isBlank()) return;
-        if (logging.getChannels(event.getGuild()).contains(event.getChannel().getIdLong())) return; // Don't log in event channels
+        if (getChannels(event.getGuild()).contains(event.getChannel().getIdLong())) return; // Don't log in event channels
 
         final var msgSplit = data.content().split(" ");
         if (msgSplit.length == 1) {
@@ -68,7 +68,7 @@ public class MessageLogging extends LoggingHandler {
         final var newMessage = event.getMessage();
         if (!event.isFromGuild() || (newMessage.getContentRaw().isBlank() && newMessage.getAttachments().isEmpty()))
             return;
-        if (logging.getChannels(event.getGuild()).contains(event.getChannel().getIdLong())) return; // Don't log in event channels
+        if (getChannels(event.getGuild()).contains(event.getChannel().getIdLong())) return; // Don't log in event channels
 
         if (newMessage.getContentRaw().equals(data.content())) {
             return;

@@ -240,6 +240,17 @@ public class Bot {
         return (Collection<S>) services.getOrDefault(serviceType, List.of());
     }
 
+    /**
+     * Run the given {@code consumer} over all registered services of the given {@code serviceType}
+     *
+     * @param serviceType the type of the services to query
+     * @param consumer    the consumer to run on the services
+     * @param <S>         the type of the services
+     */
+    public <S extends CamelotService> void forEachService(Class<S> serviceType, Consumer<? super S> consumer) {
+        getServices(serviceType).forEach(consumer);
+    }
+
     private void loadConfig(Path config) {
         if (!Files.isRegularFile(config)) {
             LOGGER.warn("No camelot configuration found at {}", config.toAbsolutePath());

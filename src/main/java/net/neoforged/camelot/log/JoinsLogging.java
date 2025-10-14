@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
+import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.neoforged.camelot.module.LoggingModule;
 import org.jetbrains.annotations.NotNull;
@@ -20,9 +21,9 @@ import java.util.stream.Collectors;
 /**
  * The logging handler that logs join and leave events.
  */
-public class JoinsLogging extends LoggingHandler {
-    public JoinsLogging(JDA jda) {
-        super(jda, LoggingModule.Type.JOINS);
+public class JoinsLogging extends ChannelLogging implements EventListener {
+    public JoinsLogging(LoggingModule module) {
+        super(module, LoggingModule.Type.JOINS);
     }
 
     @Override

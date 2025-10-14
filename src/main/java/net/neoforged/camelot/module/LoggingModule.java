@@ -1,7 +1,6 @@
 package net.neoforged.camelot.module;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -14,7 +13,7 @@ import net.neoforged.camelot.config.module.Logging;
 import net.neoforged.camelot.log.ChannelLogging;
 import net.neoforged.camelot.log.JoinsLogging;
 import net.neoforged.camelot.log.MessageLogging;
-import net.neoforged.camelot.log.ModerationActionRecorder;
+import net.neoforged.camelot.log.ModerationActionLogging;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.services.ModerationRecorderService;
 import net.neoforged.camelot.services.ServiceRegistrar;
@@ -29,9 +28,6 @@ import java.util.Set;
  */
 @RegisterCamelotModule
 public class LoggingModule extends CamelotModule.Base<Logging> {
-    /** The channel in which moderation logs will be sent. */
-    public static Logger MODERATION_LOGS = (guild, embeds) -> {};
-
     public final Map<Type, ConfigOption<Guild, Set<Long>>> channelOptions = new EnumMap<>(Type.class);
 
     public LoggingModule(ModuleProvider.Context context) {
@@ -50,13 +46,12 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
 
     @Override
     public void setup(JDA jda) {
-        MODERATION_LOGS = new ChannelLogging(jda, Type.MODERATION)::log;
-        jda.addEventListener(new JoinsLogging(jda), new MessageLogging(jda));
+        jda.addEventListener(new JoinsLogging(this), new MessageLogging(this));
     }
 
     @Override
     public void registerServices(ServiceRegistrar registrar) {
-        registrar.register(ModerationRecorderService.class, new ModerationActionRecorder());
+        registrar.register(ModerationRecorderService.class, new ModerationActionLogging(this));
     }
 
     @Override
