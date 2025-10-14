@@ -33,7 +33,6 @@ import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.Reminders;
 import net.neoforged.camelot.listener.DismissListener;
-import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.reminders.db.Reminder;
@@ -229,7 +228,7 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
 
     private RestAction<Message> sendMessage(User user, Reminder reminder, MessageChannel channel) {
         final String[] textSplit = reminder.reminder().split(" ", 2);
-        final var msgOpt = ReferencingListener.decodeMessageLink(textSplit[0]);
+        final var msgOpt = Utils.decodeMessageLink(textSplit[0]);
         if (msgOpt.isPresent()) {
             final var msgInfo = msgOpt.get();
             if (msgInfo.channelId() == reminder.channel()) {

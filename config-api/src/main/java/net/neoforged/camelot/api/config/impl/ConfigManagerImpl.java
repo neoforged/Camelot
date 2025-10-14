@@ -99,7 +99,7 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                             Button.secondary(buttonId(ev ->
                                     ev.editMessage(createEditMessage(target, path.isBlank() ? groupName : path + "." + groupName, page)).queue()), "Open"),
                             TextDisplay.of(
-                                    "**\\> " + Objects.requireNonNullElse(gr.name, groupName) + "**\n" +
+                                    "**\\⇾ " + Objects.requireNonNullElse(gr.name, groupName) + "**\n" +
                                             "-# " + gr.description
                             )
                     ));

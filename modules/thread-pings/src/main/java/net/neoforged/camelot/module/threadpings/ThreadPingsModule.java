@@ -21,7 +21,7 @@ public class ThreadPingsModule extends CamelotModule.WithDatabase<ThreadPings> {
     public ThreadPingsModule(ModuleProvider.Context context) {
         super(context, ThreadPings.class);
         accept(BuiltInModule.CONFIGURATION_COMMANDS, configCommandBuilder -> configCommandBuilder
-                .accept(new ThreadPingsCommand.ConfigureChannel(this), new ThreadPingsCommand.ConfigureGuild(this), new ThreadPingsCommand.View()));
+                .accept(new ThreadPingsCommand.ConfigureChannel(this), new ThreadPingsCommand.ConfigureGuild(this), new ThreadPingsCommand.View(this)));
 
         accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
                 .add(BuiltInModule.DatabaseSource.PINGS, 3, stmt -> {

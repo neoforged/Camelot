@@ -1,7 +1,11 @@
 package net.neoforged.camelot.util;
 
+import com.jagrosh.jdautilities.commons.utils.SafeIdUtil;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -9,11 +13,13 @@ import net.neoforged.camelot.BotMain;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 
 /**
  * General utility methods.
@@ -135,5 +141,33 @@ public class Utils {
         return user.openPrivateChannel()
                 .flatMap(ch -> action.apply(ch).map(_ -> (Void) null))
                 .onErrorMap(ErrorResponse.CANNOT_SEND_TO_USER::test, _ -> null);
+    }
+
+    /**
+     * Attempt to decode a reference to a message from the given jump {@code link}.
+     *
+     * @see Message#JUMP_URL
+     */
+    public static Optional<MessageLinkInformation> decodeMessageLink(final String link) {
+        final Matcher matcher = Message.JUMP_URL_PATTERN.matcher(link);
+        if (!matcher.find()) return Optional.empty();
+
+        try {
+            final long guildId = SafeIdUtil.safeConvert(matcher.group("guild"));
+            final long channelId = SafeIdUtil.safeConvert(matcher.group("channel"));
+            final long messageId = SafeIdUtil.safeConvert(matcher.group("message"));
+
+            return Optional.of(new MessageLinkInformation(guildId, channelId, messageId));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
+    public record MessageLinkInformation(long guildId, long channelId, long messageId) {
+        public Optional<RestAction<Message>> retrieve(JDA bot) {
+            return Optional.ofNullable(bot.getGuildById(guildId))
+                    .flatMap(guild -> Optional.ofNullable(guild.getChannelById(GuildMessageChannel.class, channelId)))
+                    .map(channel -> channel.retrieveMessageById(messageId));
+        }
     }
 }

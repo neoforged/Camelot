@@ -22,7 +22,6 @@ import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
-import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.BanAppealModule;
 import net.neoforged.camelot.module.LoggingModule;
@@ -309,7 +308,7 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
     }
 
     private void finishVerification(Guild guild, long userId, String targetMessage, String name, UUID uuid) {
-        ReferencingListener.decodeMessageLink(targetMessage)
+        Utils.decodeMessageLink(targetMessage)
                 .flatMap(msg -> msg.retrieve(BotMain.get()))
                 .ifPresent(m -> m.flatMap(msg -> msg.reply("Ownership verified as [" + name + "](<https://mcuuid.net/?q=" + uuid + ">)!").setAllowedMentions(List.of()))
                         .flatMap(_ -> guild.removeTimeout(UserSnowflake.fromId(userId)).reason("Minecraft ownership verified"))

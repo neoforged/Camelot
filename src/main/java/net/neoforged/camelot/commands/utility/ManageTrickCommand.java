@@ -32,11 +32,11 @@ import net.neoforged.camelot.db.schemas.Trick;
 import net.neoforged.camelot.db.transactionals.SlashTricksDAO;
 import net.neoforged.camelot.db.transactionals.StatsDAO;
 import net.neoforged.camelot.db.transactionals.TricksDAO;
-import net.neoforged.camelot.listener.ReferencingListener;
 import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.script.CannotRetrieveInformationException;
 import net.neoforged.camelot.script.ScriptUtils;
 import net.neoforged.camelot.script.ScriptWriter;
+import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,7 +183,7 @@ public class ManageTrickCommand extends SlashCommand {
                 }
             }
 
-            final var msgOptional = ReferencingListener.decodeMessageLink(event.optString("message"))
+            final var msgOptional = Utils.decodeMessageLink(event.optString("message"))
                     .flatMap(link -> link.retrieve(event.getJDA()));
             if (msgOptional.isEmpty()) {
                 event.reply("Invalid message link!").setEphemeral(true).queue();

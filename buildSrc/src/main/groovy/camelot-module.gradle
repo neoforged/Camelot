@@ -86,7 +86,7 @@ tasks.register('createDBFolder') {
 private static void writeOrMove(File file, File source, String txt) {
     file.delete()
     file.parentFile.mkdirs()
-    if (source?.exists()) {
+    if (source !== null && source.exists()) {
         file << source.text
         source.delete()
     } else {
