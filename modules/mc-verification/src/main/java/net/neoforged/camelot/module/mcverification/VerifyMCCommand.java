@@ -8,14 +8,12 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.InteractiveCommand;
-import net.neoforged.camelot.db.schemas.ModLogEntry;
-import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.WebServerModule;
 import net.neoforged.camelot.util.DateUtils;
 
@@ -38,7 +36,7 @@ public class VerifyMCCommand extends InteractiveCommand {
 
         this.name = "verify-mc";
         this.help = "Request an user to verify Minecraft ownership";
-        this.guildOnly = true;
+        this.contexts = new InteractionContextType[] { InteractionContextType.GUILD };
         this.userPermissions = new Permission[] {
                 Permission.MODERATE_MEMBERS
         };
@@ -85,12 +83,13 @@ public class VerifyMCCommand extends InteractiveCommand {
                 .onSuccess(msg -> db.insert(
                         event.getGuild().getIdLong(), target.getIdLong(), msg.getJumpUrl(), Timestamp.from(Instant.now().plus(verificationDeadline))
                 ))
-                .flatMap(_ -> event.getGuild().timeoutFor(target, verificationDeadline)
-                        .reason("rec: MC verification pending"))
-                .onSuccess(_ -> ModerationActionRecorder.recordAndLog(
-                        ModLogEntry.mute(target.getIdLong(), event.getGuild().getIdLong(), event.getMember().getIdLong(),
-                                verificationDeadline, "MC verification pending"), event.getJDA()
-                ))
+                .flatMap(_ -> module.bot().moderation()
+                        .timeout(
+                                target,
+                                event.getMember(),
+                                verificationDeadline,
+                                "Pending Minecraft ownership verification"
+                        ))
                 .queue();
     }
 
@@ -98,9 +97,11 @@ public class VerifyMCCommand extends InteractiveCommand {
     protected void onButton(ButtonInteractionEvent event, String[] arguments) {
         final long userId = Long.parseLong(arguments[1]);
         if (arguments[0].equals("cancel")) {
+            assert event.getGuild() != null && event.getMember() != null;
+
             // Allow either the original user who ran the command or someone with Moderate Members to cancel
-            final User originalRunner = event.getMessage().getInteraction() != null
-                    ? event.getMessage().getInteraction().getUser()
+            final User originalRunner = event.getMessage().getInteractionMetadata() != null
+                    ? event.getMessage().getInteractionMetadata().getUser()
                     : null;
             if (!event.getUser().equals(originalRunner) && !event.getMember().hasPermission(Permission.MODERATE_MEMBERS)) {
                 event.reply("You cannot use this button!").setEphemeral(true).queue();
@@ -109,13 +110,14 @@ public class VerifyMCCommand extends InteractiveCommand {
 
             event.deferEdit()
                     .flatMap(_ -> event.getMessage().editMessage("Request canceled.").setComponents(List.of()))
-                    .flatMap(_ -> event.getGuild().removeTimeout(UserSnowflake.fromId(userId))
-                            .reason("rec: MC Verification canceled"))
+                    .flatMap(_ -> module.bot().moderation()
+                            .removeTimeout(
+                                    event.getGuild(),
+                                    UserSnowflake.fromId(userId),
+                                    event.getUser(),
+                                    "Minecraft ownership verification canceled"
+                            ))
                     .onSuccess(_ -> db.delete(event.getGuild().getIdLong(), userId))
-                    .onSuccess(_ -> ModerationActionRecorder.recordAndLog(
-                            ModLogEntry.unmute(userId, event.getGuild().getIdLong(), event.getUser().getIdLong(), "MC verification canceled"),
-                            event.getJDA()
-                    ))
                     .queue();
         }
     }

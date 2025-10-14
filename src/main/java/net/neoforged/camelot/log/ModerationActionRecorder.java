@@ -2,27 +2,19 @@ package net.neoforged.camelot.log;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.audit.ActionType;
-import net.dv8tion.jda.api.audit.AuditLogChange;
-import net.dv8tion.jda.api.audit.AuditLogEntry;
-import net.dv8tion.jda.api.audit.AuditLogKey;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.GuildAuditLogEntryCreateEvent;
-import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
-import net.dv8tion.jda.api.hooks.EventListener;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
+import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.module.LoggingModule;
+import net.neoforged.camelot.services.ModerationRecorderService;
 import net.neoforged.camelot.util.Utils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.db.schemas.ModLogEntry;
-import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 
 import java.time.Duration;
-import java.time.OffsetDateTime;
 
 /**
  * An event listener that listens for the {@link GuildAuditLogEntryCreateEvent} event, automatically recording
@@ -30,63 +22,43 @@ import java.time.OffsetDateTime;
  * A "manual action" is an action with an unspecified reason or with a reason that starts with {@code "rec: "}.
  * This is to avoid recording actions which have been already recorded by the bot (e.g. bans done through the command)
  */
-public class ModerationActionRecorder implements EventListener {
+public class ModerationActionRecorder implements ModerationRecorderService {
     @Override
-    public void onEvent(@NotNull GenericEvent gevent) {
-        if (gevent instanceof GuildUnbanEvent event) {
-            Database.main().useExtension(PendingUnbansDAO.class, db -> db.delete(event.getUser().getIdLong(), event.getGuild().getIdLong()));
-        }
-
-        if (!(gevent instanceof GuildAuditLogEntryCreateEvent event)) return;
-        final AuditLogEntry entry = event.getEntry();
-        final ActionType type = entry.getType();
-
-        if (entry.getReason() != null && entry.getReason().startsWith("rec: "))
-            return; // If the reason starts with `rec:` it means that the bot moderated someone after a moderator used a command
-
-        final ModLogEntry logEntry = switch (type) {
-            case BAN -> ModLogEntry.ban(
-                    entry.getTargetIdLong(), entry.getGuild().getIdLong(),
-                    entry.getUserIdLong(), null, entry.getReason()
-            );
-            case KICK -> ModLogEntry.kick(
-                    entry.getTargetIdLong(), entry.getGuild().getIdLong(),
-                    entry.getUserIdLong(), entry.getReason()
-            );
-            case UNBAN -> ModLogEntry.unban(
-                    entry.getTargetIdLong(), entry.getGuild().getIdLong(),
-                    entry.getUserIdLong(), entry.getReason()
-            );
-            case MEMBER_UPDATE -> {
-                final @Nullable AuditLogChange timeoutChange = entry.getChangeByKey(AuditLogKey.MEMBER_TIME_OUT);
-                if (timeoutChange != null) {
-                    final OffsetDateTime oldTimeoutEnd = parseDateTime(timeoutChange.getOldValue());
-                    final OffsetDateTime newTimeoutEnd = parseDateTime(timeoutChange.getNewValue());
-
-                    if ((oldTimeoutEnd == null || oldTimeoutEnd.isBefore(OffsetDateTime.now())) && newTimeoutEnd != null) {
-                        // Somebody was timed out
-                        yield ModLogEntry.mute(
-                                entry.getTargetIdLong(), entry.getGuild().getIdLong(),
-                                entry.getUserIdLong(), Duration.ofSeconds(newTimeoutEnd.toEpochSecond()).minusSeconds(entry.getTimeCreated().toEpochSecond()), entry.getReason()
-                        );
-                    } else if (oldTimeoutEnd != null && newTimeoutEnd == null) {
-                        // Somebody's timeout was removed
-                        yield ModLogEntry.unmute(
-                                entry.getTargetIdLong(), entry.getGuild().getIdLong(),
-                                entry.getUserIdLong(), entry.getReason()
-                        );
-                    }
-                }
-                yield null;
-            }
-            default -> null;
-        };
-        if (logEntry != null) {
-            recordAndLog(logEntry, event.getJDA());
-        }
+    public void onBan(Guild guild, long member, long moderator, @Nullable Duration duration, @Nullable String reason) {
+        recordAndLog(ModLogEntry.ban(member, guild.getIdLong(), moderator, duration, reason), guild.getJDA());
     }
 
-    public static void recordAndLog(ModLogEntry entry, JDA jda) {
+    @Override
+    public void onUnban(Guild guild, long member, long moderator, @Nullable String reason) {
+        recordAndLog(ModLogEntry.unban(member, guild.getIdLong(), moderator, reason), guild.getJDA());
+    }
+
+    @Override
+    public void onKick(Guild guild, long member, long moderator, @Nullable String reason) {
+        recordAndLog(ModLogEntry.kick(member, guild.getIdLong(), moderator, reason), guild.getJDA());
+    }
+
+    @Override
+    public void onTimeout(Guild guild, long member, long moderator, Duration duration, @Nullable String reason) {
+        recordAndLog(ModLogEntry.mute(member, guild.getIdLong(), moderator, duration, reason), guild.getJDA());
+    }
+
+    @Override
+    public void onTimeoutRemoved(Guild guild, long member, long moderator, @Nullable String reason) {
+        recordAndLog(ModLogEntry.unmute(member, guild.getIdLong(), moderator, reason), guild.getJDA());
+    }
+
+    @Override
+    public void onNoteAdded(Guild guild, long member, long moderator, String note) {
+        recordAndLog(ModLogEntry.note(member, guild.getIdLong(), moderator, note), guild.getJDA());
+    }
+
+    @Override
+    public void onWarningAdded(Guild guild, long member, long moderator, String warn) {
+        recordAndLog(ModLogEntry.warn(member, guild.getIdLong(), moderator, warn), guild.getJDA());
+    }
+
+    private void recordAndLog(ModLogEntry entry, JDA jda) {
         entry.setId(Database.main().withExtension(ModLogsDAO.class, db -> db.insert(entry)));
         log(entry, jda);
     }
@@ -97,7 +69,7 @@ public class ModerationActionRecorder implements EventListener {
      * @param entry the entry to log
      * @param jda   the JDA instance to be used for querying users
      */
-    public static void log(ModLogEntry entry, JDA jda) {
+    private void log(ModLogEntry entry, JDA jda) {
         jda.retrieveUserById(entry.user())
                 .queue(user -> log(entry, user));
     }
@@ -122,10 +94,5 @@ public class ModerationActionRecorder implements EventListener {
                     BotMain.LOGGER.error("Could not log moderation log entry {}: ", entry, ex);
                     return null;
                 });
-    }
-
-    private static @Nullable OffsetDateTime parseDateTime(@Nullable String dateTimeString) {
-        if (dateTimeString == null) return null;
-        return OffsetDateTime.parse(dateTimeString);
     }
 }

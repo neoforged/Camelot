@@ -8,6 +8,7 @@ import net.neoforged.camelot.Database;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.config.CamelotConfig;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
+import net.neoforged.camelot.services.ServiceRegistrar;
 import org.flywaydb.core.api.Location;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
@@ -67,6 +68,15 @@ public interface CamelotModule<C extends ModuleConfiguration> {
      * @param object the sent object
      */
     default <T> void acceptParameter(ParameterType<T> type, T object) {
+
+    }
+
+    /**
+     * Register services used to communicate with other modules in a generic way.
+     *
+     * @param registrar the registrar to register services to
+     */
+    default void registerServices(ServiceRegistrar registrar) {
 
     }
 

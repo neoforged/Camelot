@@ -4,22 +4,21 @@ import com.google.common.base.Preconditions;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.requests.RestAction;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
-import org.jetbrains.annotations.Nullable;
+import net.neoforged.camelot.util.ModerationUtil;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The command used to unban a user.
  */
-public class UnbanCommand extends ModerationCommand<Void> {
+public class UnbanCommand extends ModerationCommand {
 
-    public UnbanCommand() {
+    public UnbanCommand(Bot bot) {
+        super(bot, ModLogEntry.Type.UNBAN);
         this.name = "unban";
         this.help = "Unbans an user";
         this.options = List.of(
@@ -31,34 +30,22 @@ public class UnbanCommand extends ModerationCommand<Void> {
         };
     }
 
-    @Nullable
     @Override
-    @SuppressWarnings("DataFlowIssue")
-    protected ModerationAction<Void> createEntry(SlashCommandEvent event) {
+    protected ModerationUtil.ModerationAction prepareAction(SlashCommandEvent event) {
         final User target = event.optUser("user");
         Preconditions.checkArgument(target != null, "Unknown user!");
-        return new ModerationAction<>(
-                ModLogEntry.unban(target.getIdLong(), event.getGuild().getIdLong(), event.getUser().getIdLong(), event.optString("reason")),
-                null
-        );
-    }
-
-    @Override
-    protected CompletableFuture<Boolean> canExecute(SlashCommandEvent event, ModerationAction<Void> action) {
-        return event.getGuild().retrieveBan(UserSnowflake.fromId(action.entry().user()))
+        final boolean isBanned = event.getGuild().retrieveBan(target)
                 .submit()
                 .thenApply(_ -> true)
-                .exceptionallyCompose(_ -> event.getHook().editOriginal("User is not banned.")
-                        .submit().thenApply(_ -> false));
-    }
-
-    @Override
-    @SuppressWarnings("DataFlowIssue")
-    protected RestAction<?> handle(User user, ModerationAction<Void> action) {
-        final ModLogEntry entry = action.entry();
-        return user.getJDA().getGuildById(entry.guild())
-                .unban(UserSnowflake.fromId(entry.user()))
-                .reason("rec: " + entry.reasonOrDefault());
+                .exceptionally(_ -> false)
+                .join();
+        if (!isBanned) {
+            throw new IllegalArgumentException("User is not banned!");
+        }
+        return new ModerationUtil.Unban(
+                event.getGuild(), target, event.getUser(),
+                event.optString("reason", "*Reason not specified*")
+        );
     }
 
 }

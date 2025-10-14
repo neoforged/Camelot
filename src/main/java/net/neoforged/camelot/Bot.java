@@ -17,8 +17,14 @@ import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.config.CamelotConfig;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
 import net.neoforged.camelot.configuration.ConfigMigrator;
+import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
+import net.neoforged.camelot.listener.ModerationListener;
+import net.neoforged.camelot.listener.PendingUnbansHandler;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
+import net.neoforged.camelot.services.CamelotService;
+import net.neoforged.camelot.services.ServiceRegistrar;
+import net.neoforged.camelot.util.ModerationUtil;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.slf4j.Logger;
@@ -27,12 +33,15 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,6 +58,10 @@ public class Bot {
     private final JDA jda;
 
     public final ConfigOption<Guild, String> commandPrefix;
+
+    private final Map<Class<? extends CamelotService>, List<CamelotService>> services;
+
+    private final ModerationUtil moderation;
 
     public Bot(Consumer<Bot> immediate, Path configPath, ConfigStorage<Guild> configStorage, List<ModuleProvider> moduleProviders) {
         immediate.accept(this);
@@ -131,6 +144,24 @@ public class Bot {
 
         forEachModule(CamelotModule::init);
 
+        Map<Class<? extends CamelotService>, List<CamelotService>> services = new IdentityHashMap<>();
+        ServiceRegistrar registrar = new ServiceRegistrar() {
+            @Override
+            public <T extends CamelotService> void register(Class<T> type, T service) {
+                services.computeIfAbsent(type, k -> new ArrayList<>()).add(service);
+            }
+        };
+        forEachModule(m -> m.registerServices(registrar));
+        this.services = Collections.unmodifiableMap(services.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> List.copyOf(e.getValue()),
+                        (_, b) -> b,
+                        IdentityHashMap::new
+                )));
+
+        this.moderation = new ModerationUtil(this, Database.main().onDemand(PendingUnbansDAO.class));
+
         final JDABuilder botBuilder = JDABuilder
                 .create(CamelotConfig.getInstance().getToken(), BotMain.INTENTS)
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS, CacheFlag.SCHEDULED_EVENTS)
@@ -145,8 +176,13 @@ public class Bot {
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)
                 .toArray()); // A command implementing EventListener shall be treated as a listener
+        botBuilder.addEventListeners(new ModerationListener(this));
 
         jda = botBuilder.build();
+
+        var pendingUnbans = new PendingUnbansHandler(jda, Database.main().onDemand(PendingUnbansDAO.class));
+        jda.addEventListener(pendingUnbans);
+        BotMain.EXECUTOR.scheduleAtFixedRate(pendingUnbans, 1, 1, TimeUnit.MINUTES);
 
         forEachModule(module -> module.setup(jda));
     }
@@ -183,6 +219,25 @@ public class Bot {
      */
     public JDA jda() {
         return jda;
+    }
+
+    /**
+     * {@return a utility class used to take moderation actions, while taking into account moderation action listener for logging purposes}
+     * Modules should use this utility to moderate users, instead of doing it normally.
+     */
+    public ModerationUtil moderation() {
+        return moderation;
+    }
+
+    /**
+     * {@return all registered services of the given {@code serviceType}}
+     *
+     * @param serviceType the type of the services to query
+     * @param <S>         the type of the services
+     */
+    @SuppressWarnings("unchecked")
+    public <S extends CamelotService> Collection<S> getServices(Class<S> serviceType) {
+        return (Collection<S>) services.getOrDefault(serviceType, List.of());
     }
 
     private void loadConfig(Path config) {

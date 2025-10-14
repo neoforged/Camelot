@@ -4,14 +4,13 @@ import com.google.common.base.Preconditions;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.requests.RestAction;
-import net.neoforged.camelot.util.Emojis;
-import org.jetbrains.annotations.Nullable;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.util.Emojis;
+import net.neoforged.camelot.util.ModerationUtil;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -20,10 +19,11 @@ import java.util.List;
 /**
  * The command used to mute a user.
  */
-public class MuteCommand extends ModerationCommand<Void> {
+public class MuteCommand extends ModerationCommand {
     private static final Duration MAX_DURATION = Duration.ofDays(28);
 
-    public MuteCommand() {
+    public MuteCommand(Bot bot) {
+        super(bot, ModLogEntry.Type.MUTE);
         this.name = "mute";
         this.help = "Mutes an user";
         this.options = List.of(
@@ -36,29 +36,17 @@ public class MuteCommand extends ModerationCommand<Void> {
         };
     }
 
-    @Nullable
     @Override
-    @SuppressWarnings("DataFlowIssue")
-    protected ModerationAction<Void> createEntry(SlashCommandEvent event) {
+    protected ModerationUtil.ModerationAction prepareAction(SlashCommandEvent event) {
         final Member target = event.optMember("user");
         Preconditions.checkArgument(canModerate(target, event.getMember()), Emojis.ADMIN_ABOOZ.getFormatted() + " Cannot moderate user!");
         Preconditions.checkArgument(target.getTimeOutEnd() == null || target.getTimeOutEnd().isBefore(OffsetDateTime.now()), "User is already muted!");
 
         final Duration time = event.getOption("duration", MAX_DURATION, it -> DateUtils.getDurationFromInput(it.getAsString()));
         Preconditions.checkArgument(time.getSeconds() <= MAX_DURATION.getSeconds(), "Cannot mute for more than " + MAX_DURATION.toDays() + " days!");
-        return new ModerationAction<>(
-                ModLogEntry.mute(target.getIdLong(), event.getGuild().getIdLong(), event.getUser().getIdLong(), time, event.optString("reason")),
-                null
+        return new ModerationUtil.Timeout(
+                event.getGuild(), target, event.getUser(),
+                time, event.optString("reason")
         );
     }
-
-    @Override
-    @SuppressWarnings("DataFlowIssue")
-    protected RestAction<?> handle(User user, ModerationAction<Void> action) {
-        final ModLogEntry entry = action.entry();
-        return user.getJDA().getGuildById(entry.guild())
-                .retrieveMemberById(entry.user())
-                .flatMap(mem -> mem.timeoutFor(entry.duration()).reason("rec: " + entry.reasonOrDefault()));
-    }
-
 }

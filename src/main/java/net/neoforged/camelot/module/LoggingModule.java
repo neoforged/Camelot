@@ -16,6 +16,8 @@ import net.neoforged.camelot.log.JoinsLogging;
 import net.neoforged.camelot.log.MessageLogging;
 import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.api.CamelotModule;
+import net.neoforged.camelot.services.ModerationRecorderService;
+import net.neoforged.camelot.services.ServiceRegistrar;
 
 import java.util.EnumMap;
 import java.util.Locale;
@@ -53,8 +55,8 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
     }
 
     @Override
-    public void registerListeners(JDABuilder builder) {
-        builder.addEventListeners(new ModerationActionRecorder());
+    public void registerServices(ServiceRegistrar registrar) {
+        registrar.register(ModerationRecorderService.class, new ModerationActionRecorder());
     }
 
     @Override

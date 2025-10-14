@@ -4,21 +4,21 @@ import com.google.common.base.Preconditions;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.requests.RestAction;
-import net.neoforged.camelot.util.Emojis;
-import org.jetbrains.annotations.Nullable;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
+import net.neoforged.camelot.util.Emojis;
+import net.neoforged.camelot.util.ModerationUtil;
 
 import java.util.List;
 
 /**
  * The command used to kick a user.
  */
-public class KickCommand extends ModerationCommand<Void> {
-    public KickCommand() {
+public class KickCommand extends ModerationCommand {
+    public KickCommand(Bot bot) {
+        super(bot, ModLogEntry.Type.KICK);
         this.name = "kick";
         this.help = "Kicks an user";
         this.options = List.of(
@@ -30,24 +30,13 @@ public class KickCommand extends ModerationCommand<Void> {
         };
     }
 
-    @Nullable
     @Override
-    protected ModerationAction<Void> createEntry(SlashCommandEvent event) {
+    protected ModerationUtil.ModerationAction prepareAction(SlashCommandEvent event) {
         final Member target = event.optMember("user");
         Preconditions.checkArgument(canModerate(target, event.getMember()), Emojis.ADMIN_ABOOZ.getFormatted() + " Cannot moderate user!");
-        return new ModerationAction<>(
-                ModLogEntry.kick(target.getIdLong(), event.getGuild().getIdLong(), event.getUser().getIdLong(), event.optString("reason")),
-                null
+        return new ModerationUtil.Kick(
+                event.getGuild(), target, event.getMember(),
+                event.optString("reason")
         );
     }
-
-    @Override
-    @SuppressWarnings("DataFlowIssue")
-    protected RestAction<?> handle(User user, ModerationAction<Void> action) {
-        final ModLogEntry entry = action.entry();
-        return user.getJDA().getGuildById(entry.guild())
-                .retrieveMemberById(entry.user())
-                .flatMap(mem -> mem.kick().reason("rec: " + entry.reasonOrDefault()));
-    }
-
 }

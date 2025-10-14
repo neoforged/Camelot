@@ -1,32 +1,34 @@
 package net.neoforged.camelot.commands.moderation;
 
-import com.google.common.base.Preconditions;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.requests.RestAction;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.Database;
-import net.neoforged.camelot.db.transactionals.ModLogsDAO;
-import org.jetbrains.annotations.Nullable;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
+import net.neoforged.camelot.db.transactionals.ModLogsDAO;
+import net.neoforged.camelot.services.ModerationRecorderService;
+import net.neoforged.camelot.util.Utils;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
  * The command used to handle moderation notes.
  */
 public class NoteCommand extends SlashCommand {
-    public NoteCommand() {
+    public NoteCommand(Bot bot) {
         this.name = "note";
         this.userPermissions = new Permission[] {
                 Permission.MODERATE_MEMBERS
         };
         this.children = new SlashCommand[] {
-                new AddCommand(), new RemoveCommand()
+                new AddCommand(bot), new RemoveCommand()
         };
         this.guildOnly = true;
     }
@@ -39,32 +41,33 @@ public class NoteCommand extends SlashCommand {
     /**
      * The command used to add a note to a user.
      */
-    public static final class AddCommand extends ModerationCommand<Void> {
-        public AddCommand() {
+    public static final class AddCommand extends SlashCommand {
+        private final Bot bot;
+        public AddCommand(Bot bot) {
+            this.bot = bot;
             this.name = "add";
             this.help = "Add a note to an user";
             this.options = List.of(
                     new OptionData(OptionType.USER, "user", "The user to add a note to", true),
                     new OptionData(OptionType.STRING, "note", "The note content", true)
             );
-            this.shouldDMUser = false;
         }
 
-        @Nullable
         @Override
-        @SuppressWarnings("DataFlowIssue")
-        protected ModerationAction<Void> createEntry(SlashCommandEvent event) {
+        protected void execute(SlashCommandEvent event) {
             final User target = event.optUser("user");
-            Preconditions.checkArgument(target != null, "Unknown user");
-            return new ModerationAction<>(
-                    ModLogEntry.note(target.getIdLong(), event.getGuild().getIdLong(), event.getUser().getIdLong(), event.optString("note")),
-                    null
-            );
-        }
+            assert target != null && event.getGuild() != null;
 
-        @Override
-        protected RestAction<?> handle(User user, ModerationAction<Void> action) {
-            return null;
+            final String note = event.optString("note");
+            bot.getServices(ModerationRecorderService.class)
+                    .forEach(service -> service.onNoteAdded(event.getGuild(), target.getIdLong(), event.getUser().getIdLong(), note));
+
+            event.replyEmbeds(new EmbedBuilder()
+                    .setDescription("%s has been noted. | **%s**".formatted(Utils.getName(target), note))
+                    .setTimestamp(Instant.now())
+                    .setColor(ModLogEntry.Type.NOTE.getColor())
+                    .build())
+                    .queue();
         }
     }
 

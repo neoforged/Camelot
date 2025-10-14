@@ -46,7 +46,6 @@ import net.neoforged.camelot.db.schemas.BanAppealBlock;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.BanAppealsDAO;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
-import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.util.DateUtils;
@@ -431,12 +430,12 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                         .orElse(null);
 
                 event.deferReply(true).flatMap(_ ->
-                                event.getGuild().unban(UserSnowflake.fromId(userId))
-                                        .reason("rec: Ban appeal approved in thread: " + thread.getId()))
-                        .onSuccess(_ -> ModerationActionRecorder.recordAndLog(
-                                ModLogEntry.unban(userId, event.getGuild().getIdLong(), event.getUser().getIdLong(), "Ban appeal approved in thread: " + thread.getId()),
-                                event.getJDA()
-                        ))
+                                bot().moderation().unban(
+                                        event.getGuild(),
+                                        UserSnowflake.fromId(userId),
+                                        event.getUser(),
+                                        "Ban appeal approved in thread: " + thread.getId()
+                                ))
                         .flatMap(_ -> thread.sendMessage("Ban appeal **approved** by " + event.getUser().getAsMention() + (message == null ? "" : ". Message: **" + message + "**.")))
                         .flatMap(_ -> closeAppeal(thread, false))
                         .flatMap(_ -> retrieveUser)

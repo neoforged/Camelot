@@ -1,31 +1,35 @@
 package net.neoforged.camelot.commands.moderation;
 
-import com.google.common.base.Preconditions;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.requests.RestAction;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.Database;
-import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
+import net.neoforged.camelot.db.transactionals.ModLogsDAO;
+import net.neoforged.camelot.services.ModerationRecorderService;
+import net.neoforged.camelot.util.Utils;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
  * The command used to manage warnings.
  */
 public class WarnCommand extends SlashCommand {
-    public WarnCommand() {
+    public WarnCommand(Bot bot) {
         this.name = "warn";
         this.userPermissions = new Permission[] {
                 Permission.MODERATE_MEMBERS
         };
         this.children = new SlashCommand[] {
-                new AddCommand(), new DeleteCommand()
+                new AddCommand(bot), new DeleteCommand()
         };
     }
 
@@ -37,8 +41,11 @@ public class WarnCommand extends SlashCommand {
     /**
      * The command used to warn a user.
      */
-    public static final class AddCommand extends ModerationCommand<Void> {
-        public AddCommand() {
+    public static final class AddCommand extends SlashCommand {
+        private final Bot bot;
+
+        public AddCommand(Bot bot) {
+            this.bot = bot;
             this.name = "add";
             this.help = "Warns an user";
             this.options = List.of(
@@ -48,18 +55,38 @@ public class WarnCommand extends SlashCommand {
         }
 
         @Override
-        protected ModerationAction<Void> createEntry(SlashCommandEvent event) {
+        protected void execute(SlashCommandEvent event) {
             final User target = event.optUser("user");
-            Preconditions.checkArgument(target != null, "Unknown user!");
-            return new ModerationAction<>(
-                    ModLogEntry.warn(target.getIdLong(), event.getGuild().getIdLong(), event.getUser().getIdLong(), event.optString("reason")),
-                    null
-            );
-        }
+            assert target != null && event.getGuild() != null;
+            final Guild guild = event.getGuild();
 
-        @Override
-        protected RestAction<?> handle(User user, ModerationAction<Void> entry) {
-            return null;
+            final String warning = event.optString("reason", "");
+            bot.getServices(ModerationRecorderService.class)
+                    .forEach(service -> service.onWarningAdded(guild, target.getIdLong(), event.getUser().getIdLong(), warning));
+
+            event.deferReply().queue();
+
+            target.openPrivateChannel()
+                    .flatMap(ch -> ch.sendMessageEmbeds(new EmbedBuilder()
+                            .setAuthor(guild.getName(), null, guild.getIconUrl())
+                            .setDescription("You have been **warned** in **" + guild.getName() + "**.")
+                            .addField("Reason", warning, false)
+                            .setColor(ModLogEntry.Type.WARN.getColor())
+                            .setTimestamp(Instant.now())
+                            .build())
+                            .map(_ -> true))
+                    .onErrorMap(_ -> false)
+                    .flatMap(dm -> {
+                        final EmbedBuilder embed = new EmbedBuilder()
+                                .setDescription("%s has been warned. | **%s**".formatted(Utils.getName(target), warning))
+                                .setTimestamp(Instant.now())
+                                .setColor(ModLogEntry.Type.WARN.getColor());
+                        if (!dm) {
+                            embed.setFooter("User could not be DMed");
+                        }
+                        return event.getInteraction().getHook().editOriginalEmbeds(embed.build());
+                    })
+                    .queue();
         }
     }
 

@@ -7,32 +7,27 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.requests.RestAction;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
+import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.module.BanAppealModule;
 import net.neoforged.camelot.module.WebServerModule;
-import net.neoforged.camelot.util.Emojis;
-import org.jetbrains.annotations.Nullable;
-import net.neoforged.camelot.db.schemas.ModLogEntry;
-import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.util.Emojis;
+import net.neoforged.camelot.util.ModerationUtil;
 
-import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The command used to ban a user.
  */
-public class BanCommand extends ModerationCommand<Integer> {
+public class BanCommand extends ModerationCommand {
 
-    public BanCommand() {
+    public BanCommand(Bot bot) {
+        super(bot, ModLogEntry.Type.BAN);
         this.name = "ban";
         this.help = "Bans an user";
         this.options = List.of(
@@ -46,10 +41,8 @@ public class BanCommand extends ModerationCommand<Integer> {
         };
     }
 
-    @Nullable
     @Override
-    @SuppressWarnings("DataFlowIssue")
-    protected ModerationAction<Integer> createEntry(SlashCommandEvent event) {
+    protected ModerationUtil.ModerationAction prepareAction(SlashCommandEvent event) {
         final long targetId;
         final Member target = event.optMember("user");
         if (target == null) {
@@ -65,30 +58,16 @@ public class BanCommand extends ModerationCommand<Integer> {
         }
 
         final Duration time = event.getOption("duration", it -> DateUtils.getDurationFromInput(it.getAsString()));
-        Database.main().useExtension(PendingUnbansDAO.class, db -> {
-            db.delete(targetId, event.getGuild().getIdLong()); // We want to allow re-running the ban command to reset the unban period
-            if (time != null) {
-                db.insert(targetId, event.getGuild().getIdLong(), Timestamp.from(Instant.now().plus(time)));
-            }
-        });
-        return new ModerationAction<>(
-                ModLogEntry.ban(targetId, event.getGuild().getIdLong(), event.getUser().getIdLong(), time, event.optString("reason")),
-                event.getOption("deldays", 0, OptionMapping::getAsInt)
+        return new ModerationUtil.Ban(
+                event.getGuild(), UserSnowflake.fromId(targetId), event.getMember(),
+                event.optString("reason"), time,
+                event.getOption("deldays", it -> Duration.ofDays(it.getAsInt()))
         );
     }
 
     @Override
-    @SuppressWarnings("DataFlowIssue")
-    protected RestAction<?> handle(User user, ModerationAction<Integer> action) {
-        final ModLogEntry entry = action.entry();
-        return user.getJDA().getGuildById(entry.guild())
-                .ban(UserSnowflake.fromId(entry.user()), action.additionalData(), TimeUnit.DAYS)
-                .reason("rec: " + entry.reasonOrDefault());
-    }
-
-    @Override
-    protected EmbedBuilder makeMessage(ModLogEntry entry, User user) {
-        final EmbedBuilder builder = super.makeMessage(entry, user);
+    protected EmbedBuilder makeMessage(ModerationUtil.ModerationAction entry) {
+        final EmbedBuilder builder = super.makeMessage(entry);
         if (BotMain.getModule(BanAppealModule.class) != null) {
             builder.appendDescription("\nYou may appeal the ban at " + BotMain.getModule(WebServerModule.class)
                     .makeLink("/ban-appeals/" + entry.guild()) + ".");

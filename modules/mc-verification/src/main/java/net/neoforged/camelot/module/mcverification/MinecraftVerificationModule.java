@@ -15,14 +15,11 @@ import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
-import net.neoforged.camelot.Database;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
-import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
-import net.neoforged.camelot.log.ModerationActionRecorder;
 import net.neoforged.camelot.module.BanAppealModule;
 import net.neoforged.camelot.module.LoggingModule;
 import net.neoforged.camelot.module.WebServerModule;
@@ -46,7 +43,6 @@ import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpTimeoutException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -153,18 +149,15 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
                                 return pc.sendMessageEmbeds(message.build());
                             }))
 
-                            .flatMap(_ -> guild.ban(UserSnowflake.fromId(toBan), 0, TimeUnit.MINUTES).reason("rec: Failed to verify Minecraft account ownership"))
+                            .flatMap(_ -> bot().moderation().ban(
+                                    guild,
+                                    UserSnowflake.fromId(toBan),
+                                    guild.getSelfMember(),
+                                    "Failed to verify Minecraft account ownership in time",
+                                    config().getBanDuration()
+                            ))
                             .queue(_ -> db.delete(guild.getIdLong(), toBan), new ErrorHandler()
                                     .handle(ErrorResponse.UNKNOWN_USER, _ -> db.delete(toBan, guild.getIdLong()))); // User doesn't exist, so don't care about the ban anymore
-
-                    Database.main().useExtension(PendingUnbansDAO.class, pending -> pending.insert(
-                            toBan, guild.getIdLong(), Timestamp.from(Instant.now().plus(config().getBanDuration()))
-                    ));
-
-                    ModerationActionRecorder.recordAndLog(
-                            ModLogEntry.ban(toBan, guild.getIdLong(), guild.getSelfMember().getIdLong(), config().getBanDuration(), "Failed to verify Minecraft account ownership"),
-                            jda
-                    );
                 }
             }
         }
