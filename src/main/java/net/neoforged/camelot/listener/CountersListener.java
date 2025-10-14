@@ -16,7 +16,7 @@ public record CountersListener(ConfigOption<Guild, Boolean> option) implements E
     @Override
     public void onEvent(@NotNull GenericEvent gevent) {
         if (!(gevent instanceof MessageReceivedEvent event)) return;
-        if (!option.get(event.getGuild()) || !event.isFromGuild() || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
+        if (!event.isFromGuild() || !option.get(event.getGuild()) || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
 
         final String content = event.getMessage().getContentRaw();
         if (content.indexOf(' ') >= 0 || content.startsWith("https://") || content.startsWith("http://")) return; // Counters shouldn't have spaces anywhere nor should they be links
