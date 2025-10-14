@@ -1,4 +1,4 @@
-package net.neoforged.camelot.log.message;
+package net.neoforged.camelot.module.logging.message;
 
 import net.dv8tion.jda.api.entities.Message;
 import org.jetbrains.annotations.Nullable;

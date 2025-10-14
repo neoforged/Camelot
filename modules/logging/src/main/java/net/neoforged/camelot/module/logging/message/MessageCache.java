@@ -1,4 +1,4 @@
-package net.neoforged.camelot.log.message;
+package net.neoforged.camelot.module.logging.message;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import net.dv8tion.jda.api.events.GenericEvent;

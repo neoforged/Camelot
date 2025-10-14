@@ -1,19 +1,14 @@
-package net.neoforged.camelot.module;
+package net.neoforged.camelot.module.logging;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.EntityOption;
 import net.neoforged.camelot.config.module.Logging;
-import net.neoforged.camelot.log.ChannelLogging;
-import net.neoforged.camelot.log.JoinsLogging;
-import net.neoforged.camelot.log.MessageLogging;
-import net.neoforged.camelot.log.ModerationActionLogging;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.services.ModerationRecorderService;
 import net.neoforged.camelot.services.ServiceRegistrar;
@@ -72,9 +67,5 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
             this.description = description;
             this.emoji = Emoji.fromUnicode(emoji);
         }
-    }
-
-    public interface Logger {
-        void log(Guild guild, MessageEmbed... embeds);
     }
 }

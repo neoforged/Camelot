@@ -1,0 +1,11 @@
+plugins {
+    id 'camelot-module'
+}
+
+camelotModule {
+    id = 'logging'
+}
+
+dependencies {
+    library(libs.fastutil)
+}

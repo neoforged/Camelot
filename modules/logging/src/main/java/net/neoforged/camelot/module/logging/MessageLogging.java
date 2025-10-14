@@ -1,4 +1,4 @@
-package net.neoforged.camelot.log;
+package net.neoforged.camelot.module.logging;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -9,9 +9,8 @@ import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.neoforged.camelot.log.message.MessageCache;
-import net.neoforged.camelot.log.message.MessageData;
-import net.neoforged.camelot.module.LoggingModule;
+import net.neoforged.camelot.module.logging.message.MessageCache;
+import net.neoforged.camelot.module.logging.message.MessageData;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
 

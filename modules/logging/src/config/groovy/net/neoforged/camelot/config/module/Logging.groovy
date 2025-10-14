@@ -4,7 +4,7 @@ import groovy.transform.CompileStatic
 
 /**
  * The module controlling logging. <br>
- * Provides the {@code /configuration logging} command that can be used
+ * Use the {@code /configure} and browse {@code Modules > Logging}
  * to configure what events should be logged in a channel.
  */
 @CompileStatic

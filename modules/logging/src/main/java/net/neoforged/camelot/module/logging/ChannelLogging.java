@@ -1,4 +1,4 @@
-package net.neoforged.camelot.log;
+package net.neoforged.camelot.module.logging;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectFunction;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.module.LoggingModule;
 
 import java.util.Collection;
 import java.util.Set;

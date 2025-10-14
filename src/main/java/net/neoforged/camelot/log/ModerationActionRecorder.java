@@ -11,10 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.time.Duration;
 
 /**
- * An event listener that listens for the {@link GuildAuditLogEntryCreateEvent} event, automatically recording
- * any manual actions in the {@link ModLogsDAO mod log}. <br>
- * A "manual action" is an action with an unspecified reason or with a reason that starts with {@code "rec: "}.
- * This is to avoid recording actions which have been already recorded by the bot (e.g. bans done through the command)
+ * A {@link ModerationRecorderService} that records any moderation events to the database
+ * such that they can be retrieved through {@code /modlogs}.
  */
 public class ModerationActionRecorder implements ModerationRecorderService {
     @Override

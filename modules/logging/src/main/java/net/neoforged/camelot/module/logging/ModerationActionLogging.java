@@ -1,10 +1,9 @@
-package net.neoforged.camelot.log;
+package net.neoforged.camelot.module.logging;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.utils.TimeFormat;
-import net.neoforged.camelot.module.LoggingModule;
 import net.neoforged.camelot.services.ModerationRecorderService;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Utils;
@@ -33,7 +32,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
     @Override
     public void onBan(Guild guild, long member, long moderator, @Nullable Duration duration, @Nullable String reason) {
         log(
-                "ban", "banned", Ban.COLOUR,
+                "banned", Ban.COLOUR,
                 guild,
                 member,
                 moderator,
@@ -45,7 +44,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
     @Override
     public void onUnban(Guild guild, long member, long moderator, @Nullable String reason) {
         log(
-                "unban", "unbanned", Unban.COLOUR,
+                "unbanned", Unban.COLOUR,
                 guild,
                 member,
                 moderator,
@@ -57,7 +56,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
     @Override
     public void onKick(Guild guild, long member, long moderator, @Nullable String reason) {
         log(
-                "kick", "kicked", Kick.COLOUR,
+                "kicked", Kick.COLOUR,
                 guild,
                 member,
                 moderator,
@@ -69,7 +68,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
     @Override
     public void onTimeout(Guild guild, long member, long moderator, Duration duration, @Nullable String reason) {
         log(
-                "mute", "muted", Timeout.COLOUR,
+                "muted", Timeout.COLOUR,
                 guild,
                 member,
                 moderator,
@@ -81,7 +80,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
     @Override
     public void onTimeoutRemoved(Guild guild, long member, long moderator, @Nullable String reason) {
         log(
-                "un-mute", "un-muted", RemoveTimeout.COLOUR,
+                "un-muted", RemoveTimeout.COLOUR,
                 guild,
                 member,
                 moderator,
@@ -93,7 +92,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
     @Override
     public void onWarningAdded(Guild guild, long member, long moderator, String warn) {
         log(
-                "warn", "warned", 0x00BFFF,
+                "warned", 0x00BFFF,
                 guild,
                 member,
                 moderator,
@@ -105,7 +104,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
     @Override
     public void onNoteAdded(Guild guild, long member, long moderator, String note) {
         log(
-                "note", "noted", 0x00FFFF,
+                "noted", 0x00FFFF,
                 guild,
                 member,
                 moderator,
@@ -125,13 +124,12 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
                 .setFooter("User ID: " + member));
     }
 
-    private void log(String type, String action, int color, Guild guild, long targetId, long moderatorId, @Nullable String reason, @Nullable Optional<Duration> duration) {
+    private void log(String action, int color, Guild guild, long targetId, long moderatorId, @Nullable String reason, @Nullable Optional<Duration> duration) {
         var now = Instant.now();
         guild.getJDA().retrieveUserById(targetId)
                 .flatMap(target -> guild.getJDA().retrieveUserById(moderatorId)
                         .onSuccess(moderator -> {
                             var information = new ArrayList<>(Arrays.asList(
-                                    "**Type**: " + type,
                                     "**Moderator**: " + Utils.getName(moderator) + " (" + moderator.getId() + ")",
                                     "**Reason**: " + (reason == null ? "*Reason not specified*" : reason)));
                             if (duration != null) {
@@ -140,6 +138,7 @@ public class ModerationActionLogging extends ChannelLogging implements Moderatio
                                                 TimeFormat.DATE_TIME_LONG.format(now.plus(duration.get())) + ")")));
                             }
                             var embed = new EmbedBuilder()
+                                    .setAuthor(Utils.getName(moderator), null, moderator.getEffectiveAvatarUrl())
                                     .setTitle("%s has been %s".formatted(Utils.getName(target), action))
                                     .addField(new MessageEmbed.Field(
                                             "Case information",
