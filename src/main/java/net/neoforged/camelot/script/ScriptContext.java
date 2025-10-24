@@ -15,10 +15,8 @@ import net.neoforged.camelot.Database;
 import net.neoforged.camelot.db.transactionals.CountersDAO;
 import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.util.Utils;
-import net.neoforged.camelot.util.jda.AppEmojiManager;
 import org.graalvm.polyglot.proxy.ProxyInstant;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -175,7 +173,7 @@ public record ScriptContext(
     public ScriptObject createJDA(JDA jda) {
         return ScriptObject.of("JDA")
                 .putMethod("getUserById", args -> createUser(jda.retrieveUserById(args.argString(0, true)).complete()))
-                .putMethod("getEmojis", _ -> transformList(AppEmojiManager.retrieveAppEmojis(jda).complete()));
+                .putMethod("getEmojis", _ -> transformList(jda.retrieveApplicationEmojis().complete()));
     }
 
     /**
