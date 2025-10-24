@@ -9,6 +9,8 @@ import net.neoforged.camelot.api.config.ConfigOption;
 import org.jetbrains.annotations.NotNull;
 import net.neoforged.camelot.db.transactionals.CountersDAO;
 
+import java.util.List;
+
 /**
  * The listener listening for counter updates.
  */
@@ -24,17 +26,20 @@ public record CountersListener(ConfigOption<Guild, Boolean> option) implements E
         if (content.endsWith("==")) {
             final String value = content.substring(0, content.length() - 2);
             final int amount = default0(Database.main().withExtension(CountersDAO.class, db -> db.getCounterAmount(event.getGuild().getIdLong(), value)));
-            event.getChannel().sendMessage(value + " == " + amount).queue();
+            event.getChannel().sendMessage(value + " == " + amount)
+                    .setAllowedMentions(List.of()).queue();
         } else if (content.endsWith("++")) {
             final String value = content.substring(0, content.length() - 2);
             final int amount = default0(Database.main().withExtension(CountersDAO.class, db -> db.getCounterAmount(event.getGuild().getIdLong(), value))) + 1;
             Database.main().useExtension(CountersDAO.class, db -> db.updateAmount(event.getGuild().getIdLong(), value, amount));
-            event.getChannel().sendMessage(value + " == " + amount).queue();
+            event.getChannel().sendMessage(value + " == " + amount)
+                    .setAllowedMentions(List.of()).queue();
         } else if (content.endsWith("--")) {
             final String value = content.substring(0, content.length() - 2);
             final int amount = default0(Database.main().withExtension(CountersDAO.class, db -> db.getCounterAmount(event.getGuild().getIdLong(), value))) - 1;
             Database.main().useExtension(CountersDAO.class, db -> db.updateAmount(event.getGuild().getIdLong(), value, amount));
-            event.getChannel().sendMessage(value + " == " + amount).queue();
+            event.getChannel().sendMessage(value + " == " + amount)
+                    .setAllowedMentions(List.of()).queue();
         }
     }
 
