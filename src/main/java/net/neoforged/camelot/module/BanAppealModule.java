@@ -93,7 +93,7 @@ import static j2html.TagCreator.*;
  *     </li>
  * </ul>
  */
-@RegisterCamelotModule
+@RegisterCamelotModule // TODO - automatically approve ban if user is manually unbanned
 public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
     private final ConfigOption<Guild, Set<Long>> appealsChannel;
@@ -429,10 +429,16 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                         .map(ModalMapping::getAsString).filter(Predicate.not(String::isBlank))
                         .orElse(null);
 
-                event.deferReply(true).flatMap(_ ->
+                var toUnban = UserSnowflake.fromId(userId);
+
+                event.deferReply(true)
+                        .flatMap(_ -> guild.retrieveBan(toUnban)
+                                .map(_ -> true)
+                                .onErrorMap(_ -> false))
+                        .flatMap(isBanned -> isBanned, _ ->
                                 bot().moderation().unban(
                                         event.getGuild(),
-                                        UserSnowflake.fromId(userId),
+                                        toUnban,
                                         event.getUser(),
                                         "Ban appeal approved in thread: " + thread.getId()
                                 ))
