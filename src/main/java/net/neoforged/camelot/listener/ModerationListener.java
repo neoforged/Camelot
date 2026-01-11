@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 /**
  * An event listener that listens for the {@link GuildAuditLogEntryCreateEvent} event, automatically reporting
- * any manual actions in the {@link ModLogsDAO mod log} to the {@link ModerationRecorderService ModerationRecorderServices}.<br>
+ * any manual actions to the {@link ModerationRecorderService ModerationRecorderServices} (so they can be recorded in the {@link ModLogsDAO mod log}).<br>
  * A "manual action" is an action with an unspecified reason or with a reason that starts with {@code "rec: "}.
  * This is to avoid recording actions which have been already recorded by the bot (e.g. bans done through the command)
  */

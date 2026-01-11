@@ -30,6 +30,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.modals.Modal;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.Result;
 import net.dv8tion.jda.internal.entities.UserImpl;
@@ -48,15 +49,17 @@ import net.neoforged.camelot.db.transactionals.BanAppealsDAO;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.server.WebServer;
+import net.neoforged.camelot.services.ModerationRecorderService;
+import net.neoforged.camelot.services.ServiceRegistrar;
 import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.MailService;
 import net.neoforged.camelot.util.oauth.OAuthClient;
 import net.neoforged.camelot.util.oauth.OAuthScope;
 import net.neoforged.camelot.util.oauth.TokenResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 
-import javax.annotation.Nullable;
 import java.awt.Color;
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -93,7 +96,7 @@ import static j2html.TagCreator.*;
  *     </li>
  * </ul>
  */
-@RegisterCamelotModule // TODO - automatically approve ban if user is manually unbanned
+@RegisterCamelotModule
 public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
     private final ConfigOption<Guild, Set<Long>> appealsChannel;
@@ -142,6 +145,27 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                 onButton(event);
             } else if (gevent instanceof ModalInteractionEvent event) {
                 onModal(event);
+            }
+        });
+    }
+
+    @Override
+    public void registerServices(ServiceRegistrar registrar) {
+        registrar.register(ModerationRecorderService.class, new ModerationRecorderService() {
+            @Override
+            public void onUnban(Guild guild, long userId, long moderator, @Nullable String reason) {
+                final var appeal = Database.appeals().withExtension(BanAppealsDAO.class, db -> db.getAppeal(guild.getIdLong(), userId));
+                if (appeal == null) return;
+
+                getAppealThread(guild, appeal)
+                        .flatMap(thread -> thread.sendMessage("User was manually unbanned by <@" + moderator + ">.")
+                                .flatMap(_ -> closeAppeal(thread, false))
+                                .flatMap(_ -> thread.retrieveParentMessage())
+                                .flatMap(msg -> msg.editMessage("User was manually unbanned.")))
+                        .flatMap(_ -> guild.getJDA().retrieveUserById(userId))
+                        .flatMap(user -> emailInvite(appeal, user, guild, null))
+                        .onSuccess(_ -> Database.appeals().useExtension(BanAppealsDAO.class, db -> db.deleteAppeal(appeal.guildId(), appeal.userId())))
+                        .queue();
             }
         });
     }
@@ -215,8 +239,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                 .setDescription(payload.getString("response"))
                 .setColor(Color.CYAN);
 
-        guild.getChannelById(GuildMessageChannel.class, appealsChannel.get(guild).iterator().next()).retrieveMessageById(existing.threadId())
-                .map(Message::getStartedThread)
+        getAppealThread(guild, existing)
                 .flatMap(thread -> thread.sendMessageEmbeds(embed.build())
                         .and(thread.retrieveParentMessage()
                                 .flatMap(msg -> msg.editMessageEmbeds(modifyColour(msg.getEmbeds().getFirst(), config().getColors().getOngoing())))))
@@ -432,29 +455,17 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                 var toUnban = UserSnowflake.fromId(userId);
 
                 event.deferReply(true)
-                        .flatMap(_ -> guild.retrieveBan(toUnban)
-                                .map(_ -> true)
-                                .onErrorMap(_ -> false))
-                        .flatMap(isBanned -> isBanned, _ ->
+                        .flatMap(_ ->
                                 bot().moderation().unban(
                                         event.getGuild(),
                                         toUnban,
                                         event.getUser(),
                                         "Ban appeal approved in thread: " + thread.getId()
-                                ))
+                                ).onErrorMap(ErrorResponse.UNKNOWN_BAN::test, _ -> null)) // We need to make sure that the action chain doesn't fail if, for some reason, the appeal was manually approved and the bot didn't catch it
                         .flatMap(_ -> thread.sendMessage("Ban appeal **approved** by " + event.getUser().getAsMention() + (message == null ? "" : ". Message: **" + message + "**.")))
                         .flatMap(_ -> closeAppeal(thread, false))
                         .flatMap(_ -> retrieveUser)
-                        .flatMap(user -> event.getGuild().getDefaultChannel().createInvite()
-                                .setMaxUses(1).setMaxAge((long) 7, TimeUnit.DAYS)
-                                .reason("Un-ban invite for " + userId)
-                                .onSuccess(invite -> sendMailFromServer(appeal.email(), user, event.getGuild(), "Ban appeal approved",
-                                        pre(text("Your appeal has been "), b(text("approved")), text(".")),
-                                        pre(text("You may join the server again using "), a("this invite link").withHref(invite.getUrl()), text(" which expires in 7 days.")),
-                                        div().condWith(message != null, hr(),
-                                                h5("Message from moderators"),
-                                                pre(message))
-                                )))
+                        .flatMap(user -> emailInvite(appeal, user, guild, message))
                         .onSuccess(_ -> Database.appeals().useExtension(BanAppealsDAO.class, db -> db.deleteAppeal(appeal.guildId(), appeal.userId())))
                         .flatMap(_ -> event.getInteraction().getHook().editOriginal("Appeal approved."))
                         .queue();
@@ -710,6 +721,24 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
             ));
             ctx.redirect("/ban-appeals/" + ctx.queryParam("state"), HttpStatus.TEMPORARY_REDIRECT);
         }
+    }
+
+    private RestAction<ThreadChannel> getAppealThread(Guild guild, BanAppeal appeal) {
+        return guild.getChannelById(GuildMessageChannel.class, appealsChannel.get(guild).iterator().next()).retrieveMessageById(appeal.threadId())
+                .map(Message::getStartedThread);
+    }
+
+    private RestAction<?> emailInvite(BanAppeal appeal, User user, Guild guild, @Nullable String message) {
+        return guild.getDefaultChannel().createInvite()
+                .setMaxUses(1).setMaxAge((long) 7, TimeUnit.DAYS)
+                .reason("Un-ban invite for " + user.getId())
+                .onSuccess(invite -> sendMailFromServer(appeal.email(), user, guild, "Ban appeal approved",
+                        pre(text("Your appeal has been "), b(text("approved")), text(".")),
+                        pre(text("You may join the server again using "), a("this invite link").withHref(invite.getUrl()), text(" which expires in 7 days.")),
+                        div().condWith(message != null, hr(),
+                                h5("Message from moderators"),
+                                pre(message))
+                ));
     }
 
     /**
