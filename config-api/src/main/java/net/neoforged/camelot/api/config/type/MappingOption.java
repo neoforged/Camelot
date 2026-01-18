@@ -2,6 +2,7 @@ package net.neoforged.camelot.api.config.type;
 
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -9,11 +10,14 @@ final class MappingOption<F, T> implements OptionType<T> {
     private final OptionType<F> elementType;
     private final Function<F, T> mapFrom;
     private final Function<T, F> mapTo;
+    @Nullable
+    private final Function<T, String> formatter;
 
-    private MappingOption(OptionType<F> elementType, Function<F, T> mapFrom, Function<T, F> mapTo) {
+    private MappingOption(OptionType<F> elementType, Function<F, T> mapFrom, Function<T, F> mapTo, @Nullable Function<T, String> formatter) {
         this.elementType = elementType;
         this.mapFrom = mapFrom;
         this.mapTo = mapTo;
+        this.formatter = formatter;
     }
 
     @Override
@@ -35,30 +39,35 @@ final class MappingOption<F, T> implements OptionType<T> {
 
     @Override
     public String format(T value) {
+        if (value != null && formatter != null) return formatter.apply(value);
         return value == null ? elementType.format(null) : elementType.format(mapTo.apply(value));
     }
 
     @Override
     public String formatFullPageView(T value) {
+        if (value != null && formatter != null) return formatter.apply(value);
         return value == null ? elementType.formatFullPageView(null) : elementType.formatFullPageView(mapTo.apply(value));
     }
 
-    static final class Builder<G, F, T> extends OptionBuilder<G, T, MappingOption.Builder<G, F, T>> {
+    static final class Builder<G, F, T> extends OptionBuilder.Terminated<G, T> {
         private final OptionBuilder<G, F, ?> elementType;
         private final Function<F, T> mapFrom;
         private final Function<T, F> mapTo;
+        @Nullable
+        private final Function<T, String> formatter;
 
-        Builder(OptionBuilder<G, F, ?> elementType, Function<F, T> mapFrom, Function<T, F> mapTo) {
+        Builder(OptionBuilder<G, F, ?> elementType, Function<F, T> mapFrom, Function<T, F> mapTo, @Nullable Function<T, String> formatter) {
             super(elementType);
             this.elementType = elementType;
             this.mapFrom = mapFrom;
             this.mapTo = mapTo;
+            this.formatter = formatter;
             setDefaultValue(elementType.defaultValue == null ? null : mapFrom.apply(elementType.defaultValue));
         }
 
         @Override
         protected OptionType<T> createType() {
-            return new MappingOption<>(elementType.createType(), mapFrom, mapTo);
+            return new MappingOption<>(elementType.createType(), mapFrom, mapTo, formatter);
         }
     }
 }

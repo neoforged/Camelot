@@ -28,11 +28,10 @@ public class ImageScamDetector extends ScamDetector {
         registrar.setGroupDisplayName("Image Scams");
         registrar.setGroupDescription("Detect scams in images using OCR");
 
-        patterns = registrar.option("patterns", StringOption::builder)
+        patterns = registrar.option("patterns", StringOption::regex)
                 .setDisplayName("Patterns")
                 .setDescription("A list of regex patterns to search for in images considered scams.",
                         "Keep in mind that the text of an image is extracted as one continous line.")
-                .map(Pattern::compile, Pattern::pattern)
                 .list()
                 .register();
     }

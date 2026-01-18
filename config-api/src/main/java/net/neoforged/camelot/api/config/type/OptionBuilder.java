@@ -4,6 +4,7 @@ import net.neoforged.camelot.api.config.ConfigManager;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.impl.ConfigManagerImpl;
 import net.neoforged.camelot.api.config.impl.ConfigOptionImpl;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -111,13 +112,30 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      * <p>
      * The path, id, display name, description and default value of this option builder will be copied over into the mapped one.
      *
-     * @param from a function used to convert from this builder's type to the target type
-     * @param to   a function used to convert from the target type to this builder's type
-     * @param <TO> the type of the object to map to
+     * @param from      a function used to convert from this builder's type to the target type
+     * @param to        a function used to convert from the target type to this builder's type
+     * @param <TO>      the type of the object to map to
      * @return the builder for the mapped option
      */
-    public <TO> OptionBuilder<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to) {
-        return new MappingOption.Builder<>(this, from, to);
+    public <TO> Terminated<G, TO> map(Function<T, TO> from, Function<TO, T> to) {
+        return map(from, to, null);
+    }
+
+    /**
+     * Create an option builder that maps the value produced by this option
+     * into another value.
+     * <p>
+     * The path, id, display name, description and default value of this option builder will be copied over into the mapped one.
+     *
+     * @param from      a function used to convert from this builder's type to the target type
+     * @param to        a function used to convert from the target type to this builder's type
+     * @param formatter a function used to convert the value to a human readable form that will be displayed in the configuration menu. If
+     *                  {@code null}, this option type's formatter will be used
+     * @param <TO>      the type of the object to map to
+     * @return the builder for the mapped option
+     */
+    public <TO> Terminated<G, TO> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter) {
+        return new MappingOption.Builder<>(this, from, to, formatter);
     }
 
     /**
@@ -130,5 +148,14 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
         var cfg = new ConfigOptionImpl<>(man, name, description, path.isBlank() ? id : path + "." + id, createType(), defaultValue);
         man.register(path, cfg);
         return cfg;
+    }
+
+    /**
+     * A {@link OptionBuilder} that should be returned by mapping functions without any further configuration options (like {@link #map(Function, Function, Function)}).
+     */
+    public abstract static class Terminated<G, T> extends OptionBuilder<G, T, Terminated<G, T>> {
+        protected Terminated(OptionBuilder<G, ?, ?> parentBuilder) {
+            super(parentBuilder);
+        }
     }
 }
