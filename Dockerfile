@@ -7,8 +7,7 @@ RUN apt-get update && apt-get install -y \
     autoconf automake libtool pkg-config \
     g++ make \
     libjpeg-dev libpng-dev libtiff-dev zlib1g-dev \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
+    wget
 
 # Download and build Leptonica 1.87.0
 RUN wget https://github.com/DanBloomberg/leptonica/releases/download/1.87.0/leptonica-1.87.0.tar.gz && \
@@ -23,7 +22,6 @@ RUN wget https://github.com/DanBloomberg/leptonica/releases/download/1.87.0/lept
 # Install Tesseract
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
-    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Create tessdata_best directory
