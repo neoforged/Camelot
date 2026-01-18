@@ -5,7 +5,8 @@ jdbi = "3.32.0"
 jackson = "2.20.0"
 jjwt = "0.10.5"
 junit = "5.10.0"
-tess4j = "5.17.0"
+# Use 5.4.0 until https://github.com/nguyenq/tess4j/issues/273 is fixed
+tess4j = "5.4.0"
 
 [libraries]
 
