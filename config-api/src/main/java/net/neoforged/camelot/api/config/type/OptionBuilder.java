@@ -86,6 +86,17 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
     }
 
     /**
+     * Create an option builder that wraps this option into a list.
+     * <p>
+     * The path, id, display name and description of this option builder will be copied over into the list one.
+     *
+     * @return the builder for this option as a list
+     */
+    public ListOption.Builder<G, T> list() {
+        return new ListOption.Builder<>(this);
+    }
+
+    /**
      * Create the configuration option according to this builder's parameters and register it.
      *
      * @return the registered config option

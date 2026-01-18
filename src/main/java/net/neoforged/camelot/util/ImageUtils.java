@@ -86,6 +86,27 @@ public final class ImageUtils {
         return retImg;
     }
 
+    /**
+     * Takes a BufferedImage and resizes it by the given factor
+     *
+     * @param  src        the source BufferedImage
+     * @param  factor     how much to resize the image
+     * @return            a resized version of the provided BufferedImage
+     */
+    public static BufferedImage resizeBy(final BufferedImage src, final int factor) {
+        int targetWidth = src.getWidth() * factor;
+        int targetHeight = src.getHeight() * factor;
+
+        final BufferedImage retImg = new BufferedImage(targetWidth, targetHeight,
+                src.getTransparency() == Transparency.OPAQUE ? BufferedImage.TYPE_INT_RGB
+                        : BufferedImage.TYPE_INT_ARGB);
+        final Graphics2D g2d = retImg.createGraphics();
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.drawImage(src, 0, 0, targetWidth, targetHeight, null);
+        g2d.dispose();
+        return retImg;
+    }
+
     public static BufferedImage cutoutImageMiddle(final BufferedImage image, final int baseWidth, final int baseHeight,
                                                   final int cornerRadius) {
         final var output = new BufferedImage(baseWidth, baseHeight, BufferedImage.TYPE_INT_ARGB);

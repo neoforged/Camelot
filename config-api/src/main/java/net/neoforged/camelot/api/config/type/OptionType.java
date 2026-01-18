@@ -17,6 +17,10 @@ public interface OptionType<T> {
 
     String format(T value);
 
+    default String formatFullPageView(T value) {
+        return format(value);
+    }
+
     interface ComponentCreator {
         Button button(Consumer<ButtonInteractionEvent> action);
         Modal.Builder modal(Consumer<ModalInteractionEvent> action);

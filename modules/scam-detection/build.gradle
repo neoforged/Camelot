@@ -1,0 +1,11 @@
+plugins {
+    id 'camelot-module'
+}
+
+camelotModule {
+    id = 'scam-detection'
+}
+
+dependencies {
+    library(libs.tess4j)
+}

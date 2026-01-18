@@ -152,7 +152,7 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                                 TextDisplay.of(
                                         "## Configure `" + option.name() + "`\n"
                                                 + option.description() + "\n"
-                                                + "\n__Current value__: " + (current == null ? "*none*" : option.type().format(current))
+                                                + "\n__Current value__: " + (current == null ? "*none*" : option.type().formatFullPageView(current))
                                 ),
                                 ActionRow.of(
                                         Button.secondary(buttonId(ev -> ev.editMessage(createEditMessage(target, path, page)).queue()), PREV_EMOJI),
