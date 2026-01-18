@@ -167,6 +167,9 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
     private MessageEditBuilder markAsHandled(Message message) {
         return MessageEditBuilder.fromMessage(message)
                 .setComponents(List.of())
+                .setFiles(message.getAttachments().stream()
+                        .map(at -> at.getProxy().downloadAsFileUpload(at.getFileName()))
+                        .toList())
                 .setEmbeds(message.getEmbeds().stream()
                         .map(e -> new EmbedBuilder(e)
                                 .setColor(Color.GREEN).build())
