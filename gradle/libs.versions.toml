@@ -5,8 +5,6 @@ jdbi = "3.32.0"
 jackson = "2.20.0"
 jjwt = "0.10.5"
 junit = "5.10.0"
-# Use 5.4.0 until https://github.com/nguyenq/tess4j/issues/273 is fixed
-tess4j = "5.4.0"
 
 [libraries]
 
@@ -65,7 +63,8 @@ sqlitejdbc = { module = "org.xerial:sqlite-jdbc", version = "3.40.0.0" }
 
 trove4j = { module = "net.sf.trove4j:trove4j", version = "3.0.3" }
 
-tess4j = { module = "net.sourceforge.tess4j:tess4j", version = "5.17.0" }
+# Use 5.4.0 until https://github.com/nguyenq/tess4j/issues/273 is fixed
+tess4j = { module = "net.sourceforge.tess4j:tess4j", version = "5.4.0" }
 
 [bundles]
 graal = ["graal-js", "graal-js-scriptengine"]
