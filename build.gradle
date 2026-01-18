@@ -154,7 +154,7 @@ tasks.register('outputVersion') {
 }
 
 shadowJar {
-    isZip64 = true
+    zip64 = true
     archiveClassifier = 'all'
     archiveFile.set(project.file("$buildDir/libs/camelot-all.jar"))
     dependsOn(tasks.gitLog)
