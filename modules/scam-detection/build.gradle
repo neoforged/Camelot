@@ -7,5 +7,9 @@ camelotModule {
 }
 
 dependencies {
-    library(libs.tess4j)
+    library(libs.tess4j) {
+        exclude group: 'net.sourceforge.lept4j'
+    }
+    // See https://github.com/nguyenq/tess4j/issues/273
+    implementation 'net.sourceforge.lept4j:lept4j:1.16.2'
 }
