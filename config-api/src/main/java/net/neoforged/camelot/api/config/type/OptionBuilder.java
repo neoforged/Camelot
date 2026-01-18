@@ -6,6 +6,7 @@ import net.neoforged.camelot.api.config.impl.ConfigManagerImpl;
 import net.neoforged.camelot.api.config.impl.ConfigOptionImpl;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Base builder used to create {@link ConfigOption ConfigOptions}.
@@ -29,6 +30,14 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
         this.id = id;
 
         this.name = id;
+    }
+
+    @SuppressWarnings("CopyConstructorMissesField")
+    // the defaultValue field cannot simply be copied as the parent may be of a different type...
+    protected OptionBuilder(OptionBuilder<G, ?, ?> parentBuilder) {
+        this(parentBuilder.manager, parentBuilder.path, parentBuilder.id);
+        this.description = parentBuilder.description;
+        this.name = parentBuilder.name;
     }
 
     @SuppressWarnings("unchecked")
@@ -94,6 +103,21 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      */
     public ListOption.Builder<G, T> list() {
         return new ListOption.Builder<>(this);
+    }
+
+    /**
+     * Create an option builder that maps the value produced by this option
+     * into another value.
+     * <p>
+     * The path, id, display name, description and default value of this option builder will be copied over into the mapped one.
+     *
+     * @param from a function used to convert from this builder's type to the target type
+     * @param to   a function used to convert from the target type to this builder's type
+     * @param <TO> the type of the object to map to
+     * @return the builder for the mapped option
+     */
+    public <TO> OptionBuilder<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to) {
+        return new MappingOption.Builder<>(this, from, to);
     }
 
     /**

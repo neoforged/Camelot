@@ -115,10 +115,8 @@ public final class ListOption<T> implements OptionType<List<T>> {
         private final OptionBuilder<G, T, ?> elementType;
 
         Builder(OptionBuilder<G, T, ?> elementType) {
-            super(elementType.manager, elementType.path, elementType.id);
+            super(elementType);
             this.elementType = elementType;
-            this.description = elementType.description;
-            this.name = elementType.name;
             setDefaultValue(List.of());
         }
 

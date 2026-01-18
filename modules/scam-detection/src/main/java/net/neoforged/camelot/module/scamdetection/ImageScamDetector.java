@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class ImageScamDetector extends ScamDetector {
     private TesseractInstance tesseract;
-    private ConfigOption<Guild, List<String>> patterns;
+    private ConfigOption<Guild, List<Pattern>> patterns;
 
     protected ImageScamDetector() {
         super("image_scams");
@@ -32,6 +32,7 @@ public class ImageScamDetector extends ScamDetector {
                 .setDisplayName("Patterns")
                 .setDescription("A list of regex patterns to search for in images considered scams.",
                         "Keep in mind that the text of an image is extracted as one continous line.")
+                .map(Pattern::compile, Pattern::pattern)
                 .list()
                 .register();
     }
@@ -47,8 +48,8 @@ public class ImageScamDetector extends ScamDetector {
             var text = extractText(attachment);
             if (text == null) continue;
 
-            for (String pattern : patterns) {
-                var matcher = Pattern.compile(pattern).matcher(text);
+            for (var pattern : patterns) {
+                var matcher = pattern.matcher(text);
                 if (matcher.find()) {
                     return new ScamDetectionResult("Attachment contained text that matches a scam pattern: `" + matcher.group(0) + "`");
                 }
