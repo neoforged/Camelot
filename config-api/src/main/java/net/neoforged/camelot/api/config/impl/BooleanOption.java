@@ -31,6 +31,11 @@ final class BooleanOption implements OptionType<Boolean> {
         return value.toString();
     }
 
+    @Override
+    public boolean requiresIndividualPage() {
+        return false;
+    }
+
     static final class Builder<G> extends OptionBuilderImpl<G, Boolean, Builder<G>> {
         Builder(ConfigManager<G> manager, String path, String id) {
             super(manager, path, id);

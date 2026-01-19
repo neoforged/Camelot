@@ -106,12 +106,23 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                 } else {
                     var option = group.options.get(i);
                     var currentValue = option.get(target);
-                    list.add(Section.of(
-                            Button.primary(buttonId(ev ->
-                                    ev.editMessage(createEditValue(path, page, target, option)).queue()), "View"),
-                            TextDisplay.of(
+                    var description = option.description().split("\n");
+
+                    Button editButton;
+                    if (description.length <= 1 && !option.type().requiresIndividualPage()) {
+                        var rawOption = (ConfigOptionImpl) option;
+                        editButton = rawOption.type().createUpdateButton(currentValue, t -> {
+                            rawOption.set(target, t);
+                            return createEditMessage(target, path, page);
+                        }, this);
+                    } else {
+                        editButton = Button.primary(buttonId(ev ->
+                                ev.editMessage(createEditValue(path, page, target, option)).queue()), "View");
+                    }
+
+                    list.add(Section.of(editButton, TextDisplay.of(
                                     "**" + option.name() + "**\n" +
-                                            "-# " + option.description().split("\n")[0] + "\n" +
+                                            "-# " + description[0] + "\n" +
                                             "Current value: " + (currentValue == null ? "*none*" : ((OptionType) option.type()).format(currentValue))
                             )
                     ));

@@ -80,6 +80,11 @@ final class EntityOption<S extends EntitySet> implements OptionType<S> {
         }).collect(Collectors.joining(", "));
     }
 
+    @Override
+    public boolean requiresIndividualPage() {
+        return false;
+    }
+
     public static final class Builder<G, S extends EntitySet> extends OptionBuilderImpl<G, S, EntitySet.Builder<G, S>> implements EntitySet.Builder<G, S> {
         private final EntitySelectMenu.SelectTarget target;
         private final Function<java.util.Set<Long>, S> collectionCreator;

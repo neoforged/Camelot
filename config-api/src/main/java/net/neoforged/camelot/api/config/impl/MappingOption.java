@@ -50,6 +50,11 @@ final class MappingOption<F, T> implements OptionType<T> {
         return value == null ? elementType.formatFullPageView(null) : elementType.formatFullPageView(mapTo.apply(value));
     }
 
+    @Override
+    public boolean requiresIndividualPage() {
+        return elementType.requiresIndividualPage();
+    }
+
     static final class Builder<G, F, T> extends OptionBuilderImpl<G, T, Builder<G, F, T>> {
         private final OptionBuilderImpl<G, F, ?> elementType;
         private final Function<F, T> mapFrom;

@@ -77,6 +77,11 @@ final class StringOption implements OptionType<String> {
         return value;
     }
 
+    @Override
+    public boolean requiresIndividualPage() {
+        return false;
+    }
+
     static final class Builder<G> extends OptionBuilderImpl<G, String, OptionBuilder.Text<G>> implements OptionBuilder.Text<G> {
         private int minLength = -1, maxLength = -1;
         private boolean multiline;
