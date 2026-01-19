@@ -11,13 +11,12 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.api.config.type.BooleanOption;
-import net.neoforged.camelot.api.config.type.EntityOption;
+import net.neoforged.camelot.api.config.type.Options;
+import net.neoforged.camelot.api.config.type.entity.RoleSet;
 import net.neoforged.camelot.commands.utility.EvalCommand;
 import net.neoforged.camelot.commands.utility.ManageTrickCommand;
 import net.neoforged.camelot.commands.utility.TrickCommand;
@@ -42,21 +41,21 @@ public class TricksModule extends CamelotModule.Base<Tricks> {
     public static final ParameterType<CompilingScript> COMPILING_SCRIPT = ParameterType.get("compilingscript", CompilingScript.class);
 
     private final ConfigOption<Guild, Boolean> messageCommandTricks;
-    public final ConfigOption<Guild, Set<Long>> trickMasterRoles;
+    public final ConfigOption<Guild, RoleSet> trickMasterRoles;
 
     public TricksModule(ModuleProvider.Context context) {
         super(context, Tricks.class);
         var reg = context.guildConfigs();
         reg.setGroupDisplayName("Tricks");
-        messageCommandTricks = reg.option("message_command_tricks", BooleanOption::builder)
-                .setDefaultValue(false)
-                .setDisplayName("Tricks as message commands")
-                .setDescription("Whether tricks can be invoked via message commands (with the prefix).", "If disabled, tricks can only be invoked via the /trick slash command or by promoting them to individual slash commands.")
+        messageCommandTricks = reg.option("message_command_tricks", Options.bool())
+                .defaultValue(false)
+                .displayName("Tricks as message commands")
+                .description("Whether tricks can be invoked via message commands (with the prefix).", "If disabled, tricks can only be invoked via the /trick slash command or by promoting them to individual slash commands.")
                 .register();
 
-        trickMasterRoles = reg.option("trick_masters", EntityOption.builder(EntitySelectMenu.SelectTarget.ROLE))
-                .setDisplayName("Trick Master Roles")
-                .setDescription("Roles which have trick master permissions.", "Trick masters can bypass permission checks and modify any trick. Additionally, they can promote tricks to slash command tricks.")
+        trickMasterRoles = reg.option("trick_masters", Options.roles())
+                .displayName("Trick Master Roles")
+                .description("Roles which have trick master permissions.", "Trick masters can bypass permission checks and modify any trick. Additionally, they can promote tricks to slash command tricks.")
                 .register();
     }
 

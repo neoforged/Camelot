@@ -4,24 +4,23 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectFunction;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.type.entity.ChannelSet;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
  * A simple class used to log messages in a logging channel.
  */
 public class ChannelLogging {
-    private final ConfigOption<Guild, Set<Long>> channels;
+    private final ConfigOption<Guild, ChannelSet> channels;
     private final Consumer<? super Object> successHandler = _ -> {};
     private final Long2ObjectFunction<Consumer<Throwable>> errorHandler;
-
-    private boolean acnowledgedUnknownChannel;
 
     public ChannelLogging(LoggingModule module, LoggingModule.Type type) {
         this.channels = module.channelOptions.get(type);
@@ -65,15 +64,7 @@ public class ChannelLogging {
      * @param guild the guild in which the event happened
      */
     public void withChannel(Guild guild, Consumer<MessageChannel> consumer) {
-        getChannels(guild).forEach(channelId -> {
-            final MessageChannel channel = guild.getJDA().getChannelById(MessageChannel.class, channelId);
-            if (channel != null) {
-                consumer.accept(channel);
-            } else if (!acnowledgedUnknownChannel) {
-                acnowledgedUnknownChannel = true;
-                BotMain.LOGGER.warn("Unknown logging channel with id '{}'", channelId);
-            }
-        });
+        channels.get(guild).get(guild, TextChannel.class).forEach(consumer);
     }
 
     /**

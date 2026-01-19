@@ -1,4 +1,4 @@
-package net.neoforged.camelot.api.config.type;
+package net.neoforged.camelot.api.config.impl;
 
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
@@ -11,6 +11,8 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.api.config.type.OptionBuilder;
+import net.neoforged.camelot.api.config.type.OptionType;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 
@@ -22,14 +24,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public final class ListOption<T> implements OptionType<List<T>> {
+final class ListOption<T> implements OptionType<List<T>> {
     private final OptionType<T> elementType;
     @Nullable
     private final T defaultValue;
+    private final int minElements;
+    private final int maxElements;
 
-    private ListOption(OptionType<T> elementType, @Nullable T defaultValue) {
+    private ListOption(OptionType<T> elementType, @Nullable T defaultValue, int minElements, int maxElements) {
         this.elementType = elementType;
         this.defaultValue = defaultValue;
+        this.minElements = minElements;
+        this.maxElements = maxElements;
     }
 
     @Override
@@ -66,7 +72,7 @@ public final class ListOption<T> implements OptionType<List<T>> {
                                 var immutableList = updateList(currentValue, l -> l.remove(idx));
                                 topLevelMessage.editMessage(updater.apply(immutableList)).queue();
                                 event.editMessage(createListEdit(topLevelMessage, immutableList, updater, components, true)).queue();
-                            }).withLabel("✖").withStyle(ButtonStyle.DANGER) :
+                            }).withLabel("✖").withDisabled(minElements >= 1 && currentValue.size() <= minElements).withStyle(ButtonStyle.DANGER) :
                             elementType.createUpdateButton(currentValue.get(idx), newValue -> {
                                 var immutableList = updateList(currentValue, l -> l.set(idx, newValue));
                                 topLevelMessage.editMessage(updater.apply(immutableList)).queue();
@@ -79,7 +85,7 @@ public final class ListOption<T> implements OptionType<List<T>> {
             var immutableList = updateList(currentValue, l -> l.add(defaultValue));
             topLevelMessage.editMessage(updater.apply(immutableList)).queue();
             addEvent.editMessage(createListEdit(topLevelMessage, immutableList, updater, components, removeMode)).queue();
-        }).withLabel("Add element").withStyle(ButtonStyle.SUCCESS), components.button(toggleRemoveEvent ->
+        }).withLabel("Add element").withStyle(ButtonStyle.SUCCESS).withDisabled(maxElements > 0 && currentValue.size() >= maxElements), components.button(toggleRemoveEvent ->
                 toggleRemoveEvent.editMessage(createListEdit(topLevelMessage, currentValue, updater, components, !removeMode)).queue())
                 .withLabel(removeMode ? "Change to edit mode" : "Change to removal mode")
                 .withStyle(ButtonStyle.SECONDARY)));
@@ -111,18 +117,31 @@ public final class ListOption<T> implements OptionType<List<T>> {
         return "\n" + value.stream().map(el -> "- " + elementType.formatFullPageView(el)).collect(Collectors.joining("\n"));
     }
 
-    public static final class Builder<G, T> extends OptionBuilder<G, List<T>, ListOption.Builder<G, T>> {
-        private final OptionBuilder<G, T, ?> elementType;
+    static final class Builder<G, T> extends OptionBuilderImpl<G, java.util.List<T>, OptionBuilder.List<G, T>> implements OptionBuilder.List<G, T> {
+        private final OptionBuilderImpl<G, T, ?> elementType;
+        private int minElements = -1, maxElements = -1;
 
-        Builder(OptionBuilder<G, T, ?> elementType) {
+        Builder(OptionBuilderImpl<G, T, ?> elementType) {
             super(elementType);
             this.elementType = elementType;
-            setDefaultValue(List.of());
+            defaultValue(java.util.List.of());
         }
 
         @Override
-        protected OptionType<List<T>> createType() {
-            return new ListOption<>(elementType.createType(), elementType.defaultValue);
+        public List<G, T> minElements(int minElements) {
+            this.minElements = minElements;
+            return this;
+        }
+
+        @Override
+        public List<G, T> maxElements(int maxElements) {
+            this.maxElements = maxElements;
+            return this;
+        }
+
+        @Override
+        protected OptionType<java.util.List<T>> createType() {
+            return new ListOption<>(elementType.createType(), elementType.defaultValue, minElements, maxElements);
         }
     }
 }

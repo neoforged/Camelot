@@ -1,4 +1,4 @@
-package net.neoforged.camelot.api.config.type;
+package net.neoforged.camelot.api.config.impl;
 
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.components.label.Label;
@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.api.config.ConfigManager;
+import net.neoforged.camelot.api.config.type.OptionBuilder;
+import net.neoforged.camelot.api.config.type.OptionType;
 import org.json.JSONArray;
 
 import java.util.Arrays;
@@ -16,18 +18,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public final class EnumOption<E extends Enum<E> & EnumOption.HumanReadableEnum> implements OptionType<Set<E>> {
+final class EnumOption<E extends Enum<E>> implements OptionType<Set<E>> {
     private final Class<E> enumType;
     private final int minValues, maxValues;
+    private final Function<E, String> humanReadableName, description;
 
-    private EnumOption(Class<E> enumType, int minValues, int maxValues) {
+    private EnumOption(Class<E> enumType, int minValues, int maxValues, Function<E, String> humanReadableName, Function<E, String> description) {
         this.enumType = enumType;
         this.minValues = minValues;
         this.maxValues = maxValues;
-    }
-
-    public static <G, E extends Enum<E> & HumanReadableEnum> OptionBuilderFactory<G, Set<E>, Builder<G, E>> builder(Class<E> enumType) {
-        return (manager, path, id) -> new Builder<>(manager, path, id, enumType);
+        this.humanReadableName = humanReadableName;
+        this.description = description;
     }
 
     @Override
@@ -55,8 +56,8 @@ public final class EnumOption<E extends Enum<E> & EnumOption.HumanReadableEnum> 
                             .setRequiredRange(minValues, maxValues)
                             .setRequired(minValues > 0)
                             .addOptions(Arrays.stream(enumType.getEnumConstants())
-                                    .map(e -> SelectOption.of(e.humanReadableName(), e.name())
-                                            .withDescription(e.description()))
+                                    .map(e -> SelectOption.of(humanReadableName.apply(e), e.name())
+                                            .withDescription(description.apply(e)))
                                     .toList())
                             .setDefaultValues(currentValue.stream()
                                     .map(E::name)
@@ -68,38 +69,37 @@ public final class EnumOption<E extends Enum<E> & EnumOption.HumanReadableEnum> 
 
     @Override
     public String format(Set<E> value) {
-        return value.isEmpty() ? "*none*" : value.stream().map(HumanReadableEnum::humanReadableName).collect(Collectors.joining(", "));
+        return value.isEmpty() ? "*none*" : value.stream().map(humanReadableName).collect(Collectors.joining(", "));
     }
 
-    public static final class Builder<G, E extends Enum<E> & HumanReadableEnum> extends OptionBuilder<G, Set<E>, Builder<G, E>> {
+    static final class Builder<G, E extends Enum<E>> extends OptionBuilderImpl<G, Set<E>, OptionBuilder.Set<G, E>> implements OptionBuilder.Set<G, E> {
         private final Class<E> type;
-        private int min = 0, max = 25;
+        private final Function<E, String> humanReadableName, description;
+        private int minElements = 0, maxElements = 25;
 
-        private Builder(ConfigManager<G> manager, String path, String id, Class<E> type) {
+        Builder(ConfigManager<G> manager, String path, String id, Class<E> type, Function<E, String> humanReadableName, Function<E, String> description) {
             super(manager, path, id);
             this.type = type;
-            setDefaultValue(Set.of());
+            defaultValue(java.util.Set.of());
+            this.humanReadableName = humanReadableName;
+            this.description = description;
         }
 
-        public Builder<G, E> setMinValues(int min) {
-            this.min = min;
-            return this;
-        }
-
-        public Builder<G, E> setMaxValues(int max) {
-            this.max = max;
+        @Override
+        public Builder<G, E> maxElements(int maxElements) {
+            this.maxElements = maxElements;
             return this;
         }
 
         @Override
-        protected OptionType<Set<E>> createType() {
-            return new EnumOption<>(type, min, max);
+        public Builder<G, E> minElements(int minElements) {
+            this.minElements = minElements;
+            return this;
         }
-    }
 
-    public interface HumanReadableEnum {
-        String humanReadableName();
-
-        String description();
+        @Override
+        protected OptionType<java.util.Set<E>> createType() {
+            return new EnumOption<>(type, minElements, maxElements, humanReadableName, description);
+        }
     }
 }

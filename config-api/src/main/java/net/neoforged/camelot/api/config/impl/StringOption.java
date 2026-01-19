@@ -1,4 +1,4 @@
-package net.neoforged.camelot.api.config.type;
+package net.neoforged.camelot.api.config.impl;
 
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.components.label.Label;
@@ -7,43 +7,30 @@ import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.api.config.ConfigManager;
+import net.neoforged.camelot.api.config.type.OptionBuilder;
+import net.neoforged.camelot.api.config.type.OptionType;
+import net.neoforged.camelot.api.config.type.Validator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
-public final class StringOption implements OptionType<String> {
+final class StringOption implements OptionType<String> {
     private final int minLength, maxLength;
-    private final boolean required, multiline;
+    private final boolean multiline;
     @Nullable
-    private final Function<String, String> validator;
+    private final Validator<String> validator;
 
-    private StringOption(int minLength, int maxLength, boolean required, boolean multiline, @Nullable Function<String, String> validator) {
+    private StringOption(int minLength, int maxLength, boolean multiline, @Nullable Validator<String> validator) {
         this.minLength = minLength;
         this.maxLength = maxLength;
-        this.required = required;
         this.multiline = multiline;
         this.validator = validator;
     }
 
-    public static <G> Builder<G> builder(ConfigManager<G> manager, String path, String id) {
+    static <G> Builder<G> builder(ConfigManager<G> manager, String path, String id) {
         return new Builder<>(manager, path, id);
-    }
-
-    public static <G> OptionBuilder.Terminated<G, Pattern> regex(ConfigManager<G> manager, String path, String id) {
-        return builder(manager, path, id)
-                .validate(in -> {
-                    try {
-                        Pattern.compile(in);
-                        return null;
-                    } catch (PatternSyntaxException ex) {
-                        return ex.getMessage();
-                    }
-                })
-                .map(Pattern::compile, Pattern::pattern, in -> "`" + in.pattern() + "`");
     }
 
     @Override
@@ -64,7 +51,7 @@ public final class StringOption implements OptionType<String> {
                         .filter(Predicate.not(String::isBlank)).orElse(null);
 
                 if (newValue != null && validator != null) {
-                    var validationResult = validator.apply(newValue);
+                    var validationResult = validator.validate(newValue);
                     if (validationResult != null) {
                         modalEvent.reply("Invalid input `" + newValue + "`: " + validationResult)
                                 .setEphemeral(true).queue();
@@ -78,7 +65,7 @@ public final class StringOption implements OptionType<String> {
             modal.addComponents(Label.of("New value",
                     TextInput.create("value", multiline ? TextInputStyle.PARAGRAPH : TextInputStyle.SHORT)
                             .setValue(currentValue)
-                            .setRequired(required)
+                            .setRequired(false)
                             .setRequiredRange(minLength, maxLength)
                             .build()));
             event.replyModal(modal.build()).queue();
@@ -90,52 +77,46 @@ public final class StringOption implements OptionType<String> {
         return value;
     }
 
-    public static final class Builder<G> extends OptionBuilder<G, String, Builder<G>> {
+    static final class Builder<G> extends OptionBuilderImpl<G, String, OptionBuilder.Text<G>> implements OptionBuilder.Text<G> {
         private int minLength = -1, maxLength = -1;
-        private boolean required, multiline;
-        private Function<String, String> validator;
+        private boolean multiline;
+        private Validator<String> validator;
 
         private Builder(ConfigManager<G> manager, String path, String id) {
             super(manager, path, id);
         }
 
-        public Builder<G> setMinLength(int minLength) {
+        @Override
+        public Text<G> minLength(int minLength) {
             this.minLength = minLength;
-            return this;
+            return null;
         }
 
-        public Builder<G> setMaxLength(int maxLength) {
+        @Override
+        public Text<G> maxLength(int maxLength) {
             this.maxLength = maxLength;
             return this;
         }
 
-        public Builder<G> required() {
-            this.required = true;
-            return this;
-        }
-
-        public Builder<G> multiline() {
+        @Override
+        public Text<G> multiline() {
             this.multiline = true;
             return this;
         }
 
-        /**
-         * Configure a function used to validate user input for this option.
-         * <p>
-         * Return {@code null} in the validator function for a valid input. Otherwise, the returned
-         * string represents the error message.
-         *
-         * @param validator the function used to validate the input
-         * @return the option builder
-         */
-        public Builder<G> validate(Function<String, String> validator) {
-            this.validator = validator;
+        @Override
+        public Builder<G> validate(Validator<String> validator) {
+            if (this.validator == null) {
+                this.validator = validator;
+            } else {
+                this.validator = this.validator.or(validator);
+            }
             return this;
         }
 
         @Override
         protected OptionType<String> createType() {
-            return new StringOption(minLength, maxLength, required, multiline, validator);
+            return new StringOption(minLength, maxLength, multiline, validator);
         }
     }
 }

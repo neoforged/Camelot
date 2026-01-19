@@ -1,53 +1,23 @@
 package net.neoforged.camelot.api.config.type;
 
-import net.neoforged.camelot.api.config.ConfigManager;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.api.config.impl.ConfigManagerImpl;
-import net.neoforged.camelot.api.config.impl.ConfigOptionImpl;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
- * Base builder used to create {@link ConfigOption ConfigOptions}.
+ * Base interface used to create {@link ConfigOption ConfigOptions}.
  *
  * @param <G> the type of objects that config values are attached to
  * @param <T> the type of the config values
  * @param <S> a recursive reference to the builder type, for chaining purposes
+ * @see Options
  * @see OptionRegistrar#option(String, OptionBuilderFactory)
  */
-public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
-    protected final ConfigManager<G> manager;
-    protected final String path, id;
-
-    protected String name, description = "*No description provided*";
-
-    protected T defaultValue;
-
-    protected OptionBuilder(ConfigManager<G> manager, String path, String id) {
-        this.manager = manager;
-        this.path = path;
-        this.id = id;
-
-        this.name = id;
-    }
-
-    @SuppressWarnings("CopyConstructorMissesField")
-    // the defaultValue field cannot simply be copied as the parent may be of a different type...
-    protected OptionBuilder(OptionBuilder<G, ?, ?> parentBuilder) {
-        this(parentBuilder.manager, parentBuilder.path, parentBuilder.id);
-        this.description = parentBuilder.description;
-        this.name = parentBuilder.name;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected S self() {
-        return (S) this;
-    }
-
-    protected abstract OptionType<T> createType();
-
+public interface OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
     /**
      * Change the display name of the configuration option.
      * By default, the display name is the ID (within the group) of the configuration option.
@@ -57,10 +27,7 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      * @param name the new display name
      * @return the builder, for chaining purposes
      */
-    public S setDisplayName(String name) {
-        this.name = Objects.requireNonNull(name, "option display name");
-        return self();
-    }
+    S displayName(String name);
 
     /**
      * Change the description of the configuration option.
@@ -72,10 +39,7 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      * @param description the new description. Each element in the vararg is a line
      * @return the builder, for chaining purposes
      */
-    public S setDescription(String... description) {
-        this.description = String.join("\n", description);
-        return self();
-    }
+    S description(String... description);
 
     /**
      * Change the default value of the configuration option.
@@ -84,16 +48,13 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      * does not have the configuration option explicitly modified.
      * <p>
      * The default default value might be {@code null} or another value, depending on the specific
-     * option type (e.g. {@code false} for {@linkplain BooleanOption}). Some option types
+     * option type (e.g. {@code false} for {@linkplain Options#bool() the boolean option}). Some option types
      * might not allow you to set the default value to {@code null}.
      *
      * @param defaultValue the new default value of this option
      * @return the builder, for chaining purposes
      */
-    public S setDefaultValue(T defaultValue) {
-        this.defaultValue = defaultValue;
-        return self();
-    }
+    S defaultValue(T defaultValue);
 
     /**
      * Create an option builder that wraps this option into a list.
@@ -102,9 +63,7 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      *
      * @return the builder for this option as a list
      */
-    public ListOption.Builder<G, T> list() {
-        return new ListOption.Builder<>(this);
-    }
+    List<G, T> list();
 
     /**
      * Create an option builder that maps the value produced by this option
@@ -112,12 +71,12 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      * <p>
      * The path, id, display name, description and default value of this option builder will be copied over into the mapped one.
      *
-     * @param from      a function used to convert from this builder's type to the target type
-     * @param to        a function used to convert from the target type to this builder's type
-     * @param <TO>      the type of the object to map to
+     * @param from a function used to convert from this builder's type to the target type
+     * @param to   a function used to convert from the target type to this builder's type
+     * @param <TO> the type of the object to map to
      * @return the builder for the mapped option
      */
-    public <TO> Terminated<G, TO> map(Function<T, TO> from, Function<TO, T> to) {
+    default <TO> OptionBuilder<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to) {
         return map(from, to, null);
     }
 
@@ -134,28 +93,143 @@ public abstract class OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
      * @param <TO>      the type of the object to map to
      * @return the builder for the mapped option
      */
-    public <TO> Terminated<G, TO> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter) {
-        return new MappingOption.Builder<>(this, from, to, formatter);
-    }
+    <TO> OptionBuilder<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter);
 
     /**
      * Create the configuration option according to this builder's parameters and register it.
      *
      * @return the registered config option
      */
-    public ConfigOption<G, T> register() {
-        var man = (ConfigManagerImpl<G>) manager;
-        var cfg = new ConfigOptionImpl<>(man, name, description, path.isBlank() ? id : path + "." + id, createType(), defaultValue);
-        man.register(path, cfg);
-        return cfg;
+    ConfigOption<G, T> register();
+
+    /**
+     * A {@link OptionBuilder} for values that can be validated.
+     */
+    interface Validatable<G, T, S extends Validatable<G, T, S>> extends OptionBuilder<G, T, S> {
+        /**
+         * Add a validator that will be used to check whether user inputs are valid for this option.
+         * <p>
+         * If the given {@code validator} returns {@code false}, the input will be rejected and the
+         * {@code errorMessage} will be displayed to the user.
+         * <p>
+         * <b>Note:</b> this method is additive.
+         *
+         * @param validator    the validator that checks user inputs
+         * @param errorMessage the message to display if the validator rejects the input
+         * @return the builder, for chaining purposes
+         */
+        default S validate(Predicate<T> validator, String errorMessage) {
+            return validate(value -> validator.test(value) ? null : errorMessage);
+        }
+
+        /**
+         * Add a validator that will be used to check whether user inputs are valid for this option.
+         * <p>
+         * Return {@code null} in the validator function for a valid input. Otherwise, the returned
+         * string represents the error message.
+         * <p>
+         * <b>Note:</b> this method is additive.
+         *
+         * @param validator the validator that checks user inputs
+         * @return the builder, for chaining purposes
+         */
+        S validate(Validator<T> validator);
     }
 
     /**
-     * A {@link OptionBuilder} that should be returned by mapping functions without any further configuration options (like {@link #map(Function, Function, Function)}).
+     * A {@link OptionBuilder} for text (string).
      */
-    public abstract static class Terminated<G, T> extends OptionBuilder<G, T, Terminated<G, T>> {
-        protected Terminated(OptionBuilder<G, ?, ?> parentBuilder) {
-            super(parentBuilder);
+    interface Text<G> extends Validatable<G, String, Text<G>> {
+        /**
+         * Restrict the minimum length of the value of this option.
+         *
+         * @param minLength the minimum length of this option's values
+         * @return the builder, for chaining purposes
+         */
+        Text<G> minLength(int minLength);
+
+        /**
+         * Restrict the maximum length of the value of this option.
+         *
+         * @param maxLength the maximum length of this option's values
+         * @return the builder, for chaining purposes
+         */
+        Text<G> maxLength(int maxLength);
+
+        /**
+         * When configured as multiline, this option will prompt a {@link TextInputStyle#PARAGRAPH multiline}
+         * text input box in the configuration modal.
+         * <p>
+         * <b>Note</b>: by default, text options are configured as {@linkplain TextInputStyle#SHORT single-line}.
+         *
+         * @return the builder, for chaining purposes
+         */
+        Text<G> multiline();
+    }
+
+    /**
+     * A {@link OptionBuilder} for collections, adding a few common methods.
+     */
+    interface Collection<G, T, C extends java.util.Collection<T>, S extends Collection<G, T, C, S>> extends OptionBuilder<G, C, S> {
+        /**
+         * Restrict the maximum amount of elements values of this option can contain.
+         * <p>
+         * For instance, if this is set to {@code 25}, users may not add more than 25 elements to the collection,
+         * using the configuration menu.
+         *
+         * @param maxElements the maximum amount of elements values of this option can contain
+         * @return the builder, for chaining purposes
+         */
+        S maxElements(int maxElements);
+
+        /**
+         * Restrict the minimum amount of elements values of this option can contain.
+         * <p>
+         * For instance, if this is set to {@code 4}, users may not remove elements in such a way that
+         * less than 4 elements would remain.
+         * <p>
+         * <b>Note</b>: for this to be used effectively, you have to {@link #defaultValue(Object) set the default value}
+         * in such a way that at least the minimum amount of elements are present by default.
+         *
+         * @param minElements the maximum amount of elements values of this option can contain
+         * @return the builder, for chaining purposes
+         */
+        S minElements(int minElements);
+
+        /**
+         * Restrict the amount of elements this option can have to just one, and
+         * return an option that either returns that sole element or {@code null} if the collection is empty.
+         *
+         * @return the builder, for chaining purposes
+         */
+        OptionBuilder<G, T, ?> justOne();
+    }
+
+    /**
+     * A {@link OptionBuilder} for lists.
+     *
+     * @see OptionBuilder#list()
+     */
+    interface List<G, T> extends Collection<G, T, java.util.List<T>, List<G, T>> {
+        @Override
+        default OptionBuilder<G, T, ?> justOne() {
+            return maxElements(1).map(
+                    l -> l.isEmpty() ? null : l.getFirst(),
+                    el -> el == null ? java.util.List.of() : java.util.List.of(el)
+            );
+        }
+    }
+
+    /**
+     * A {@link OptionBuilder} for sets.
+     */
+    interface Set<G, T> extends Collection<G, T, java.util.Set<T>, Set<G, T>> {
+        @Override
+        default OptionBuilder<G, T, ?> justOne() {
+            return maxElements(1).map(
+                    l -> l.isEmpty() ? null : l.iterator().next(),
+                    el -> el == null ? java.util.Set.of() : java.util.Set.of(el)
+            );
         }
     }
 }

@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.api.config.type.BooleanOption;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.config.module.MessageReferencing;
 import net.neoforged.camelot.module.api.CamelotModule;
 
@@ -20,10 +20,10 @@ public class MessageReferencingModule extends CamelotModule.Base<MessageReferenc
         super(context, MessageReferencing.class);
         enabled = context.guildConfigs()
                 .setGroupDisplayName("Message Referencing")
-                .option("enabled", BooleanOption::builder)
-                .setDefaultValue(true)
-                .setDisplayName("Enabled")
-                .setDescription(
+                .option("enabled", Options.bool())
+                .defaultValue(true)
+                .displayName("Enabled")
+                .description(
                         """
                         Whether message referencing is enabled in this guild.
                         When enabled, messages which either:

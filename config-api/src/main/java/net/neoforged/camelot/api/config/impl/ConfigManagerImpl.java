@@ -231,7 +231,7 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
         @Override
         public OptionRegistrar<G> pushGroup(String path) {
             var newPath = new ArrayList<>(this.path);
-            newPath.add(path);
+            newPath.addAll(Arrays.asList(path.split("\\.")));
             return new Registrar(newPath);
         }
 

@@ -39,7 +39,7 @@ import net.neoforged.camelot.Database;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.api.config.type.EntityOption;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.config.module.BanAppeals;
 import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.BanAppeal;
@@ -99,7 +99,7 @@ import static j2html.TagCreator.*;
 @RegisterCamelotModule
 public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
-    private final ConfigOption<Guild, Set<Long>> appealsChannel;
+    private final ConfigOption<Guild, Long> appealsChannel;
 
     public BanAppealModule(ModuleProvider.Context context) {
         super(context, BanAppeals.class);
@@ -112,10 +112,10 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         var reg = context.guildConfigs();
         reg.setGroupDisplayName("Ban Appeals");
-        appealsChannel = reg.option("appeals_channel", EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
-                .setMaxValues(1)
-                .setDisplayName("Appeals channel")
-                .setDescription("The channel ban appeals are sent to.", "If left unconfigured, ban appeals are disabled for this server.")
+        appealsChannel = reg.option("appeals_channel", Options.entities(EntitySelectMenu.SelectTarget.CHANNEL))
+                .justOne()
+                .displayName("Appeals channel")
+                .description("The channel ban appeals are sent to.", "If left unconfigured, ban appeals are disabled for this server.")
                 .register();
     }
 
@@ -180,7 +180,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         final String guildId = context.pathParam("serverId");
         final Guild guild = BotMain.get().getGuildById(guildId);
-        if (guild == null || appealsChannel.get(guild).isEmpty()) {
+        if (guild == null || appealsChannel.get(guild) == null) {
             context.result(new JSONObject().put("error", "Unknown server").toString())
                     .status(HttpStatus.NOT_FOUND);
             return null;
@@ -349,7 +349,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
             embed.addField("Feedback", payload.getString("feedback"), false);
         }
 
-        final ThreadChannel thread = BotMain.get().getChannelById(MessageChannel.class, appealsChannel.get(guild).iterator().next())
+        final ThreadChannel thread = BotMain.get().getChannelById(MessageChannel.class, appealsChannel.get(guild))
                 .sendMessageEmbeds(embed.build())
                 .addComponents(ActionRow.of(
                         Button.success("ban-appeals/approve/" + selfId, "Approve"),
@@ -544,7 +544,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         final String guildId = context.pathParam("serverId");
         final Guild guild = BotMain.get().getGuildById(guildId);
-        if (guild == null || appealsChannel.get(guild).isEmpty()) {
+        if (guild == null || appealsChannel.get(guild) == null) {
             context.html(WebServer.tag()
                     .withTitle(title("Unknown server"))
                     .withContent(div(h2("Unknown server!")).withClass("px-4 py-5 my-5 text-center"))
@@ -724,7 +724,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
     }
 
     private RestAction<ThreadChannel> getAppealThread(Guild guild, BanAppeal appeal) {
-        return guild.getChannelById(GuildMessageChannel.class, appealsChannel.get(guild).iterator().next()).retrieveMessageById(appeal.threadId())
+        return guild.getChannelById(GuildMessageChannel.class, appealsChannel.get(guild)).retrieveMessageById(appeal.threadId())
                 .map(Message::getStartedThread);
     }
 

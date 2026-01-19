@@ -1,7 +1,8 @@
-package net.neoforged.camelot.api.config.type;
+package net.neoforged.camelot.api.config.impl;
 
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.api.config.type.OptionType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
@@ -49,20 +50,20 @@ final class MappingOption<F, T> implements OptionType<T> {
         return value == null ? elementType.formatFullPageView(null) : elementType.formatFullPageView(mapTo.apply(value));
     }
 
-    static final class Builder<G, F, T> extends OptionBuilder.Terminated<G, T> {
-        private final OptionBuilder<G, F, ?> elementType;
+    static final class Builder<G, F, T> extends OptionBuilderImpl<G, T, Builder<G, F, T>> {
+        private final OptionBuilderImpl<G, F, ?> elementType;
         private final Function<F, T> mapFrom;
         private final Function<T, F> mapTo;
         @Nullable
         private final Function<T, String> formatter;
 
-        Builder(OptionBuilder<G, F, ?> elementType, Function<F, T> mapFrom, Function<T, F> mapTo, @Nullable Function<T, String> formatter) {
+        Builder(OptionBuilderImpl<G, F, ?> elementType, Function<F, T> mapFrom, Function<T, F> mapTo, @Nullable Function<T, String> formatter) {
             super(elementType);
             this.elementType = elementType;
             this.mapFrom = mapFrom;
             this.mapTo = mapTo;
             this.formatter = formatter;
-            setDefaultValue(elementType.defaultValue == null ? null : mapFrom.apply(elementType.defaultValue));
+            defaultValue(elementType.defaultValue == null ? null : mapFrom.apply(elementType.defaultValue));
         }
 
         @Override

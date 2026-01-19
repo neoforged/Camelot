@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.OptionRegistrar;
-import net.neoforged.camelot.api.config.type.StringOption;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.util.ImageUtils;
 import net.sourceforge.tess4j.ITessAPI;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +28,9 @@ public class ImageScamDetector extends ScamDetector {
         registrar.setGroupDisplayName("Image Scams");
         registrar.setGroupDescription("Detect scams in images using OCR");
 
-        patterns = registrar.option("patterns", StringOption::regex)
-                .setDisplayName("Patterns")
-                .setDescription("A list of regex patterns to search for in images considered scams.",
+        patterns = registrar.option("patterns", Options.regex())
+                .displayName("Patterns")
+                .description("A list of regex patterns to search for in images considered scams.",
                         "Keep in mind that the text of an image is extracted as one continous line.")
                 .list()
                 .register();

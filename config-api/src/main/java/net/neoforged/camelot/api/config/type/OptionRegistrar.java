@@ -7,21 +7,21 @@ import net.neoforged.camelot.api.config.ConfigManager;
  * <p>
  * Example:
  * {@snippet :
- * ConfigManager<G> manager;
+ * import net.neoforged.camelot.api.config.ConfigManager;ConfigManager<G> manager;
  *
  * OptionRegistrar<G> rootRegistrar = manager.registrar();
- * var topLevelOption = rootRegistrar.option("top_level", StringOption::builder)
- *     .setDisplayName("Root option")
- *     .setDescription("This value controls something")
- *     .setMinLength(100)
- *     .setDefaultValue("default")
+ * var topLevelOption = rootRegistrar.option("top_level", Options.string())
+ *     .displayName("Root option")
+ *     .description("This value controls something")
+ *     .minLength(100)
+ *     .defaultValue("default")
  *     .register();
  *
  * // Register config values under group1 > group2 (named "Nested Group")
  * var subRegistrar = rootRegistrar.pushGroup("group1").pushGroup("group2");
  * subRegistrar.setGroupDisplayName("Nested group");
- * var subOption = rootRegistrar.option("sub", BooleanOption::builder)
- *     .setDisplayName("Option in nested group")
+ * var subOption = rootRegistrar.option("sub", Options.bool())
+ *     .displayName("Option in nested group")
  *     .register();
  *}
  */
@@ -59,11 +59,12 @@ public interface OptionRegistrar<G> {
      *
      * @param id      the ID of the configuration option, which will be used when storing and retrieving the config values
      *                from the database. This ID does not include the group
-     * @param factory a factory that creates the builder (generally a method reference). For instance, {@linkplain StringOption#builder(ConfigManager, String, String) StringOption::builder}
-     *                or {@linkplain BooleanOption#builder(ConfigManager, String, String) BooleanOption::builder}
+     * @param factory a factory that creates the builder. For instance, {@linkplain Options#string() Options.string()}
+     *                or {@linkplain Options#bool() Options.bool()}
      * @param <T>     the type of the configuration option
      * @param <B>     the builder type
      * @return the builder. Call {@link OptionBuilder#register()} after you finish configuring it to create the option
+     * @see Options
      */
     <T, B extends OptionBuilder<G, T, B>> B option(String id, OptionBuilderFactory<G, T, B> factory);
 

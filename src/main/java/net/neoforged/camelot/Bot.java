@@ -12,7 +12,7 @@ import net.neoforged.camelot.api.config.ConfigManager;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.storage.ConfigStorage;
 import net.neoforged.camelot.api.config.type.OptionRegistrar;
-import net.neoforged.camelot.api.config.type.StringOption;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.config.CamelotConfig;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
@@ -68,11 +68,11 @@ public class Bot {
         var guildConfigs = ConfigManager.create(configStorage, Guild::getIdLong);
         this.commandPrefix = guildConfigs
                 .registrar()
-                .option("command_prefix", StringOption::builder)
-                .setDisplayName("Command prefix")
-                .setDescription("The command prefix the bot will respond to in this server.", "If not set, the bot will not reply to message commands in this server.")
-                .setDefaultValue("!")
-                .setMaxLength(3) // Technically not required to be under a length but this is just a sanity check
+                .option("command_prefix", Options.string())
+                .displayName("Command prefix")
+                .description("The command prefix the bot will respond to in this server.", "If not set, the bot will not reply to message commands in this server.")
+                .defaultValue("!")
+                .maxLength(3) // Technically not required to be under a length but this is just a sanity check
                 .register();
 
         var moduleRegistrar = guildConfigs.registrar()

@@ -7,7 +7,8 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.api.config.type.EntityOption;
+import net.neoforged.camelot.api.config.type.Options;
+import net.neoforged.camelot.api.config.type.entity.ChannelSet;
 import net.neoforged.camelot.config.module.Logging;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.services.ModerationRecorderService;
@@ -16,14 +17,13 @@ import net.neoforged.camelot.services.ServiceRegistrar;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The module controlling logging.
  */
 @RegisterCamelotModule
 public class LoggingModule extends CamelotModule.Base<Logging> {
-    public final Map<Type, ConfigOption<Guild, Set<Long>>> channelOptions = new EnumMap<>(Type.class);
+    public final Map<Type, ConfigOption<Guild, ChannelSet>> channelOptions = new EnumMap<>(Type.class);
 
     public LoggingModule(ModuleProvider.Context context) {
         super(context, Logging.class);
@@ -32,9 +32,9 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
         registrar.setGroupDisplayName("Logging");
 
         for (Type type : Type.values()) {
-            channelOptions.put(type, registrar.option("channel_" + type.name().toLowerCase(Locale.ROOT), EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
-                    .setDisplayName(type.displayName + " Logging Channels")
-                    .setDescription(type.emoji.getFormatted() + " The channels in which to log " + type.description)
+            channelOptions.put(type, registrar.option("channel_" + type.name().toLowerCase(Locale.ROOT), Options.channels())
+                    .displayName(type.displayName + " Logging Channels")
+                    .description(type.emoji.getFormatted() + " The channels in which to log " + type.description)
                     .register());
         }
     }

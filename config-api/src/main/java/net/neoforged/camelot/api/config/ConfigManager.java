@@ -37,15 +37,17 @@ public interface ConfigManager<G> extends EventListener {
      * <p>
      * Example usage:
      * {@snippet :
-     * import net.neoforged.camelot.api.config.type.StringOption;
+     * import net.dv8tion.jda.api.entities.Guild;
+     * import net.neoforged.camelot.api.config.type.OptionRegistrar;
+     * import net.neoforged.camelot.api.config.type.Options;
      *
      * ConfigManager<Guild> manager;
      * OptionRegistrar<Guild> registrar = manager.registrar();
-     * var option = registrar.option("some_option", StringOption::builder)
-     *     .setDisplayName("Some option")
-     *     .setDescription("This value controls something")
-     *     .setMinLength(100)
-     *     .setDefaultValue("default")
+     * var option = registrar.option("some_option", Options.string())
+     *     .displayName("Some option")
+     *     .description("This value controls something")
+     *     .minLength(100)
+     *     .defaultValue("default")
      *     .register();
      *}
      */

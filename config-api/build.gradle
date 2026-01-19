@@ -8,4 +8,5 @@ dependencies {
     api(libs.jda)
     api(libs.bundles.database)
     implementation(libs.json)
+    compileOnly(libs.annotations)
 }

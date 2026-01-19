@@ -17,8 +17,8 @@ import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
-import net.neoforged.camelot.api.config.type.BooleanOption;
-import net.neoforged.camelot.api.config.type.EntityOption;
+import net.neoforged.camelot.api.config.type.Options;
+import net.neoforged.camelot.api.config.type.entity.EntitySet;
 import net.neoforged.camelot.config.module.ScamDetection;
 import net.neoforged.camelot.module.api.CamelotModule;
 
@@ -26,13 +26,12 @@ import java.awt.Color;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Set;
 
 @RegisterCamelotModule
 public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
     private static final String BUTTON_PREFIX = "scam-detection/";
 
-    private final ConfigOption<Guild, Set<Long>> loggingChannels;
+    private final ConfigOption<Guild, EntitySet> loggingChannels;
     private final List<ScamDetector> detectors;
 
     public ScamDetectionModule(ModuleProvider.Context context) {
@@ -42,18 +41,18 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
         registrar.setGroupDisplayName("Scam Detection");
 
         this.loggingChannels = registrar
-                .option("logging_channels", EntityOption.builder(EntitySelectMenu.SelectTarget.CHANNEL))
-                .setDisplayName("Logging Channels")
-                .setDescription("The channel in which to log detected scams")
+                .option("logging_channels", Options.entities(EntitySelectMenu.SelectTarget.CHANNEL))
+                .displayName("Logging Channels")
+                .description("The channel in which to log detected scams")
                 .register();
 
         this.detectors = List.of(new ImageScamDetector());
 
         for (ScamDetector detector : detectors) {
             var group = registrar.pushGroup(detector.id);
-            detector.enabled = group.option("enabled", BooleanOption::builder)
-                    .setDisplayName("Enabled")
-                    .setDescription("Whether this scam detector is enabled")
+            detector.enabled = group.option("enabled", Options.bool())
+                    .displayName("Enabled")
+                    .description("Whether this scam detector is enabled")
                     .register();
             detector.registerOptions(group);
         }
@@ -65,8 +64,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
             switch (gevent) {
                 case MessageReceivedEvent event -> handleMessage(event);
                 case ButtonInteractionEvent event -> handleButton(event);
-                default -> {
-                }
+                default -> {}
             }
         });
     }
