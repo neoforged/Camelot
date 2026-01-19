@@ -1,9 +1,12 @@
 package net.neoforged.camelot.module;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
+import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.commands.moderation.BanCommand;
 import net.neoforged.camelot.commands.moderation.KickCommand;
 import net.neoforged.camelot.commands.moderation.ModLogsCommand;
@@ -24,8 +27,19 @@ import net.neoforged.camelot.services.ServiceRegistrar;
  */
 @RegisterCamelotModule
 public class ModerationModule extends CamelotModule.Base<Moderation> {
+    private final ConfigOption<Guild, Boolean> viewOwnModlogs;
+
     public ModerationModule(ModuleProvider.Context context) {
         super(context, Moderation.class);
+
+        var registrar = context.guildConfigs();
+        registrar.setGroupDisplayName("Moderation");
+
+        viewOwnModlogs = registrar.option("view_own_modlogs", Options.bool())
+                .displayName("View own modlogs")
+                .description("Whether users should be able to see their own modlogs using the `/modlogs` command")
+                .defaultValue(true)
+                .register();
     }
 
     @Override
@@ -41,7 +55,7 @@ public class ModerationModule extends CamelotModule.Base<Moderation> {
     @Override
     public void registerCommands(CommandClientBuilder builder) {
         builder.addSlashCommands(
-                new ModLogsCommand(BotMain.BUTTON_MANAGER),
+                new ModLogsCommand(BotMain.BUTTON_MANAGER, viewOwnModlogs::get),
                 new NoteCommand(bot()), new WarnCommand(bot()),
                 new MuteCommand(bot()), new UnmuteCommand(bot()),
                 new KickCommand(bot()), new PurgeCommand(),
