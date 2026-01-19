@@ -92,11 +92,12 @@ public class CustomPingListener implements EventListener {
         if (threadId == null) {
             return createNewThread(jda, guildId, memberId);
         } else {
+            final long pingsChannelId = Objects.requireNonNullElse(BotMain.getModule(CustomPingsModule.class).pingThreadsChannel.get(jda.getGuildById(guildId)), 0L);
             final ThreadChannel channel = jda.getThreadChannelById(threadId);
-            if (channel != null) {
+            if (channel != null && channel.getParentChannel().getIdLong() == pingsChannelId) {
                 return singleton(channel);
             } else {
-                var pingsChannel = jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getPingThreadsChannel(guildId)).longValue());
+                var pingsChannel = jda.getChannelById(IThreadContainer.class, pingsChannelId);
                 //noinspection rawtypes, unchecked this is so dirty
                 return pingsChannel.retrieveArchivedPrivateJoinedThreadChannels()
                         .flatMap(threadChannels -> threadChannels.stream().filter(c -> c.getIdLong() == threadId)
@@ -142,7 +143,7 @@ public class CustomPingListener implements EventListener {
     }
 
     private static RestAction<ThreadChannel> createNewThread(JDA jda, long guildId, long memberId) {
-        return Objects.requireNonNull(jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).db().withExtension(PingsDAO.class, db -> db.getPingThreadsChannel(guildId)).longValue()))
+        return Objects.requireNonNull(jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).pingThreadsChannel.get(jda.getGuildById(guildId))))
                 .createThreadChannel("Custom ping notifications of " + memberId, true)
                 .setInvitable(false)
                 .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)

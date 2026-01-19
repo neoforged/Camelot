@@ -80,6 +80,11 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
         return description;
     }
 
+    @Nullable
+    public T defaultValue() {
+        return defaultValue;
+    }
+
     @Override
     public OptionType<T> type() {
         return type;

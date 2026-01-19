@@ -19,6 +19,7 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,7 +58,7 @@ final class ListOption<T> implements OptionType<List<T>> {
     @Override
     public Button createUpdateButton(List<T> currentValue, Function<List<T>, MessageEditData> updater, ComponentCreator components) {
         return components.button(event ->
-                        event.reply(MessageCreateData.fromEditData(createListEdit(event.getMessage(), currentValue, updater, components, false)))
+                        event.reply(MessageCreateData.fromEditData(createListEdit(event.getMessage(), Objects.requireNonNullElse(currentValue, List.of()), updater, components, false)))
                                 .setEphemeral(true).queue())
                 .withLabel("Modify");
     }

@@ -1,23 +1,21 @@
 package net.neoforged.camelot.module.custompings;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import com.jagrosh.jdautilities.command.SlashCommand;
-import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.Guild;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
+import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.config.module.CustomPings;
 import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.custompings.db.PingsCallbacks;
 import net.neoforged.camelot.module.custompings.db.PingsDAO;
 
-import java.util.Objects;
-
 @RegisterCamelotModule
 public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
+    final ConfigOption<Guild, Long> pingThreadsChannel;
 
     public CustomPingsModule(ModuleProvider.Context context) {
         super(context, CustomPings.class);
@@ -44,30 +42,15 @@ public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
                     CustomPingListener.requestRefresh();
                 }));
 
-        accept(BuiltInModule.CONFIGURATION_COMMANDS, builder -> builder
-                .accept(new SlashCommand() {
-                    {
-                        name = "custom-pings-threads-channel";
-                        help = "Sets the channel for custom pings threads in this guild to this channel";
-                    }
-                    @Override
-                    protected void execute(SlashCommandEvent event) {
-                        if (event.getChannel().getType() != ChannelType.TEXT) {
-                            event.reply("This command can only be used in text channels.").setEphemeral(true).queue();
-                            return;
-                        }
-                        if (!event.getGuild().getSelfMember().hasPermission(event.getTextChannel(), Permission.CREATE_PRIVATE_THREADS)) {
-                            event.reply("I cannot create private threads in this channel!").setEphemeral(true).queue();
-                            return;
-                        }
+        var registrar = context.guildConfigs();
+        registrar.setGroupDisplayName("Custom Pings");
 
-                        db().useExtension(PingsDAO.class, db -> {
-                            var old = Objects.requireNonNullElse(db.getPingThreadsChannel(event.getGuild().getIdLong()), 0L);
-                            db.setPingThreadsChannel(event.getGuild().getIdLong(), event.getChannel().getIdLong());
-                            event.reply("Set ping threads channel to this channel!" + (old != 0 ? " (was <#" + old + ">)" : "")).queue();
-                        });
-                    }
-                }));
+        pingThreadsChannel = registrar.option("ping_threads_channel", Options.channels())
+                .justOne()
+                .displayName("Ping threads channel")
+                .description("The channel in which private threads will be created when a user cannot be DM'd by the bot to receive their custom pings")
+                .register();
+        System.out.println("");
     }
 
     @Override

@@ -14,6 +14,7 @@ import org.json.JSONArray;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -59,7 +60,7 @@ final class EntityOption<S extends EntitySet> implements OptionType<S> {
                     EntitySelectMenu.create("values", target)
                             .setRequiredRange(minValues, maxValues)
                             .setRequired(minValues > 0)
-                            .setDefaultValues(currentValue.stream()
+                            .setDefaultValues(Objects.requireNonNullElse(currentValue, Set.<Long>of()).stream()
                                     .map(id -> switch (target) {
                                         case CHANNEL -> EntitySelectMenu.DefaultValue.channel(id);
                                         case ROLE -> EntitySelectMenu.DefaultValue.role(id);

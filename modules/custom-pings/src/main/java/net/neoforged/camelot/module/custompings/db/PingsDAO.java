@@ -92,17 +92,4 @@ public interface PingsDAO extends Transactional<PingsDAO> {
                     return previous;
                 });
     }
-
-    /**
-     * Sets the channel ping threads will be created in for the guild.
-     */
-    @SqlUpdate("insert or replace into ping_threads_channels(guild, channel) values (?, ?)")
-    void setPingThreadsChannel(long guild, long channel);
-
-    /**
-     * {@return the channel ping threads will be created in for the guild}
-     */
-    @Nullable
-    @SqlQuery("select channel from ping_threads_channels where guild = ?")
-    Long getPingThreadsChannel(long guild);
 }

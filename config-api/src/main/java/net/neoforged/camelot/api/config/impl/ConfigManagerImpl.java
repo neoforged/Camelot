@@ -163,6 +163,7 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                                 TextDisplay.of(
                                         "## Configure `" + option.name() + "`\n"
                                                 + option.description() + "\n"
+                                                + "\n**Default value**: " + (option.defaultValue() == null ? "*none*" : option.type().format(option.defaultValue()))
                                                 + "\n__Current value__: " + (current == null ? "*none*" : option.type().formatFullPageView(current))
                                 ),
                                 ActionRow.of(
