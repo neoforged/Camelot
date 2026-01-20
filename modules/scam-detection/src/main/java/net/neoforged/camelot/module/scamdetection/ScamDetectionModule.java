@@ -8,10 +8,12 @@ import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.neoforged.camelot.ModuleProvider;
@@ -23,8 +25,11 @@ import net.neoforged.camelot.config.module.ScamDetection;
 import net.neoforged.camelot.module.api.CamelotModule;
 
 import java.awt.Color;
+import java.net.URI;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RegisterCamelotModule
@@ -64,7 +69,8 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
             switch (gevent) {
                 case MessageReceivedEvent event -> handleMessage(event);
                 case ButtonInteractionEvent event -> handleButton(event);
-                default -> {}
+                default -> {
+                }
             }
         });
     }
@@ -105,7 +111,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
 
                 builder.addComponents(ActionRow.of(
                         Button.danger(BUTTON_PREFIX + "ban/" + event.getAuthor().getId(), "Temporarily ban"),
-                        Button.secondary(BUTTON_PREFIX + "false-flag/" + event.getAuthor().getId(), "Mark as false flag")
+                        Button.secondary(BUTTON_PREFIX + "false-positive/" + event.getAuthor().getId(), "Mark as false positive")
                 ));
 
                 var message = builder.build();
@@ -145,7 +151,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                                 .build()))
                         .queue();
             }
-            case "false-flag" -> {
+            case "false-positive" -> {
                 if (!event.getMember().hasPermission(Permission.MODERATE_MEMBERS)) {
                     event.reply("You cannot use this button!").setEphemeral(true).queue();
                     return;
@@ -155,7 +161,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                 bot().moderation()
                         .removeTimeout(event.getGuild(), userToUnmute, event.getMember(), "Scam is a false flag")
                         .flatMap(_ -> event.editMessage(markAsHandled(event.getMessage())
-                                .setContent("Marked as false flag by " + event.getMember().getAsMention() + ".")
+                                .setContent("Marked as false positive by " + event.getMember().getAsMention() + ".")
                                 .build()))
                         .queue();
             }
@@ -163,15 +169,23 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
     }
 
     private MessageEditBuilder markAsHandled(Message message) {
+        var images = new ArrayList<FileUpload>();
+        var newEmbeds = new ArrayList<MessageEmbed>(message.getEmbeds().size());
+        for (int i = 0; i < message.getEmbeds().size(); i++) {
+            var embed = message.getEmbeds().get(i);
+            var newEmbed = new EmbedBuilder(embed).setColor(Color.GREEN);
+            var proxy = embed.getImage() == null ? null : embed.getImage().getProxy();
+            if (proxy != null) {
+                var name = "img" + images.size() + "." + Arrays.asList(URI.create(proxy.getUrl()).getPath().split("\\.")).getLast();
+                newEmbed.setImage("attachment://" + name);
+                images.add(proxy.downloadAsFileUpload(name));
+            }
+            newEmbeds.add(newEmbed.build());
+        }
         return MessageEditBuilder.fromMessage(message)
                 .setComponents(List.of())
-                .setFiles(message.getAttachments().stream()
-                        .map(at -> at.getProxy().downloadAsFileUpload(at.getFileName()))
-                        .toList())
-                .setEmbeds(message.getEmbeds().stream()
-                        .map(e -> new EmbedBuilder(e)
-                                .setColor(Color.GREEN).build())
-                        .toList());
+                .setFiles(images)
+                .setEmbeds(newEmbeds);
     }
 
     @Override

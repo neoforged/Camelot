@@ -50,7 +50,6 @@ public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
                 .displayName("Ping threads channel")
                 .description("The channel in which private threads will be created when a user cannot be DM'd by the bot to receive their custom pings")
                 .register();
-        System.out.println("");
     }
 
     @Override
