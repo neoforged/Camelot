@@ -119,7 +119,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                 for (var channelId : loggingChannels.get(event.getGuild())) {
                     var channel = event.getGuild().getTextChannelById(channelId);
                     if (channel != null) {
-                        channel.sendMessage(message).queue();
+                        channel.sendMessage(message).complete();
                     }
                 }
 
