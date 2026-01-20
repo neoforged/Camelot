@@ -12,8 +12,8 @@ import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.util.CachedOnlineData;
 import net.neoforged.camelot.util.jda.ButtonManager;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
+import javax.xml.xpath.XPathConstants;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,12 +21,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleData> {
-    private static final CachedOnlineData<String> LATEST_VERSION = CachedOnlineData.builder()
+    private static final CachedOnlineData<String> LATEST_VERSION = CachedOnlineData.<String>builder()
             .client(BotMain.HTTP_CLIENT)
-            .uri(URI.create("https://search.maven.org/solrsearch/select?q=g:net.neoforged.camelot+AND+a:camelot&core=gav&rows=1&wt=json"))
+            .uri(URI.create("https://repo1.maven.org/maven2/net/neoforged/camelot/camelot/maven-metadata.xml"))
             .cacheDuration(Duration.ofHours(1))
-            .json()
-            .map(o -> o.get("response").get("docs").get(0).get("v").asText())
+            .xpathExtract("/metadata/versioning/latest", XPathConstants.STRING)
             .build();
 
     public HelpCommand(ButtonManager buttonManager) {

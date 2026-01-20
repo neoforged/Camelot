@@ -8,6 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPathFactory;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -94,6 +97,28 @@ public interface CachedOnlineData<T> {
         public Builder<T> bodyHandler(HttpResponse.BodyHandler<T> handler) {
             this.bodyHandler = handler;
             return this;
+        }
+
+        /**
+         * Decode the response as an xml file, extracting a value using XPath expressions.
+         *
+         * @param expression the XPath expression to use to extract
+         * @param returnType the type of the value that the expression will extract
+         */
+        public Builder<T> xpathExtract(String expression, QName returnType) {
+            return this.bodyHandler(_ -> HttpResponse.BodySubscribers.mapping(
+                    HttpResponse.BodySubscribers.ofInputStream(),
+                    in -> {
+                        try {
+                            var doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(in);
+                            var xpath = XPathFactory.newInstance().newXPath();
+                            //noinspection unchecked
+                            return (T) xpath.evaluate(expression, doc, returnType);
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+            ));
         }
 
         /**
