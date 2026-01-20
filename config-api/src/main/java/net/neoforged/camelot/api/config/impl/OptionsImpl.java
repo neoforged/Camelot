@@ -26,6 +26,7 @@ public class OptionsImpl {
             })
             .map(Pattern::compile, Pattern::pattern, in -> "`" + in.pattern() + "`");
     public static final OptionBuilderFactory STRING = StringOption::builder;
+    public static final OptionBuilderFactory INT = (manager, path, id) -> new NumberOption.Builder<>(manager, path, id, Integer::parseInt, Number::intValue);
 
     public static <G, E extends Enum<E> & HumanReadableEnum> OptionBuilderFactory<G, Set<E>, OptionBuilder.Set<G, E>> enumeration(Class<E> type) {
         return (manager, path, id) -> new EnumOption.Builder<>(manager, path, id, type, HumanReadableEnum::humanReadableName, HumanReadableEnum::description);

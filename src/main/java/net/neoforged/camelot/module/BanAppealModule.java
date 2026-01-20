@@ -100,6 +100,7 @@ import static j2html.TagCreator.*;
 public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
     private final ConfigOption<Guild, Long> appealsChannel;
+    private final ConfigOption<Guild, Integer> responseTime;
 
     public BanAppealModule(ModuleProvider.Context context) {
         super(context, BanAppeals.class);
@@ -116,6 +117,13 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
                 .justOne()
                 .displayName("Appeals channel")
                 .description("The channel ban appeals are sent to.", "If left unconfigured, ban appeals are disabled for this server.")
+                .register();
+
+        responseTime = reg.option("response_time", Options.integer())
+                .positive()
+                .defaultValue(7)
+                .displayName("Response Time")
+                .description("The amount of days in which the user is expected to get a response to their appeal.")
                 .register();
     }
 
@@ -251,7 +259,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         sendMailFromServer(existing.email(), user, guild, "Ban appeal follow-up",
                 pre("We have received your follow-up."),
-                pre("You should be informed of our decision within " + config().getResponseTime() + " days."),
+                pre("You should be informed of our decision within " + responseTime.get(guild) + " days."),
                 hr(),
                 h4("Follow-up content"),
                 h5("Our question"),
@@ -365,7 +373,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
         sendMailFromServer(payload.getString("email"), user, guild, "Ban appeal",
                 pre("We have received your ban appeal and we will send updates to this email going forward. Please do not reply to this email or any further ones."),
-                pre("You should be informed of our decision within " + config().getResponseTime() + " days."),
+                pre("You should be informed of our decision within " + responseTime.get(guild) + " days."),
                 hr(),
                 h4("Appeal content"),
                 h5("Your explanation"),

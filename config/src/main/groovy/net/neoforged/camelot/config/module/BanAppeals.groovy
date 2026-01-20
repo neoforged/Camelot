@@ -37,11 +37,6 @@ class BanAppeals extends ModuleConfiguration {
     }
 
     /**
-     * The amount of days in which the user is expected to get a response to their appeal.
-     */
-    int responseTime = 7
-
-    /**
      * Configuration for ban appeal colours.
      */
     final Colors colors = new Colors()

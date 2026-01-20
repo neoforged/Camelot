@@ -1,6 +1,5 @@
 package net.neoforged.camelot.api.config.type;
 
-import net.dv8tion.jda.api.components.textinput.TextInput;
 import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.neoforged.camelot.api.config.ConfigOption;
 import org.jetbrains.annotations.Nullable;
@@ -134,6 +133,46 @@ public interface OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
          * @return the builder, for chaining purposes
          */
         S validate(Validator<T> validator);
+    }
+
+    /**
+     * A {@link OptionBuilder} for values that can be validated and are {@linkplain Comparable comparable}.
+     */
+    interface Comparable<G, T extends java.lang.Comparable<T>, S extends Comparable<G, T, S>> extends Validatable<G, T, S> {
+        /**
+         * Adds a {@linkplain #validate(Validator) validator} that checks if the input
+         * is greater than or equal to the {@code minValue}.
+         *
+         * @param minValue the minimum value of user input
+         * @return the builder, for chaining purposes
+         */
+        default S min(T minValue) {
+            return validate(i -> i.compareTo(minValue) >= 0, "Input must be greater than or equal to " + minValue);
+        }
+
+        /**
+         * Adds a {@linkplain #validate(Validator) validator} that checks if the input
+         * is smaller than or equal to the {@code maxValue}.
+         *
+         * @param maxValue the maximum value of user input
+         * @return the builder, for chaining purposes
+         */
+        default S max(T maxValue) {
+            return validate(i -> i.compareTo(maxValue) <= 0, "Input must be smaller than or equal to " + maxValue);
+        }
+    }
+
+    /**
+     * A {@link OptionBuilder} for numeral values (ints, etc.).
+     */
+    interface Number<G, T extends java.lang.Number & java.lang.Comparable<T>> extends Comparable<G, T, Number<G, T>> {
+        /**
+         * Adds a {@linkplain #validate(Validator) validator} that ensures that
+         * user input is positive (that is, greater or equal to zero).
+         *
+         * @return the builder, for chaining purposes
+         */
+        Number<G, T> positive();
     }
 
     /**

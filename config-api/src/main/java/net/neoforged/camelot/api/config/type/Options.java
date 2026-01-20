@@ -31,6 +31,13 @@ public interface Options {
     }
 
     /**
+     * {@return a factory for integer options}
+     */
+    static <G> OptionBuilderFactory<G, Integer, OptionBuilder.Number<G, Integer>> integer() {
+        return OptionsImpl.INT;
+    }
+
+    /**
      * {@return a factory for regex pattern options}
      */
     static <G> OptionBuilderFactory<G, Pattern, ? extends OptionBuilder<G, Pattern, ?>> regex() {
