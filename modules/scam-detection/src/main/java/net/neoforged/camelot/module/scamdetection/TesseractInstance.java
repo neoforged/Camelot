@@ -11,6 +11,7 @@ public class TesseractInstance {
     public TesseractInstance(int psmMode) {
         this.tesseract = new Tesseract();
         tesseract.setPageSegMode(psmMode);
+        tesseract.setVariable("user_defined_dpi", "72");
     }
 
     public String extractText(BufferedImage image) throws TesseractException {

@@ -6,10 +6,12 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.TexturePaint;
 import java.awt.Transparency;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
@@ -94,17 +96,11 @@ public final class ImageUtils {
      * @return            a resized version of the provided BufferedImage
      */
     public static BufferedImage resizeBy(final BufferedImage src, final int factor) {
-        int targetWidth = src.getWidth() * factor;
-        int targetHeight = src.getHeight() * factor;
-
-        final BufferedImage retImg = new BufferedImage(targetWidth, targetHeight,
-                src.getTransparency() == Transparency.OPAQUE ? BufferedImage.TYPE_INT_RGB
-                        : BufferedImage.TYPE_INT_ARGB);
-        final Graphics2D g2d = retImg.createGraphics();
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2d.drawImage(src, 0, 0, targetWidth, targetHeight, null);
-        g2d.dispose();
-        return retImg;
+        BufferedImage dstImg = new BufferedImage(src.getWidth() * factor, src.getHeight() * factor, src.getType());
+        AffineTransform scalingTransform = new AffineTransform();
+        scalingTransform.scale(factor, factor);
+        AffineTransformOp scaleOp = new AffineTransformOp(scalingTransform, AffineTransformOp.TYPE_BILINEAR);
+        return scaleOp.filter(src, dstImg);
     }
 
     public static BufferedImage cutoutImageMiddle(final BufferedImage image, final int baseWidth, final int baseHeight,
