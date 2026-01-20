@@ -159,7 +159,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
 
                 var userToUnmute = UserSnowflake.fromId(split[2]);
                 bot().moderation()
-                        .removeTimeout(event.getGuild(), userToUnmute, event.getMember(), "Scam is a false flag")
+                        .removeTimeout(event.getGuild(), userToUnmute, event.getMember(), "Scam is a false positive")
                         .flatMap(_ -> event.editMessage(markAsHandled(event.getMessage())
                                 .setContent("Marked as false positive by " + event.getMember().getAsMention() + ".")
                                 .build()))

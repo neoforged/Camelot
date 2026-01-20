@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class ImageScamDetector extends ScamDetector {
+    private static final Pattern IMAGE_LINK_URL = Pattern.compile("https?://\\S+?\\.(?:png|jpg|jpeg)(?:\\?\\S*)?");
+
     private TesseractInstance tesseract;
     private ConfigOption<Guild, List<Pattern>> patterns;
 
@@ -44,16 +46,30 @@ public class ImageScamDetector extends ScamDetector {
         for (Message.Attachment attachment : message.getAttachments()) {
             if (!attachment.isImage()) continue;
 
-            var text = extractText(attachment);
+            var text = extractText(attachment.getProxyUrl() + "&format=png");
             if (text == null) continue;
 
             for (var pattern : patterns) {
                 var matcher = pattern.matcher(text);
                 if (matcher.find()) {
-                    return new ScamDetectionResult("Attachment contained text that matches a scam pattern: `" + matcher.group(0) + "`");
+                    return new ScamDetectionResult("Attachment contained text that matches a scam pattern: `" + matcher.group() + "`");
                 }
             }
         }
+
+        var linkMatcher = IMAGE_LINK_URL.matcher(message.getContentRaw());
+        while (linkMatcher.find()) {
+            var text = extractText(linkMatcher.group());
+            if (text == null) continue;
+
+            for (var pattern : patterns) {
+                var matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    return new ScamDetectionResult("Linked image contained text that matches a scam pattern: `" + matcher.group() + "`");
+                }
+            }
+        }
+
         return null;
     }
 
@@ -68,8 +84,8 @@ public class ImageScamDetector extends ScamDetector {
     }
 
     @Nullable
-    private String extractText(Message.Attachment attachment) {
-        try (var image = URI.create(attachment.getProxyUrl() + "&format=png").toURL().openStream()) {
+    private String extractText(String url) {
+        try (var image = URI.create(url).toURL().openStream()) {
             // A factor of 3 seems to be resizing the common scam images just enough for a consistent extraction of common sentences
             var outLines = getTesseract().extractText(ImageUtils.resizeBy(ImageIO.read(image), 3)).split("\n");
             var ocr = new StringBuilder();
@@ -81,7 +97,7 @@ public class ImageScamDetector extends ScamDetector {
             }
             return ocr.toString();
         } catch (Exception e) {
-            BotMain.LOGGER.error("Failed to extract text of attachment {}: ", attachment, e);
+            BotMain.LOGGER.error("Failed to extract text of attachment {}: ", url, e);
             return null;
         }
     }
