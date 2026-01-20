@@ -69,9 +69,9 @@ public class CustomPingsCommand extends SlashCommand {
                     db -> db.getAllPingsOf(event.getUser().getIdLong(), event.getGuild().getIdLong()))
                     .size();
 
-            final var config = BotMain.getModule(CustomPingsModule.class).config();
-            if (config.getLimit() >= 0 && pingAmount >= config.getLimit()) {
-                event.reply(STR."You have already reached your limit of **\{config.getLimit()}** custom pings.").setEphemeral(true).queue();
+            final var limit = BotMain.getModule(CustomPingsModule.class).limit.get(event.getGuild());
+            if (limit > 0 && pingAmount >= limit) {
+                event.reply("You have already reached your limit of **" + limit + "** custom pings.").setEphemeral(true).queue();
                 return;
             }
 

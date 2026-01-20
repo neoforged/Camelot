@@ -8,9 +8,4 @@ import groovy.transform.CompileStatic
  */
 @CompileStatic
 class CustomPings extends ModuleConfiguration {
-    /**
-     * The maximum amount of custom pings an user can have.
-     * {@code -1} means indefinite
-     */
-    int limit = 100
 }

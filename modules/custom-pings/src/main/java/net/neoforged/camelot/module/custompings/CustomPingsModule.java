@@ -15,6 +15,7 @@ import net.neoforged.camelot.module.custompings.db.PingsDAO;
 
 @RegisterCamelotModule
 public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
+    final ConfigOption<Guild, Integer> limit;
     final ConfigOption<Guild, Long> pingThreadsChannel;
 
     public CustomPingsModule(ModuleProvider.Context context) {
@@ -44,6 +45,13 @@ public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
 
         var registrar = context.guildConfigs();
         registrar.setGroupDisplayName("Custom Pings");
+
+        limit = registrar.option("pings_limit", Options.integer())
+                .positive()
+                .defaultValue(25)
+                .displayName("Pings Limit")
+                .description("The maximum amount of custom pings an user can have. 0 means indefinite")
+                .register();
 
         pingThreadsChannel = registrar.option("ping_threads_channel", Options.channels())
                 .justOne()
