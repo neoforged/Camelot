@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
@@ -30,8 +29,6 @@ import net.neoforged.camelot.script.ScriptContext;
 import net.neoforged.camelot.script.ScriptObject;
 import net.neoforged.camelot.script.SlashTrickManager;
 
-import java.util.Set;
-
 /**
  * The module for tricks.
  */
@@ -40,17 +37,25 @@ public class TricksModule extends CamelotModule.Base<Tricks> {
     public record CompilingScript(ScriptContext context, ScriptObject object) {}
     public static final ParameterType<CompilingScript> COMPILING_SCRIPT = ParameterType.get("compilingscript", CompilingScript.class);
 
-    private final ConfigOption<Guild, Boolean> messageCommandTricks;
+    private final ConfigOption<Guild, Boolean> messageCommandTricks, forcePromoted;
     public final ConfigOption<Guild, RoleSet> trickMasterRoles;
 
     public TricksModule(ModuleProvider.Context context) {
         super(context, Tricks.class);
         var reg = context.guildConfigs();
         reg.setGroupDisplayName("Tricks");
+
         messageCommandTricks = reg.option("message_command_tricks", Options.bool())
                 .defaultValue(false)
                 .displayName("Tricks as message commands")
                 .description("Whether tricks can be invoked via message commands (with the prefix).", "If disabled, tricks can only be invoked via the /trick slash command or by promoting them to individual slash commands.")
+                .register();
+
+        forcePromoted = reg.option("force_promoted_tricks", Options.bool())
+                .defaultValue(false)
+                .displayName("Force promoted tricks")
+                .description("If true, promoted tricks cannot be invoked using message commands.")
+                .dependsOn(messageCommandTricks, true)
                 .register();
 
         trickMasterRoles = reg.option("trick_masters", Options.roles())
@@ -107,6 +112,6 @@ public class TricksModule extends CamelotModule.Base<Tricks> {
 
     @Override
     public void setup(JDA jda) {
-        jda.addEventListener(new TrickListener(messageCommandTricks, bot().commandPrefix, this));
+        jda.addEventListener(new TrickListener(this, bot().commandPrefix, messageCommandTricks, forcePromoted));
     }
 }

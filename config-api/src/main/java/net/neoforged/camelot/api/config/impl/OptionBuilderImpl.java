@@ -17,6 +17,8 @@ public abstract class OptionBuilderImpl<G, T, S extends OptionBuilder<G, T, S>> 
 
     protected T defaultValue;
 
+    protected ConfigOptionImpl.Dependency<G, ?> dependency;
+
     protected OptionBuilderImpl(ConfigManager<G> manager, String path, String id) {
         this.manager = manager;
         this.path = path;
@@ -31,6 +33,7 @@ public abstract class OptionBuilderImpl<G, T, S extends OptionBuilder<G, T, S>> 
         this(parentBuilder.manager, parentBuilder.path, parentBuilder.id);
         this.description = parentBuilder.description;
         this.name = parentBuilder.name;
+        this.dependency = parentBuilder.dependency;
     }
 
     @SuppressWarnings("unchecked")
@@ -69,9 +72,15 @@ public abstract class OptionBuilderImpl<G, T, S extends OptionBuilder<G, T, S>> 
     }
 
     @Override
+    public <V> OptionBuilder<G, T, S> dependsOn(ConfigOption<G, V> dependency, V expectedValue) {
+        this.dependency = new ConfigOptionImpl.Dependency<>(dependency, expectedValue);
+        return this;
+    }
+
+    @Override
     public ConfigOption<G, T> register() {
         var man = (ConfigManagerImpl<G>) manager;
-        var cfg = new ConfigOptionImpl<>(man, name, description, path.isBlank() ? id : path + "." + id, createType(), defaultValue);
+        var cfg = new ConfigOptionImpl<>(man, name, description, path.isBlank() ? id : path + "." + id, createType(), defaultValue, dependency);
         man.register(path, cfg);
         return cfg;
     }

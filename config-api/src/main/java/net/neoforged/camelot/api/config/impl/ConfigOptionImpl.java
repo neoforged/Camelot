@@ -13,7 +13,7 @@ import java.util.Objects;
 public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
     private final ConfigManagerImpl<G> manager;
     private final String name, description;
-    private final String path;
+    final String path;
     private final OptionType<T> type;
 
     private final T defaultValue;
@@ -22,13 +22,16 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
 
     private final List<UpdateListener<G, T>> listeners = new ArrayList<>();
 
-    public ConfigOptionImpl(ConfigManagerImpl<G> manager, String name, String description, String path, OptionType<T> type, T defaultValue) {
+    final Dependency<G, ?> dependency;
+
+    public ConfigOptionImpl(ConfigManagerImpl<G> manager, String name, String description, String path, OptionType<T> type, T defaultValue, Dependency<G, ?> dependency) {
         this.manager = manager;
         this.name = name;
         this.description = description;
         this.path = path;
         this.type = type;
         this.defaultValue = defaultValue;
+        this.dependency = dependency;
     }
 
     @Override
@@ -119,6 +122,16 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
     private void valueChanged(G target, @Nullable T oldValue, @Nullable T newValue) {
         for (UpdateListener<G, T> listener : listeners) {
             listener.onUpdate(target, oldValue, newValue);
+        }
+    }
+
+    record Dependency<G, T>(ConfigOption<G, T> option, T expected) {
+        public boolean test(G target) {
+            return Objects.equals(option.get(target), expected);
+        }
+
+        public String formatted() {
+            return expected == null ? "*none*" : option.type().format(expected);
         }
     }
 }

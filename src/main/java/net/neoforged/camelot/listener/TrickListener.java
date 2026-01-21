@@ -31,7 +31,7 @@ import java.util.EnumSet;
  * A listener listening for {@link MessageReceivedEvent} and seeing if they match a trick alias, which if found,
  * will be executed with the arguments.
  */
-public record TrickListener(ConfigOption<Guild, Boolean> enabled, ConfigOption<Guild, String> prefix, TricksModule module) implements EventListener {
+public record TrickListener(TricksModule module, ConfigOption<Guild, String> prefix, ConfigOption<Guild, Boolean> enabled, ConfigOption<Guild, Boolean> enforcePromotions) implements EventListener {
     private static final EnumSet<Message.MentionType> ALLOWED_MENTIONS = EnumSet.of(
             Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND
     );
@@ -50,10 +50,10 @@ public record TrickListener(ConfigOption<Guild, Boolean> enabled, ConfigOption<G
 
             if (trick == null) return;
 
-            if (module.config().isEnforcePromotions()) {
+            if (enforcePromotions.get(event.getGuild())) {
                 final SlashTrick promotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
                 if (promotion != null) {
-                    final Command.Subcommand asSlash = BotMain.getModule(TricksModule.class)
+                    final Command.Subcommand asSlash = module
                             .slashTrickManagers.get(event.getGuild().getIdLong())
                             .getByName(promotion.getFullName());
 
@@ -75,8 +75,7 @@ public record TrickListener(ConfigOption<Guild, Boolean> enabled, ConfigOption<G
                         if (module.config().getEncouragePromotedTricks()) {
                             final SlashTrick promotion = Database.main().withExtension(SlashTricksDAO.class, db -> db.getPromotion(trick.id(), event.getGuild().getIdLong()));
                             if (promotion != null) {
-                                final Command.Subcommand asSlash = BotMain.getModule(TricksModule.class)
-                                        .slashTrickManagers.get(event.getGuild().getIdLong())
+                                final Command.Subcommand asSlash = module.slashTrickManagers.get(event.getGuild().getIdLong())
                                                            .getByName(promotion.getFullName());
                                 if (asSlash != null && createData.getEmbeds().size() < 10) {
                                     //noinspection resource

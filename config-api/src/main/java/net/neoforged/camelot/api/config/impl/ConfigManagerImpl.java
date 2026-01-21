@@ -74,10 +74,23 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
         if (path.isBlank()) return "";
         List<String> nameComponents = new ArrayList<>();
         Group<G> group = root;
-        for (String s : path.split("\\.")) {
+
+        var split = path.split("\\.");
+        for (int i = 0; i < split.length - 1; i++) {
+            var s = split[i];
             group = group.childGroups.get(s);
             nameComponents.add(group.name == null ? s : group.name);
         }
+
+        var lastGroup = group.childGroups.get(split[split.length - 1]);
+        if (lastGroup == null) {
+            nameComponents.add(group.options.stream().filter(o -> o.path.equals(path))
+                    .findFirst()
+                    .orElseThrow().name());
+        } else {
+            nameComponents.add(lastGroup.name == null ? split[split.length - 1] : lastGroup.name);
+        }
+
         return String.join(" > ", nameComponents);
     }
 
@@ -120,12 +133,22 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                                 ev.editMessage(createEditValue(path, page, target, option)).queue()), "View");
                     }
 
-                    list.add(Section.of(editButton, TextDisplay.of(
-                                    "**" + option.name() + "**\n" +
-                                            "-# " + description[0] + "\n" +
-                                            "Current value: " + (currentValue == null ? "*none*" : ((OptionType) option.type()).format(currentValue))
-                            )
-                    ));
+                    StringBuilder sectionDesc = new StringBuilder("**" + option.name() + "**\n" +
+                            "-# " + description[0] + "\n");
+
+                    if (option.dependency != null && !option.dependency.test(target)) {
+                        var dep = ((ConfigOptionImpl) option.dependency.option());
+                        editButton = editButton.withDisabled(true);
+                        sectionDesc.append("-# *To configure this, **")
+                                .append(pathToDisplayName(dep.path))
+                                .append("** must be set to ")
+                                .append(option.dependency.formatted())
+                                .append("*\n");
+                    }
+
+                    sectionDesc.append("Current value: ").append(currentValue == null ? "*none*" : ((OptionType) option.type()).format(currentValue));
+
+                    list.add(Section.of(editButton, TextDisplay.of(sectionDesc.toString())));
                 }
             }
         })));

@@ -17,11 +17,6 @@ class Tricks extends ModuleConfiguration {
     boolean encouragePromotedTricks
 
     /**
-     * Enforce promoted slash commands to be used as slash commands.
-     */
-    boolean enforcePromotions
-
-    /**
      * The amount of seconds that a normal trick has to finish execution, before it is killed
      */
     int executionTimeout = 5

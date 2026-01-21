@@ -95,6 +95,16 @@ public interface OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
     <TO> OptionBuilder<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter);
 
     /**
+     * Require that the given {@code dependency} has the {@code expectedValue} in order to
+     * be able to configure this option.
+     *
+     * @param dependency    the option to depend on
+     * @param expectedValue the required value of the dependency
+     * @return the builder, for chaining purposes
+     */
+    <V> OptionBuilder<G, T, S> dependsOn(ConfigOption<G, V> dependency, V expectedValue);
+
+    /**
      * Create the configuration option according to this builder's parameters and register it.
      *
      * @return the registered config option
