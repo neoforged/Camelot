@@ -1,6 +1,6 @@
 package net.neoforged.camelot.test;
 
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 

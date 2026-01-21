@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -31,6 +32,9 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
+import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.DateUtils;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.config.module.Reminders;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.module.BuiltInModule;
@@ -38,12 +42,13 @@ import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.reminders.db.Reminder;
 import net.neoforged.camelot.module.reminders.db.RemindersCallbacks;
 import net.neoforged.camelot.module.reminders.db.RemindersDAO;
-import net.neoforged.camelot.util.DateUtils;
 import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.Utils;
 
 import java.awt.Color;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.AbstractList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -58,6 +63,8 @@ import java.util.function.Supplier;
 public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
     public static final Supplier<ScheduledExecutorService> EXECUTOR = Suppliers.memoize(() ->
             Executors.newScheduledThreadPool(1, Utils.daemonGroup("Reminders")));
+
+    private final ConfigOption<User, List<Duration>> snoozeButtons;
 
     public RemindersModule(ModuleProvider.Context context) {
         super(context, Reminders.class);
@@ -79,13 +86,31 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
                     });
                     RemindersCallbacks.migrating = false;
                 }));
+
+        var userRegistrar = context.userConfigs()
+                .setGroupDisplayName("Reminders");
+
+        snoozeButtons = userRegistrar.option("snooze_buttons", Options.duration())
+                .displayName("Snooze Buttons")
+                .description("The duration of the snooze buttons on your reminders")
+                .list()
+                .defaultValue(new AbstractList<>() {
+                    @Override
+                    public Duration get(int index) {
+                        return config().getSnoozeDurations().get(index);
+                    }
+
+                    @Override
+                    public int size() {
+                        return config().getSnoozeDurations().size();
+                    }
+                })
+                .register();
     }
 
     private static final String SNOOZE_BUTTON_ID = "snooze_reminder";
     private static final String BASE_REMIND_MESSAGE = "remindmsg";
     private static final Emoji SNOOZE_EMOJI = Emojis.MANAGER.getLazyEmoji("snooze");
-
-    private List<ActionRow> snoozeButtons = List.of();
 
     private final Cache<Long, Reminder> snoozable = Caffeine.newBuilder()
             .initialCapacity(10)
@@ -104,7 +129,7 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
         builder.addContextMenu(new MessageContextMenu() {
             {
                 name = "Add reminder";
-                guildOnly = true;
+                contexts = new InteractionContextType[] { InteractionContextType.GUILD };
             }
 
             @Override
@@ -146,9 +171,6 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
                 }
             }
         }));
-
-        snoozeButtons = ActionRow.partitionOf(config().getSnoozeDurations().stream().map(duration -> Button.of(ButtonStyle.SECONDARY, SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), DateUtils.formatDuration(duration), SNOOZE_EMOJI))
-                .toList());
 
         db().useExtension(RemindersDAO.class, db -> db.getAllReminders()
                 .forEach(reminder -> {
@@ -271,7 +293,8 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
                                 .build()
                 )
                 .setAllowedMentions(ALLOWED_MENTIONS)
-                .addComponents(snoozeButtons)
+                .addComponents(ActionRow.partitionOf(snoozeButtons.get(user).stream().map(duration -> Button.of(ButtonStyle.SECONDARY,
+                        SNOOZE_BUTTON_ID + "-" + duration.getSeconds(), DateUtils.formatDuration(duration), SNOOZE_EMOJI)).toList()))
                 .addComponents(ActionRow.of(DismissListener.createDismissButton(user)))
                 .setSuppressedNotifications(false)
                 .build();

@@ -28,7 +28,7 @@ import net.neoforged.camelot.module.mcverification.protocol.MinecraftConnection;
 import net.neoforged.camelot.module.mcverification.protocol.MinecraftServerVerificationHandler;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.services.ModerationRecorderService;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.oauth.OAuthClient;
 import net.neoforged.camelot.util.oauth.OAuthScope;

@@ -6,6 +6,7 @@ import net.neoforged.camelot.api.config.type.entity.ChannelSet;
 import net.neoforged.camelot.api.config.type.entity.EntitySet;
 import net.neoforged.camelot.api.config.type.entity.RoleSet;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -42,6 +43,13 @@ public interface Options {
      */
     static <G> OptionBuilderFactory<G, Pattern, ? extends OptionBuilder<G, Pattern, ?>> regex() {
         return OptionsImpl.REGEX;
+    }
+
+    /**
+     * {@return a factory for duration options}
+     */
+    static <G> OptionBuilderFactory<G, Duration, ? extends OptionBuilder<G, Duration, ?>> duration() {
+        return OptionsImpl.DURATION;
     }
 
     /**

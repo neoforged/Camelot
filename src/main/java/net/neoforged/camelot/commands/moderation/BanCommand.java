@@ -14,7 +14,7 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.module.BanAppealModule;
 import net.neoforged.camelot.module.WebServerModule;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.ModerationUtil;
 

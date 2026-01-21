@@ -9,7 +9,7 @@ import net.neoforged.camelot.util.Utils;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jetbrains.annotations.Nullable;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

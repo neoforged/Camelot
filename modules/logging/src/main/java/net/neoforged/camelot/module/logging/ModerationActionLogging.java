@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.neoforged.camelot.services.ModerationRecorderService;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.Nullable;
 

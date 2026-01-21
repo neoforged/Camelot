@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.ModerationUtil;
 

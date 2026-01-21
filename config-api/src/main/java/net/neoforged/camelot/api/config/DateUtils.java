@@ -1,6 +1,5 @@
-package net.neoforged.camelot.util;
+package net.neoforged.camelot.api.config;
 
-import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
@@ -109,7 +108,7 @@ public class DateUtils {
      * @param time the time to decode
      * @return the decoded time.
      */
-    public static Duration decode(@Nonnull final String time) {
+    public static Duration decode(final String time) {
         final var unit = switch (time.charAt(time.length() - 1)) {
             case 'n' -> ChronoUnit.NANOS;
             case 'l' -> ChronoUnit.MILLIS;

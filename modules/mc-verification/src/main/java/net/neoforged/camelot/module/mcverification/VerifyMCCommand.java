@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.neoforged.camelot.commands.InteractiveCommand;
 import net.neoforged.camelot.module.WebServerModule;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 
 import java.sql.Timestamp;
 import java.time.Instant;

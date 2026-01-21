@@ -22,7 +22,7 @@ import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.ModerationUtil;
 import net.neoforged.camelot.util.Utils;
 

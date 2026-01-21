@@ -26,6 +26,8 @@ public class OptionsImpl {
     public static final OptionBuilderFactory STRING = StringOption::builder;
     public static final OptionBuilderFactory INT = (manager, path, id) -> new NumberOption.Builder<>(manager, path, id, Integer::parseInt, Number::intValue);
 
+    public static final OptionBuilderFactory DURATION = DurationOption.Builder::new;
+
     public static final OptionBuilderFactory
             ROLES = (manager, path, id) -> new EntityOption.Builder<>(manager, path, id, EntitySelectMenu.SelectTarget.ROLE, EntityOption.RoleSet::new),
             CHANNELS = (manager, path, id) -> new EntityOption.Builder<>(manager, path, id, EntitySelectMenu.SelectTarget.CHANNEL, EntityOption.ChannelSet::new);

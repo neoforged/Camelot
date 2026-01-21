@@ -18,7 +18,7 @@ import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.module.reminders.db.Reminder;
 import net.neoforged.camelot.module.reminders.db.RemindersDAO;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 
 import java.time.Instant;
 import java.util.List;

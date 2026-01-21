@@ -51,7 +51,7 @@ import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.services.ModerationRecorderService;
 import net.neoforged.camelot.services.ServiceRegistrar;
-import net.neoforged.camelot.util.DateUtils;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.MailService;
 import net.neoforged.camelot.util.oauth.OAuthClient;
 import net.neoforged.camelot.util.oauth.OAuthScope;
