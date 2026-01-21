@@ -4,6 +4,8 @@ import net.neoforged.camelot.util.DateUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 public class DateUtilsTest {
     @Test
     void testSimpleParse() {
@@ -38,4 +40,16 @@ public class DateUtilsTest {
         Assertions.assertThat(DateUtils.getDurationFromInput("1h4s-4m-12s"))
                 .hasSeconds(60 * 60 + 4 - 4 * 60 - 12);
     }
+
+    @Test
+    void testDurations() {
+        List<String> durations = List.of("4M1d2s", "19d12h1m6s");
+
+        for (String duration : durations) {
+            Assertions.assertThat(DateUtils.getDurationFromInput(duration))
+                    .extracting(DateUtils::formatAsInput)
+                    .isEqualTo(duration);
+        }
+    }
+
 }

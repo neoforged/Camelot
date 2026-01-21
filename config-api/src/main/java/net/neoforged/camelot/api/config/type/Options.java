@@ -73,7 +73,7 @@ public interface Options {
      * You can restrict it to only one option using {@link OptionBuilder.Set#justOne()}.
      */
     static <G> OptionBuilderFactory<G, RoleSet, EntitySet.Builder<G, RoleSet>> roles() {
-        return OptionsImpl.roles();
+        return OptionsImpl.ROLES;
     }
 
     /**
@@ -83,6 +83,6 @@ public interface Options {
      * You can restrict it to only one option using {@link OptionBuilder.Set#justOne()}.
      */
     static <G> OptionBuilderFactory<G, ChannelSet, EntitySet.Builder<G, ChannelSet>> channels() {
-        return OptionsImpl.channels();
+        return OptionsImpl.CHANNELS;
     }
 }

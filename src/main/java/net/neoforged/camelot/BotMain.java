@@ -2,6 +2,7 @@ package net.neoforged.camelot;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.messages.MessageRequest;
 import net.neoforged.camelot.api.config.storage.ConfigStorage;
@@ -160,13 +161,14 @@ public class BotMain {
         });
 
         MessageRequest.setDefaultMentionRepliedUser(false);
+
+        final var configDb = Database.createDatabaseConnection(Path.of("data/configuration.db"), "config");
+
         new Bot(
                 b -> instance = b,
                 cliConfig.config.toPath(),
-                ConfigStorage.sql(
-                        Database.createDatabaseConnection(Path.of("data/configuration.db"), "config"),
-                        "guild_configuration", Guild::getId
-                ),
+                ConfigStorage.sql(configDb, "guild_configuration", Guild::getId),
+                ConfigStorage.sql(configDb, "user_configuration", User::getId),
                 ServiceLoader.load(ModuleProvider.class)
                         .stream().map(ServiceLoader.Provider::get)
                         .toList()

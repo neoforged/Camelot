@@ -1,6 +1,7 @@
 package net.neoforged.camelot;
 
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 import net.neoforged.camelot.api.config.type.OptionRegistrar;
 import net.neoforged.camelot.module.api.CamelotModule;
 
@@ -11,6 +12,8 @@ public interface ModuleProvider {
         Bot bot();
 
         OptionRegistrar<Guild> guildConfigs();
+
+        OptionRegistrar<User> userConfigs();
 
         void set(CamelotModule<?> module);
     }

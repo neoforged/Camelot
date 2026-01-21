@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -63,9 +64,12 @@ public class Bot {
 
     private final ModerationUtil moderation;
 
-    public Bot(Consumer<Bot> immediate, Path configPath, ConfigStorage<Guild> configStorage, List<ModuleProvider> moduleProviders) {
+    public Bot(Consumer<Bot> immediate, Path configPath, ConfigStorage<Guild> configStorage, ConfigStorage<User> userConfigStorage, List<ModuleProvider> moduleProviders) {
         immediate.accept(this);
+
         var guildConfigs = ConfigManager.create(configStorage, Guild::getIdLong);
+        var userConfigs = ConfigManager.create(userConfigStorage, User::getIdLong);
+
         this.commandPrefix = guildConfigs
                 .registrar()
                 .option("command_prefix", Options.string())
@@ -75,7 +79,12 @@ public class Bot {
                 .maxLength(3) // Technically not required to be under a length but this is just a sanity check
                 .register();
 
-        var moduleRegistrar = guildConfigs.registrar()
+        var moduleGuildRegistrar = guildConfigs.registrar()
+                .pushGroup("modules")
+                .setGroupDisplayName("Modules")
+                .setGroupDescription("Configuration related to specific modules");
+
+        var moduleUserRegistrar = userConfigs.registrar()
                 .pushGroup("modules")
                 .setGroupDisplayName("Modules")
                 .setGroupDescription("Configuration related to specific modules");
@@ -94,15 +103,26 @@ public class Bot {
                         this.module = module;
                     }
 
-                    private OptionRegistrar<Guild> registrar;
+                    private OptionRegistrar<Guild> moduleRegistrar;
 
                     @Override
                     public OptionRegistrar<Guild> guildConfigs() {
-                        if (registrar == null) {
-                            registrar = moduleRegistrar.pushGroup(module.id())
+                        if (moduleRegistrar == null) {
+                            moduleRegistrar = moduleGuildRegistrar.pushGroup(module.id())
                                     .setGroupDescription("Configuration of the " + module.id() + " module");
                         }
-                        return registrar;
+                        return moduleRegistrar;
+                    }
+
+                    private OptionRegistrar<User> userRegistrar;
+
+                    @Override
+                    public OptionRegistrar<User> userConfigs() {
+                        if (userRegistrar == null) {
+                            userRegistrar = moduleUserRegistrar.pushGroup(module.id())
+                                    .setGroupDescription("Configuration of the " + module.id() + " module");
+                        }
+                        return userRegistrar;
                     }
                 }))
                 .peek(Bot::validateID)
@@ -167,11 +187,11 @@ public class Bot {
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS, CacheFlag.SCHEDULED_EVENTS)
                 .setActivity(Activity.customStatus("Listening for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .addEventListeners(guildConfigs);
+                .addEventListeners(guildConfigs, userConfigs);
 
         forEachModule(module -> module.registerListeners(botBuilder));
 
-        botBuilder.addEventListeners(Commands.init(this, guildConfigs, commandPrefix));
+        botBuilder.addEventListeners(Commands.init(this, commandPrefix, guildConfigs, userConfigs));
         botBuilder.addEventListeners(Commands.get().getSlashCommands().stream()
                 .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
                 .filter(EventListener.class::isInstance)

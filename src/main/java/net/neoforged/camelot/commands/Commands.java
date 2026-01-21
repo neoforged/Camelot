@@ -4,6 +4,7 @@ import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.api.config.ConfigManager;
@@ -35,14 +36,15 @@ public class Commands {
      * Register and setup every valid command.
      * To remove a command from the bot, simply comment the line where it is added.
      */
-    public static CommandClient init(Bot bot, ConfigManager<Guild> manager, ConfigOption<Guild, String> prefix) {
+    public static CommandClient init(Bot bot, ConfigOption<Guild, String> prefix, ConfigManager<Guild> guildConfigManager, ConfigManager<User> userConfigManager) {
         final var builder = new CommandClientBuilder()
                 .setOwnerId(String.valueOf(CamelotConfig.getInstance().getOwner()))
                 .setPrefixFunction(event -> prefix.get(event.getGuild()))
                 .setActivity(null)
                 .useHelpBuilder(false) // We use the slash command instead
 
-                .addSlashCommand(new GuildConfigCommand(manager))
+                .addSlashCommand(new UserConfigCommand(userConfigManager))
+                .addSlashCommand(new GuildConfigCommand(guildConfigManager))
 
                 .addSlashCommand(new PingCommand())
                 .addSlashCommand(new HelpCommand(BotMain.BUTTON_MANAGER))
