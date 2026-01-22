@@ -33,7 +33,7 @@ public class ModerationModule extends CamelotModule.Base<Moderation> {
         super(context, Moderation.class);
 
         var registrar = context.guildConfigs();
-        registrar.setGroupDisplayName("Moderation");
+        registrar.groupDisplayName("Moderation");
 
         viewOwnModlogs = registrar.option("view_own_modlogs", Options.bool())
                 .displayName("View own modlogs")

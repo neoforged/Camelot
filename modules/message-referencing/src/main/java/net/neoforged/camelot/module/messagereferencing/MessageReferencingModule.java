@@ -19,7 +19,7 @@ public class MessageReferencingModule extends CamelotModule.Base<MessageReferenc
     public MessageReferencingModule(ModuleProvider.Context context) {
         super(context, MessageReferencing.class);
         enabled = context.guildConfigs()
-                .setGroupDisplayName("Message Referencing")
+                .groupDisplayName("Message Referencing")
                 .option("enabled", Options.bool())
                 .defaultValue(true)
                 .displayName("Enabled")

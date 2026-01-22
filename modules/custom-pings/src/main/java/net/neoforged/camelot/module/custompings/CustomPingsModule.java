@@ -44,7 +44,7 @@ public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
                 }));
 
         var registrar = context.guildConfigs();
-        registrar.setGroupDisplayName("Custom Pings");
+        registrar.groupDisplayName("Custom Pings");
 
         limit = registrar.option("pings_limit", Options.integer())
                 .positive()

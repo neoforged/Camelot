@@ -112,7 +112,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
         });
 
         var reg = context.guildConfigs();
-        reg.setGroupDisplayName("Ban Appeals");
+        reg.groupDisplayName("Ban Appeals");
         appealsChannel = reg.option("appeals_channel", Options.entities(EntitySelectMenu.SelectTarget.CHANNEL))
                 .justOne()
                 .displayName("Appeals channel")

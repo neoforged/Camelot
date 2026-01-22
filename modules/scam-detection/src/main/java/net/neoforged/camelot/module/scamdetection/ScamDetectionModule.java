@@ -43,7 +43,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
         super(context, ScamDetection.class);
 
         var registrar = context.guildConfigs();
-        registrar.setGroupDisplayName("Scam Detection");
+        registrar.groupDisplayName("Scam Detection");
 
         this.loggingChannels = registrar
                 .option("logging_channels", Options.entities(EntitySelectMenu.SelectTarget.CHANNEL))

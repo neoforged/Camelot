@@ -35,6 +35,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, OptionType.ComponentCreator {
@@ -97,7 +99,10 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
     private MessageEditData createEditMessage(G target, String path, int page) {
         var components = new ArrayList<MessageTopLevelComponent>();
         var group = getGroup(path);
-        int maxElements = group.size();
+        var childGroupIdx = IntStream.range(0, group.childGroups.size())
+                .filter(i -> group.childGroups.getValue(i).condition.test(target))
+                .toArray();
+        int maxElements = group.options.size() + childGroupIdx.length;
         int pageCount = maxElements / OPTIONS_PER_PAGE + (maxElements % OPTIONS_PER_PAGE == 0 ? 0 : 1);
 
         components.add(Container.of(list(list -> {
@@ -106,8 +111,8 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
 
             for (int i = page * OPTIONS_PER_PAGE; i < Math.min(maxElements, (page + 1) * OPTIONS_PER_PAGE); i++) {
                 if (i >= group.options.size()) {
-                    var groupName = group.childGroups.get(i - group.options.size());
-                    var gr = group.childGroups.get(groupName);
+                    var groupName = group.childGroups.get(childGroupIdx[i - group.options.size()]);
+                    var gr = group.childGroups.getValue(childGroupIdx[i - group.options.size()]);
                     list.add(Section.of(
                             Button.secondary(buttonId(ev ->
                                     ev.editMessage(createEditMessage(target, path.isBlank() ? groupName : path + "." + groupName, page)).queue()), "Open"),
@@ -252,14 +257,20 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
         }
 
         @Override
-        public OptionRegistrar<G> setGroupDescription(String description) {
+        public OptionRegistrar<G> groupDescription(String description) {
             getGroup(path()).description = description;
             return this;
         }
 
         @Override
-        public OptionRegistrar<G> setGroupDisplayName(String displayName) {
+        public OptionRegistrar<G> groupDisplayName(String displayName) {
             getGroup(path()).name = displayName;
+            return this;
+        }
+
+        @Override
+        public OptionRegistrar<G> groupAvailableIf(Predicate<G> condition) {
+            getGroup(path()).condition = condition;
             return this;
         }
 
@@ -288,11 +299,14 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
     }
 
     private static final class Group<G> {
+        private static final Predicate TRUE = t -> true;
+
         private final ListOrderedMap<String, Group<G>> childGroups;
         private final List<ConfigOptionImpl<G, ?>> options;
 
         private String name;
         private String description = "*No description available*";
+        private Predicate<G> condition = TRUE;
 
         private Group(ListOrderedMap<String, Group<G>> childGroups, List<ConfigOptionImpl<G, ?>> options) {
             this.childGroups = childGroups;
@@ -301,10 +315,6 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
 
         public Group() {
             this(new ListOrderedMap<>(), new ArrayList<>());
-        }
-
-        public int size() {
-            return childGroups.size() + options.size();
         }
     }
 

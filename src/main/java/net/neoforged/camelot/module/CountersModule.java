@@ -19,7 +19,7 @@ public class CountersModule extends CamelotModule.Base<Counters> {
 
     public CountersModule(ModuleProvider.Context context) {
         super(context, Counters.class);
-        enabled = context.guildConfigs().setGroupDisplayName("Counters")
+        enabled = context.guildConfigs().groupDisplayName("Counters")
                 .option("enabled", Options.bool())
                 .displayName("Enabled")
                 .description("Whether counters are enabled in this server.")

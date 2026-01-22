@@ -81,13 +81,13 @@ public class Bot {
 
         var moduleGuildRegistrar = guildConfigs.registrar()
                 .pushGroup("modules")
-                .setGroupDisplayName("Modules")
-                .setGroupDescription("Configuration related to specific modules");
+                .groupDisplayName("Modules")
+                .groupDescription("Configuration related to specific modules");
 
         var moduleUserRegistrar = userConfigs.registrar()
                 .pushGroup("modules")
-                .setGroupDisplayName("Modules")
-                .setGroupDescription("Configuration related to specific modules");
+                .groupDisplayName("Modules")
+                .groupDescription("Configuration related to specific modules");
 
         var moduleCandidates = moduleProviders.stream()
                 .map(p -> p.provide(new ModuleProvider.Context() {
@@ -109,7 +109,8 @@ public class Bot {
                     public OptionRegistrar<Guild> guildConfigs() {
                         if (moduleRegistrar == null) {
                             moduleRegistrar = moduleGuildRegistrar.pushGroup(module.id())
-                                    .setGroupDescription("Configuration of the " + module.id() + " module");
+                                    .groupDescription("Configuration of the " + module.id() + " module")
+                                    .groupAvailableIf(_ -> this.module.config().isEnabled());
                         }
                         return moduleRegistrar;
                     }
@@ -120,7 +121,8 @@ public class Bot {
                     public OptionRegistrar<User> userConfigs() {
                         if (userRegistrar == null) {
                             userRegistrar = moduleUserRegistrar.pushGroup(module.id())
-                                    .setGroupDescription("Configuration of the " + module.id() + " module");
+                                    .groupDescription("Configuration of the " + module.id() + " module")
+                                    .groupAvailableIf(_ -> this.module.config().isEnabled());
                         }
                         return userRegistrar;
                     }

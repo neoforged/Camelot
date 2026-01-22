@@ -1,7 +1,6 @@
 package net.neoforged.camelot.module.logging;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.neoforged.camelot.ModuleProvider;
@@ -29,7 +28,7 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
         super(context, Logging.class);
 
         var registrar = context.guildConfigs();
-        registrar.setGroupDisplayName("Logging");
+        registrar.groupDisplayName("Logging");
 
         for (Type type : Type.values()) {
             channelOptions.put(type, registrar.option("channel_" + type.name().toLowerCase(Locale.ROOT), Options.channels())

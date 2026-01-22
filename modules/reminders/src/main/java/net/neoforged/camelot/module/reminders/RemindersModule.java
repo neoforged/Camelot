@@ -88,7 +88,7 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
                 }));
 
         var userRegistrar = context.userConfigs()
-                .setGroupDisplayName("Reminders");
+                .groupDisplayName("Reminders");
 
         snoozeButtons = userRegistrar.option("snooze_buttons", Options.duration())
                 .displayName("Snooze Buttons")

@@ -27,8 +27,8 @@ public class ImageScamDetector extends ScamDetector {
 
     @Override
     protected void registerOptions(OptionRegistrar<Guild> registrar) {
-        registrar.setGroupDisplayName("Image Scams");
-        registrar.setGroupDescription("Detect scams in images using OCR");
+        registrar.groupDisplayName("Image Scams");
+        registrar.groupDescription("Detect scams in images using OCR");
 
         patterns = registrar.option("patterns", Options.regex())
                 .displayName("Patterns")

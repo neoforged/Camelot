@@ -43,7 +43,7 @@ public class TricksModule extends CamelotModule.Base<Tricks> {
     public TricksModule(ModuleProvider.Context context) {
         super(context, Tricks.class);
         var reg = context.guildConfigs();
-        reg.setGroupDisplayName("Tricks");
+        reg.groupDisplayName("Tricks");
 
         messageCommandTricks = reg.option("message_command_tricks", Options.bool())
                 .defaultValue(false)

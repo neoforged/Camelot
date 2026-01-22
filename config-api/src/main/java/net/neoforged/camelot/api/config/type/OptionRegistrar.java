@@ -2,6 +2,9 @@ package net.neoforged.camelot.api.config.type;
 
 import net.neoforged.camelot.api.config.ConfigManager;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
+
 /**
  * Used to register options to a {@link ConfigManager}.
  * <p>
@@ -19,7 +22,7 @@ import net.neoforged.camelot.api.config.ConfigManager;
  *
  * // Register config values under group1 > group2 (named "Nested Group")
  * var subRegistrar = rootRegistrar.pushGroup("group1").pushGroup("group2");
- * subRegistrar.setGroupDisplayName("Nested group");
+ * subRegistrar.groupDisplayName("Nested group");
  * var subOption = rootRegistrar.option("sub", Options.bool())
  *     .displayName("Option in nested group")
  *     .register();
@@ -43,7 +46,7 @@ public interface OptionRegistrar<G> {
      * @param displayName the display name of the group
      * @return the registrar, for chaining purposes
      */
-    OptionRegistrar<G> setGroupDisplayName(String displayName);
+    OptionRegistrar<G> groupDisplayName(String displayName);
 
     /**
      * Sets the description of the group this registrar is pointing to, which will be shown to users in the configuration menu.
@@ -51,7 +54,15 @@ public interface OptionRegistrar<G> {
      * @param description the description of the group
      * @return the registrar, for chaining purposes
      */
-    OptionRegistrar<G> setGroupDescription(String description);
+    OptionRegistrar<G> groupDescription(String description);
+
+    /**
+     * Makes the group available only if the given predicate returns {@code true}.
+     *
+     * @param condition the predicate that checks if the group is available
+     * @return the registrar, for chaining purposes
+     */
+    OptionRegistrar<G> groupAvailableIf(Predicate<G> condition);
 
     /**
      * Create a builder for a new option with the given {@code id}, which will be placed under the group
