@@ -2,6 +2,7 @@ package net.neoforged.camelot.module.logging;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
@@ -14,8 +15,10 @@ import net.neoforged.camelot.services.ModerationRecorderService;
 import net.neoforged.camelot.services.ServiceRegistrar;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * The module controlling logging.
@@ -40,7 +43,7 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
 
     @Override
     public void setup(JDA jda) {
-        jda.addEventListener(new JoinsLogging(this), new MessageLogging(this));
+        jda.addEventListener(new JoinsLogging(this), new MessageLogging(this), new RoleLogging(this));
     }
 
     @Override
@@ -53,10 +56,16 @@ public class LoggingModule extends CamelotModule.Base<Logging> {
         return "logging";
     }
 
+    static String mentionsOrEmpty(List<? extends IMentionable> list) {
+        final String str = list.stream().map(IMentionable::getAsMention).collect(Collectors.joining(" "));
+        return str.isBlank() ? "_None_" : str;
+    }
+
     public enum Type {
         MODERATION("Moderation", "moderation events, such as bans and warnings", "🔨"),
         JOINS("Joins", "join and leave events", "🚪"),
-        MESSAGES("Messages", "message events (edit, delete)", "💬");
+        MESSAGES("Messages", "message events (edit, delete)", "💬"),
+        ROLES("Roles", "role events (role added, removed)", "🧻");
 
         public final String displayName, description;
         public final Emoji emoji;

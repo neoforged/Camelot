@@ -42,16 +42,11 @@ public class JoinsLogging extends ChannelLogging implements EventListener {
                     .addField("User", event.getUser().getName(), true)
                     .addField("Account created", TimeFormat.DATE_LONG.format(event.getUser().getTimeCreated()), true)
                     .addField("Joined", TimeFormat.RELATIVE.format(event.getMember().getTimeJoined()), true)
-                    .addField("Roles", mentionsOrEmpty(event.getMember().getRoles()), false)
+                    .addField("Roles", LoggingModule.mentionsOrEmpty(event.getMember().getRoles()), false)
                     .setFooter("User ID: " + event.getMember().getId(), event.getMember().getEffectiveAvatarUrl())
                     .setTimestamp(Instant.now()));
             default -> {
             }
         }
-    }
-
-    public static String mentionsOrEmpty(List<? extends IMentionable> list) {
-        final String str = list.stream().map(IMentionable::getAsMention).collect(Collectors.joining(" "));
-        return str.isBlank() ? "_None_" : str;
     }
 }
