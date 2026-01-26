@@ -1,6 +1,7 @@
 package net.neoforged.camelot.module.messagereferencing;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -15,7 +16,6 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.util.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +40,15 @@ public record ReferencingListener(ConfigOption<Guild, Boolean> enabled) implemen
         if (!(gevent instanceof MessageReceivedEvent event)) return;
         if (!event.isFromGuild() || !enabled().get(event.getGuild())) return;
 
+        final Member quoter = event.getMember();
+        assert quoter != null;
+
         final Message originalMsg = event.getMessage();
         if (originalMsg.getMessageReference() != null && isStringReference(originalMsg.getContentRaw())) {
             final Message referencedMessage = originalMsg.getMessageReference().getMessage();
             if (referencedMessage != null) {
-                event.getChannel().sendMessage(reference(referencedMessage, event.getMember()))
-                        .flatMap($ -> originalMsg.delete().reason("Reference successful"))
+                event.getChannel().sendMessage(reference(referencedMessage, quoter))
+                        .flatMap(_ -> originalMsg.delete().reason("Reference successful"))
                         .queue();
                 return;
             }
@@ -57,14 +60,22 @@ public record ReferencingListener(ConfigOption<Guild, Boolean> enabled) implemen
         }
 
         Utils.decodeMessageLink(msg[0])
-                .flatMap(info -> info.retrieve(BotMain.get()))
-                .ifPresent(action -> action.flatMap(message -> event.getChannel().sendMessage(reference(message, event.getMember())))
-                        .flatMap($ -> msg.length == 1 && originalMsg.getMessageReference() == null, $ -> originalMsg.delete().reason("Reference successful"))
-                        .queue(null, ERROR_HANDLER));
+                .flatMap(info -> info.retrieve(event.getJDA()))
+                .ifPresent(action -> action.queue(message -> {
+                    if (userCanAccess(quoter, message)) {
+                        event.getChannel().sendMessage(reference(message, event.getMember()))
+                                .flatMap(_ -> msg.length == 1 && originalMsg.getMessageReference() == null, _ -> originalMsg.delete().reason("Reference successful"))
+                                .queue(null, ERROR_HANDLER);
+                    }
+                }, ERROR_HANDLER));
     }
 
     private static boolean isStringReference(final String string) {
         return string.equals(".") || string.equals(ZERO_WIDTH_SPACE);
+    }
+
+    private static boolean userCanAccess(final Member quoter, final Message message) {
+        return quoter.getPermissions(message.getChannel().asGuildMessageChannel()).contains(Permission.VIEW_CHANNEL);
     }
 
     public static MessageCreateData reference(final Message message, final Member quoter) {
