@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
@@ -31,6 +32,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @RegisterCamelotModule
 public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
@@ -149,6 +151,19 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                         .flatMap(_ -> event.editMessage(markAsHandled(event.getMessage())
                                 .setContent("User banned by " + event.getMember().getAsMention() + ".")
                                 .build()))
+
+                        // Mark any scam alerts of the same person around this one as handled
+                        .flatMap(_ -> event.getChannel().getHistoryAround(event.getMessage(), 20)
+                                .map(h -> h.getRetrievedHistory().stream()
+                                        .filter(msg -> msg.getComponents().stream()
+                                                .anyMatch(c -> c instanceof ActionRow ar && ar.getButtons().stream()
+                                                        .anyMatch(b -> Objects.equals(b.getCustomId(), event.getComponentId()))))
+                                        .toList())
+                                .flatMap(h -> !h.isEmpty(), history -> RestAction.allOf(history.stream()
+                                        .map(msg -> msg.editMessage(markAsHandled(msg)
+                                                .setContent("User banned by " + event.getMember().getAsMention() + ".")
+                                                .build()))
+                                        .toList())))
                         .queue();
             }
             case "false-positive" -> {
