@@ -8,11 +8,12 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
-import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
@@ -25,7 +26,7 @@ import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.Options;
-import net.neoforged.camelot.api.config.type.entity.EntitySet;
+import net.neoforged.camelot.api.config.type.entity.ChannelSet;
 import net.neoforged.camelot.config.module.ScamDetection;
 import net.neoforged.camelot.module.api.CamelotModule;
 
@@ -44,7 +45,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
     private static final String BUTTON_PREFIX = "scam-detection/";
     private static final LongSet MUTED = LongSets.synchronize(new LongArraySet());
 
-    private final ConfigOption<Guild, EntitySet> loggingChannels;
+    private final ConfigOption<Guild, ChannelSet> loggingChannels;
     private final List<ScamDetector> detectors;
 
     public ScamDetectionModule(ModuleProvider.Context context) {
@@ -54,7 +55,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
         registrar.groupDisplayName("Scam Detection");
 
         this.loggingChannels = registrar
-                .option("logging_channels", Options.entities(EntitySelectMenu.SelectTarget.CHANNEL))
+                .option("logging_channels", Options.channels())
                 .displayName("Logging Channels")
                 .description("The channel in which to log detected scams")
                 .register();
@@ -77,6 +78,10 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
             switch (gevent) {
                 case MessageReceivedEvent event -> handleMessage(event);
                 case ButtonInteractionEvent event -> handleButton(event);
+
+                // Mark any scam alerts of the banned user as handled
+                case GuildBanEvent event -> handleBan(event);
+
                 default -> {
                 }
             }
@@ -164,19 +169,6 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                         .flatMap(_ -> event.editMessage(markAsHandled(event.getMessage())
                                 .setContent("User banned by " + event.getMember().getAsMention() + ".")
                                 .build()))
-
-                        // Mark any scam alerts of the same person around this one as handled
-                        .flatMap(_ -> event.getChannel().getHistoryAround(event.getMessage(), 20)
-                                .map(h -> h.getRetrievedHistory().stream()
-                                        .filter(msg -> msg.getComponents().stream()
-                                                .anyMatch(c -> c instanceof ActionRow ar && ar.getButtons().stream()
-                                                        .anyMatch(b -> Objects.equals(b.getCustomId(), event.getComponentId()))))
-                                        .toList())
-                                .flatMap(h -> !h.isEmpty(), history -> RestAction.allOf(history.stream()
-                                        .map(msg -> msg.editMessage(markAsHandled(msg)
-                                                .setContent("User banned by " + event.getMember().getAsMention() + ".")
-                                                .build()))
-                                        .toList())))
                         .queue();
             }
             case "false-positive" -> {
@@ -194,6 +186,28 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                         .queue();
             }
         }
+    }
+
+    private void handleBan(GuildBanEvent event) {
+        var userId = event.getUser().getIdLong();
+        loggingChannels.get(event.getGuild())
+                .get(event.getGuild(), TextChannel.class)
+                .forEach(channel -> channel.getIterableHistory()
+                        .takeAsync(25)
+                        .thenAccept(messages -> {
+                            final var actions = messages.stream()
+                                    .filter(msg -> msg.getComponents().stream()
+                                            .anyMatch(c -> c instanceof ActionRow ar && ar.getButtons().stream()
+                                                    .anyMatch(b -> Objects.equals(b.getCustomId(), BUTTON_PREFIX + "ban/" + userId))))
+                                    .map(msg -> msg.editMessage(markAsHandled(msg)
+                                            .setContent("User banned.")
+                                            .build()))
+                                    .toList();
+
+                            if (!actions.isEmpty()) {
+                                RestAction.allOf(actions).queue();
+                            }
+                        }));
     }
 
     private MessageEditBuilder markAsHandled(Message message) {
