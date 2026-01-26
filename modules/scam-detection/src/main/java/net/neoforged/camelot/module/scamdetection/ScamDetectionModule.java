@@ -1,5 +1,8 @@
 package net.neoforged.camelot.module.scamdetection;
 
+import it.unimi.dsi.fastutil.longs.LongArraySet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
@@ -17,6 +20,7 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
+import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
@@ -33,10 +37,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @RegisterCamelotModule
 public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
     private static final String BUTTON_PREFIX = "scam-detection/";
+    private static final LongSet MUTED = LongSets.synchronize(new LongArraySet());
 
     private final ConfigOption<Guild, EntitySet> loggingChannels;
     private final List<ScamDetector> detectors;
@@ -126,9 +132,16 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                 }
 
                 event.getMessage().delete()
-                        .flatMap(_ -> bot().moderation().timeout(event.getMember(), event.getJDA().getSelfUser(),
-                                Duration.of(1, ChronoUnit.DAYS), "Suspected scam: " + detector.id))
-                        .queue();
+                        .queue(_ -> {
+                            var memberId = event.getMember().getIdLong();
+                            if (MUTED.add(memberId)) {
+                                var muteDuration = Duration.of(1, ChronoUnit.DAYS);
+                                bot().moderation().timeout(event.getMember(), event.getJDA().getSelfUser(), muteDuration, "Suspected scam: " + detector.id)
+                                        .queue(_ -> BotMain.EXECUTOR.schedule(
+                                                () -> MUTED.remove(memberId), muteDuration.toSeconds(), TimeUnit.SECONDS
+                                        ));
+                            }
+                        });
             }
         }
     }

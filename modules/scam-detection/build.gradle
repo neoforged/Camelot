@@ -8,4 +8,5 @@ camelotModule {
 
 dependencies {
     library(libs.tess4j)
+    library(libs.fastutil)
 }
