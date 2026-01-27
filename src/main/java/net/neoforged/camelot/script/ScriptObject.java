@@ -65,6 +65,13 @@ public class ScriptObject implements ProxyObject {
         return this;
     }
 
+    public ScriptObject putMethodIf(BooleanSupplier condition, String key, Executable method) {
+        if (condition.getAsBoolean()) {
+            putMethod(key, method);
+        }
+        return this;
+    }
+
     public ScriptObject putVoidMethod(String key, ExecutableVoid method) {
         values.put(key, (ProxyExecutable) args -> {
             method.invoke(createArgs(key, args));

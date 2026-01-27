@@ -60,6 +60,7 @@ public record ScriptContext(
         return (ScriptTransformer<T>) TRANSFORMERS.computeIfAbsent(obj.getClass(), _ -> switch (obj) {
             case User _ -> cast(ScriptContext::createUser);
             case Member _ -> cast(ScriptContext::createMember);
+            case MessageChannel _ -> cast(ScriptContext::createMessageChannel);
             case Channel _ -> cast(ScriptContext::createChannel);
             case Role _ -> cast(ScriptContext::createRole);
             case Guild _ -> cast(ScriptContext::createGuild);
@@ -80,7 +81,7 @@ public record ScriptContext(
                 // The context with which the script was executed
                 .put("guild", createGuild(guild))
                 .put("member", createMember(member))
-                .put("channel", createChannel(channel))
+                .put("channel", createMessageChannel(channel))
                 .put("user", createUser(member.getUser()))
                 .put("jda", createJDA(jda))
 
@@ -139,6 +140,11 @@ public record ScriptContext(
                 .putLazyGetter("getPermissions", () -> new ArrayList<>(member.getPermissions()))
                 .putLazyGetter("getRoles", () -> transformList(member.getRoles()))
                 .putMethod("toString", _ -> Utils.getName(member.getUser()) + " in " + member.getGuild().getName());
+    }
+
+    public ScriptObject createMessageChannel(MessageChannel channel) {
+        return createChannel(channel)
+                .putMethodIf(this::priviliged, "sendMessage", args -> channel.sendMessage(args.argString(0, true)).complete());
     }
 
     public ScriptObject createChannel(Channel channel) {

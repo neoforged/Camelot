@@ -58,7 +58,7 @@ public class ModerationModule extends CamelotModule.Base<Moderation> {
                 new ModLogsCommand(BotMain.BUTTON_MANAGER, viewOwnModlogs::get),
                 new NoteCommand(bot()), new WarnCommand(bot()),
                 new MuteCommand(bot()), new UnmuteCommand(bot()),
-                new KickCommand(bot()), new PurgeCommand(),
+                new KickCommand(bot()), new PurgeCommand(BotMain.BUTTON_MANAGER),
                 new BanCommand(bot()), new UnbanCommand(bot())
         );
     }

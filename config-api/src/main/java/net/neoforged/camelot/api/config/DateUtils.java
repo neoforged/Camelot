@@ -1,5 +1,7 @@
 package net.neoforged.camelot.api.config;
 
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
@@ -100,6 +102,13 @@ public class DateUtils {
             }
         }
         return duration;
+    }
+
+    /**
+     * Decodes a duration from an {@code input}, supporting multiple time specifiers (e.g. {@code 1w2d}).
+     */
+    public static Duration getDurationFromInput(OptionMapping input) {
+        return getDurationFromInput(input.getAsString());
     }
 
     /**
