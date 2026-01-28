@@ -14,12 +14,11 @@ import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.util.Emojis;
-import net.neoforged.camelot.util.jda.ButtonManager;
+import net.neoforged.camelot.util.jda.ComponentManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -37,7 +36,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
         return MessageEditData.fromContent("Encountered exception executing command: " + throwable);
     };
 
-    protected final ButtonManager buttonManager;
+    protected final ComponentManager buttonManager;
     /**
      * The amount of items a page can display.
      */
@@ -54,7 +53,7 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
      */
     protected boolean dismissible;
 
-    protected PaginatableCommand(ButtonManager buttonManager) {
+    protected PaginatableCommand(ComponentManager buttonManager) {
         this.buttonManager = buttonManager;
     }
 
@@ -68,13 +67,13 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
         }
 
         event.deferReply().setEphemeral(ephemeral).queue();
-        final UUID btnId = buttonManager.newButton(e -> onButton(e, data));
+        final String btnId = buttonManager.<ButtonInteractionEvent>handler(e -> onButton(e, data));
         final int page = event.getOption("page", 1, OptionMapping::getAsInt);
         if (page > 1 && pageAmount(data.itemAmount()) < page) {
             event.reply("Invalid page").setEphemeral(true).queue();
             return;
         }
-        final var buttons = createButtons(btnId.toString(), page - 1, data.itemAmount());
+        final var buttons = createButtons(btnId, page - 1, data.itemAmount());
 
         createMessage(page - 1, data, event)
                 .thenApply(ed -> event.getHook().sendMessage(MessageCreateData.fromEditData(ed)))
@@ -119,9 +118,10 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
      * @param data  the button data
      */
     protected final void onButton(final ButtonInteractionEvent event, final T data) {
+        event.deferEdit().queue();
+
         final String[] split = event.getButton().getCustomId().split("/");
         int currentPage = Integer.parseInt(split[1]);
-        event.deferEdit().queue();
 
         if (split[2].equals("prev")) {
             currentPage -= 1;

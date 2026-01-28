@@ -14,7 +14,6 @@ import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.util.AuthUtil;
 import net.neoforged.camelot.util.Utils;
-import net.neoforged.camelot.util.jda.ButtonManager;
 import org.jdbi.v3.core.extension.ExtensionConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.CmdLineException;
@@ -30,11 +29,9 @@ import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
 
 /**
  * Bot program entry point.
@@ -64,11 +61,6 @@ public class BotMain {
             GatewayIntent.DIRECT_MESSAGES,              // For receiving direct messages.
             GatewayIntent.GUILD_MODERATION              // For receiving moderation-related events, such as bans, unbans and audit log changes.
     );
-
-    /**
-     * The static button manager, used for easy button handling.
-     */
-    public static final ButtonManager BUTTON_MANAGER = new ButtonManager();
 
     /**
      * The static {@link ScheduledExecutorService} for scheduling tasks.

@@ -99,7 +99,7 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        final QuoteCommand cmd = new QuoteCommand();
+        final QuoteCommand cmd = new QuoteCommand(bot());
         builder.addSlashCommand(cmd);
         // I hate this...
         builder.addCommand(cmd);

@@ -17,7 +17,7 @@ import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
 import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.util.Utils;
-import net.neoforged.camelot.util.jda.ButtonManager;
+import net.neoforged.camelot.util.jda.ComponentManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 public class ModLogsCommand extends PaginatableCommand<ModLogsCommand.Data> {
     private final Predicate<Guild> viewOwnModlogs;
 
-    public ModLogsCommand(ButtonManager buttonManager, Predicate<Guild> viewOwnModlogs) {
+    public ModLogsCommand(ComponentManager buttonManager, Predicate<Guild> viewOwnModlogs) {
         super(buttonManager);
         this.viewOwnModlogs = viewOwnModlogs;
 

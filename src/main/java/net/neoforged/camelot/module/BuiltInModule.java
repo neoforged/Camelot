@@ -5,7 +5,6 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
@@ -65,7 +64,7 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
 
     @Override
     public void registerListeners(JDABuilder builder) {
-        builder.addEventListeners(BotMain.BUTTON_MANAGER, Emojis.MANAGER, new DismissListener());
+        builder.addEventListeners(Emojis.MANAGER, new DismissListener());
     }
 
     @Override

@@ -77,8 +77,8 @@ public class TricksModule extends CamelotModule.Base<Tricks> {
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommands(new ManageTrickCommand(), new TrickCommand())
-                .addCommand(new EvalCommand());
+        builder.addSlashCommands(new ManageTrickCommand(bot()), new TrickCommand())
+                .addCommand(new EvalCommand(bot().components()));
     }
 
     @Override

@@ -11,7 +11,7 @@ import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.util.CachedOnlineData;
-import net.neoforged.camelot.util.jda.ButtonManager;
+import net.neoforged.camelot.util.jda.ComponentManager;
 
 import javax.xml.xpath.XPathConstants;
 import java.net.URI;
@@ -28,7 +28,7 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
             .xpathExtract("/metadata/versioning/latest", XPathConstants.STRING)
             .build();
 
-    public HelpCommand(ButtonManager buttonManager) {
+    public HelpCommand(ComponentManager buttonManager) {
         super(buttonManager);
         this.name = "help";
         this.help = "Show information about the bot's commands";

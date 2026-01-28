@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
-import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -16,7 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.neoforged.camelot.api.config.DateUtils;
-import net.neoforged.camelot.util.jda.ButtonManager;
+import net.neoforged.camelot.util.jda.ComponentManager;
 import net.neoforged.camelot.util.jda.MessageHelper;
 
 import java.time.Instant;
@@ -33,9 +32,9 @@ import java.util.function.Consumer;
 public class PurgeCommand extends SlashCommand {
     private static final int PURGE_LIMIT = 10_000;
 
-    private final ButtonManager buttons;
+    private final ComponentManager buttons;
 
-    public PurgeCommand(ButtonManager buttons) {
+    public PurgeCommand(ComponentManager buttons) {
         this.name = "purge";
         this.help = "Delete a number of messages from the channel you run the command in";
         this.options = List.of(
@@ -103,9 +102,9 @@ public class PurgeCommand extends SlashCommand {
         confirmationMessage.append("\nUse the button below to confirm the deletion of the messages.");
 
         event.getHook().editOriginal(confirmationMessage.toString())
-                .setComponents(ActionRow.of(Button.danger(
-                        buttons.newButton(deleteButton(totalSize, messagesByChannel)).toString(),
-                        "⚠ Confirm"
+                .setComponents(ActionRow.of(buttons.dangerButton(
+                        "⚠ Confirm",
+                        deleteButton(totalSize, messagesByChannel)
                 )))
                 .queue();
     }

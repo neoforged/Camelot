@@ -6,7 +6,6 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.neoforged.camelot.Bot;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.api.config.ConfigManager;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.commands.information.HelpCommand;
@@ -47,7 +46,7 @@ public class Commands {
                 .addSlashCommand(new GuildConfigCommand(guildConfigManager))
 
                 .addSlashCommand(new PingCommand())
-                .addSlashCommand(new HelpCommand(BotMain.BUTTON_MANAGER))
+                .addSlashCommand(new HelpCommand(bot.components()))
                 .addSlashCommand(new ShutdownCommand())
 
                 // Information commands

@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -20,12 +21,13 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.db.api.StringSearch;
 import net.neoforged.camelot.module.quotes.db.Quote;
 import net.neoforged.camelot.module.quotes.db.QuotesDAO;
-import net.neoforged.camelot.util.jda.ButtonManager;
+import net.neoforged.camelot.util.jda.ComponentManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
@@ -39,14 +41,14 @@ import java.util.regex.Matcher;
  * Quote-related commands.
  */
 public class QuoteCommand extends SlashCommand {
-    public QuoteCommand() {
+    public QuoteCommand(Bot bot) {
         this.name = "quote";
         this.guildOnly = true;
         this.help = "Quote stuff";
         this.children = new SlashCommand[] {
                 new GetQuote(),
                 new AddQuote(),
-                new ListQuotes(BotMain.BUTTON_MANAGER),
+                new ListQuotes(bot.components()),
                 new EditQuote(),
                 new DeleteQuote(),
                 new QuoteImage()
@@ -168,7 +170,7 @@ public class QuoteCommand extends SlashCommand {
     }
 
     public static final class ListQuotes extends PaginatableCommand<ListQuotes.Data> {
-        private ListQuotes(ButtonManager buttonManager) {
+        private ListQuotes(ComponentManager buttonManager) {
             super(buttonManager);
             this.name = "list";
             this.help = "List quotes (with an optional filters)";
@@ -200,8 +202,8 @@ public class QuoteCommand extends SlashCommand {
                 return;
             }
 
-            final UUID btnId = buttonManager.newButton(e -> onButton(e, data));
-            final var buttons = createButtons(btnId.toString(), 0, data.itemAmount());
+            final String btnId = buttonManager.<ButtonInteractionEvent>handler(e -> onButton(e, data));
+            final var buttons = createButtons(btnId, 0, data.itemAmount());
 
             createMessage(0, data, null)
                     .thenApply(ed -> event.getMessage().reply(MessageCreateData.fromEditData(ed))

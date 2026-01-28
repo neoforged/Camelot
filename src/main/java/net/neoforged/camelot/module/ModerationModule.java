@@ -2,7 +2,6 @@ package net.neoforged.camelot.module;
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import net.dv8tion.jda.api.entities.Guild;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
@@ -55,10 +54,10 @@ public class ModerationModule extends CamelotModule.Base<Moderation> {
     @Override
     public void registerCommands(CommandClientBuilder builder) {
         builder.addSlashCommands(
-                new ModLogsCommand(BotMain.BUTTON_MANAGER, viewOwnModlogs::get),
+                new ModLogsCommand(bot().components(), viewOwnModlogs::get),
                 new NoteCommand(bot()), new WarnCommand(bot()),
                 new MuteCommand(bot()), new UnmuteCommand(bot()),
-                new KickCommand(bot()), new PurgeCommand(BotMain.BUTTON_MANAGER),
+                new KickCommand(bot()), new PurgeCommand(bot().components()),
                 new BanCommand(bot()), new UnbanCommand(bot())
         );
     }

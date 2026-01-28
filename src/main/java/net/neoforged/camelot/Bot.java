@@ -26,6 +26,7 @@ import net.neoforged.camelot.module.api.ParameterType;
 import net.neoforged.camelot.services.CamelotService;
 import net.neoforged.camelot.services.ServiceRegistrar;
 import net.neoforged.camelot.util.ModerationUtil;
+import net.neoforged.camelot.util.jda.ComponentManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.slf4j.Logger;
@@ -63,6 +64,7 @@ public class Bot {
     private final Map<Class<? extends CamelotService>, List<CamelotService>> services;
 
     private final ModerationUtil moderation;
+    private final ComponentManager components;
 
     public Bot(Consumer<Bot> immediate, Path configPath, ConfigStorage<Guild> configStorage, ConfigStorage<User> userConfigStorage, List<ModuleProvider> moduleProviders) {
         immediate.accept(this);
@@ -183,13 +185,15 @@ public class Bot {
                 )));
 
         this.moderation = new ModerationUtil(this, Database.main().onDemand(PendingUnbansDAO.class));
+        this.components = new ComponentManager();
 
         final JDABuilder botBuilder = JDABuilder
                 .create(CamelotConfig.getInstance().getToken(), BotMain.INTENTS)
                 .disableCache(CacheFlag.VOICE_STATE, CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS, CacheFlag.SCHEDULED_EVENTS)
                 .setActivity(Activity.customStatus("Listening for your commands"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .addEventListeners(guildConfigs, userConfigs);
+                .addEventListeners(guildConfigs, userConfigs)
+                .addEventListeners(components);
 
         forEachModule(module -> module.registerListeners(botBuilder));
 
@@ -249,6 +253,13 @@ public class Bot {
      */
     public ModerationUtil moderation() {
         return moderation;
+    }
+
+    /**
+     * {@return a utility class for creating Discord message components with lambda-based handlers}
+     */
+    public ComponentManager components() {
+        return components;
     }
 
     /**

@@ -23,6 +23,7 @@ import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.dv8tion.jda.internal.utils.Checks;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.Database;
 import net.neoforged.camelot.commands.InteractiveCommand;
@@ -37,7 +38,7 @@ import net.neoforged.camelot.script.CannotRetrieveInformationException;
 import net.neoforged.camelot.script.ScriptUtils;
 import net.neoforged.camelot.script.ScriptWriter;
 import net.neoforged.camelot.util.Utils;
-import net.neoforged.camelot.util.jda.ButtonManager;
+import net.neoforged.camelot.util.jda.ComponentManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.StringWriter;
@@ -56,7 +57,7 @@ public class ManageTrickCommand extends SlashCommand {
     public static final SubcommandGroupData ALIAS = new SubcommandGroupData("alias", "Manage trick aliases");
     public static final SubcommandGroupData PROMOTIONS = new SubcommandGroupData("promotions", "Manage trick slash promotions");
 
-    public ManageTrickCommand() {
+    public ManageTrickCommand(Bot bot) {
         this.name = "manage-trick";
         this.children = new SlashCommand[] {
                 new Add(),
@@ -67,7 +68,7 @@ public class ManageTrickCommand extends SlashCommand {
                 new Info(),
                 new SetOwner(),
                 new SetPrivileged(),
-                new ListCmd(BotMain.BUTTON_MANAGER),
+                new ListCmd(bot.components()),
 
                 new AliasAdd(),
                 new AliasDelete(),
@@ -75,7 +76,7 @@ public class ManageTrickCommand extends SlashCommand {
                 new NewPromotion(),
                 new RemovePromotion(),
                 new RefreshPromotions(),
-                new ListPromoted(BotMain.BUTTON_MANAGER),
+                new ListPromoted(bot.components()),
                 new CountCommandUsage()
         };
         this.guildOnly = true;
@@ -786,7 +787,7 @@ public class ManageTrickCommand extends SlashCommand {
      */
     public static final class ListPromoted extends PaginatableCommand<PaginatableCommand.SimpleData> {
 
-        public ListPromoted(ButtonManager buttonManager) {
+        public ListPromoted(ComponentManager buttonManager) {
             super(buttonManager);
             this.name = "list";
             this.subcommandGroup = PROMOTIONS;
@@ -919,7 +920,7 @@ public class ManageTrickCommand extends SlashCommand {
      */
     public static final class ListCmd extends PaginatableCommand<PaginatableCommand.SimpleData> {
 
-        public ListCmd(ButtonManager buttonManager) {
+        public ListCmd(ComponentManager buttonManager) {
             super(buttonManager);
             this.name = "list";
             this.help = "List all tricks";

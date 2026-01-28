@@ -73,7 +73,7 @@ public class CustomPingsModule extends CamelotModule.WithDatabase<CustomPings> {
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommand(new CustomPingsCommand());
+        builder.addSlashCommand(new CustomPingsCommand(bot()));
     }
 
     @Override

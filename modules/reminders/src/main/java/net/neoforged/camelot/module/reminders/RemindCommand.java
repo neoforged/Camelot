@@ -13,12 +13,14 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.listener.DismissListener;
 import net.neoforged.camelot.module.reminders.db.Reminder;
 import net.neoforged.camelot.module.reminders.db.RemindersDAO;
-import net.neoforged.camelot.api.config.DateUtils;
+import net.neoforged.camelot.util.jda.ComponentManager;
 
 import java.time.Instant;
 import java.util.List;
@@ -27,11 +29,11 @@ import java.util.stream.Collectors;
 
 public class RemindCommand extends SlashCommand {
 
-    public RemindCommand() {
+    public RemindCommand(Bot bot) {
         this.name = "remind";
         this.help = "Reminder-related commands";
         this.children = new SlashCommand[] {
-                new In(), new ListCmd(), new Delete()
+                new In(), new ListCmd(bot.components()), new Delete()
         };
     }
 
@@ -103,8 +105,8 @@ public class RemindCommand extends SlashCommand {
      * Command used to list your reminders.
      */
     private static final class ListCmd extends PaginatableCommand<ListCmd.Data> {
-        public ListCmd() {
-            super(BotMain.BUTTON_MANAGER);
+        public ListCmd(ComponentManager components) {
+            super(components);
             this.name = "list";
             this.help = "List your reminders";
             this.ephemeral = true;

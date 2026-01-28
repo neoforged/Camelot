@@ -3,8 +3,6 @@ package net.neoforged.camelot.commands.utility;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
-import net.dv8tion.jda.api.components.buttons.Button;
-import net.dv8tion.jda.api.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.components.label.Label;
 import net.dv8tion.jda.api.components.textinput.TextInput;
 import net.dv8tion.jda.api.components.textinput.TextInputStyle;
@@ -18,16 +16,15 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.script.ScriptContext;
 import net.neoforged.camelot.script.ScriptReplier;
 import net.neoforged.camelot.script.ScriptUtils;
 import net.neoforged.camelot.util.Emojis;
+import net.neoforged.camelot.util.jda.ComponentManager;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -37,7 +34,10 @@ import java.util.function.Consumer;
  * <p>The add trick button prompts a modal asking for trick names (separated by a space) and when submitted will add the script as a trick.</p>
  */
 public class EvalCommand extends Command {
-    public EvalCommand() {
+    private final ComponentManager components;
+
+    public EvalCommand(ComponentManager components) {
+        this.components = components;
         this.name = "eval";
         this.help = "Evaluate the given script";
     }
@@ -48,37 +48,37 @@ public class EvalCommand extends Command {
     @Override
     protected void execute(CommandEvent commandEvent) {
         commandEvent.getMessage().reply(new MessageCreateBuilder().setContent(commandEvent.getMember().getAsMention() + ", use the buttons below:")
-                .addComponents(ActionRow.of(
-                        Button.of(ButtonStyle.PRIMARY, checkUser(commandEvent, event -> event.replyModal(Modal.create(EVAL_ID + commandEvent.getMessage().getId(), "Evaluate script")
-                                    .addComponents(Label.of("Arguments", TextInput.create("args", TextInputStyle.SHORT)
-                                            .setRequired(false)
-                                            .setPlaceholder("The arguments to evaluate the script with")
-                                            .build()))
-                                .build())
-                                .queue()).toString(), "Evaluate", Emojis.CMDLINE),
-                        Button.of(ButtonStyle.SECONDARY, checkUser(commandEvent, event -> event.replyModal(Modal.create(ADD_TRICK_ID + commandEvent.getMessage().getId(), "Add trick")
-                                        .addComponents(Label.of("Trick names", TextInput.create("names", TextInputStyle.SHORT)
-                                                .setRequired(true)
-                                                .setPlaceholder("Space-separated names of the trick")
-                                                .setMinLength(1)
-                                                .build()))
-                                        .build())
-                                .queue()).toString(), "Add trick", Emojis.ADD)
-                ))
-                .build())
+                        .addComponents(ActionRow.of(
+                                components.primaryButton("Evaluate", checkUser(commandEvent, event -> event.replyModal(Modal.create(EVAL_ID + commandEvent.getMessage().getId(), "Evaluate script")
+                                                .addComponents(Label.of("Arguments", TextInput.create("args", TextInputStyle.SHORT)
+                                                        .setRequired(false)
+                                                        .setPlaceholder("The arguments to evaluate the script with")
+                                                        .build()))
+                                                .build())
+                                        .queue())).withEmoji(Emojis.CMDLINE),
+                                components.secondaryButton("Add trick", checkUser(commandEvent, event -> event.replyModal(Modal.create(ADD_TRICK_ID + commandEvent.getMessage().getId(), "Add trick")
+                                                .addComponents(Label.of("Trick names", TextInput.create("names", TextInputStyle.SHORT)
+                                                        .setRequired(true)
+                                                        .setPlaceholder("Space-separated names of the trick")
+                                                        .setMinLength(1)
+                                                        .build()))
+                                                .build())
+                                        .queue())).withEmoji(Emojis.ADD)
+                        ))
+                        .build())
                 .queue();
     }
 
-    private static UUID checkUser(CommandEvent event, Consumer<ButtonInteractionEvent> consumer) {
+    private static Consumer<ButtonInteractionEvent> checkUser(CommandEvent event, Consumer<ButtonInteractionEvent> consumer) {
         var uid = event.getMember().getIdLong();
-        return BotMain.BUTTON_MANAGER.newButton(evt -> {
+        return evt -> {
             if (evt.getUser().getIdLong() != uid) {
                 evt.reply("You cannot use that button!").setEphemeral(true).queue();
                 return;
             }
 
             consumer.accept(evt);
-        });
+        };
     }
 
     public static void onEvent(final GenericEvent genericEvent) {

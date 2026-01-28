@@ -125,7 +125,7 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommands(new RemindCommand());
+        builder.addSlashCommands(new RemindCommand(bot()));
         builder.addContextMenu(new MessageContextMenu() {
             {
                 name = "Add reminder";

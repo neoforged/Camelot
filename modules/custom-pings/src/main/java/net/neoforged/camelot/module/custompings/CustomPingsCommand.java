@@ -13,10 +13,12 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.module.custompings.db.Ping;
 import net.neoforged.camelot.module.custompings.db.PingsDAO;
+import net.neoforged.camelot.util.jda.ComponentManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,12 +29,12 @@ import java.util.stream.Collectors;
  * Command used to manage your custom pings.
  */
 public class CustomPingsCommand extends SlashCommand {
-    public CustomPingsCommand() {
+    public CustomPingsCommand(Bot bot) {
         this.name = "custom-pings";
         this.guildOnly = true;
         this.children = new SlashCommand[] {
                 new Add(),
-                new ListCmd(),
+                new ListCmd(bot.components()),
                 new Delete()
         };
     }
@@ -115,9 +117,9 @@ public class CustomPingsCommand extends SlashCommand {
     /**
      * Command used to list your custom pings.
      */
-    public static final class ListCmd extends PaginatableCommand<ListCmd.Data> {
-        public ListCmd() {
-            super(BotMain.BUTTON_MANAGER);
+    private static final class ListCmd extends PaginatableCommand<ListCmd.Data> {
+        public ListCmd(ComponentManager components) {
+            super(components);
             this.name = "list";
             this.help = "List your pings in this guild, or another user's if you're a moderator";
             this.ephemeral = true;
