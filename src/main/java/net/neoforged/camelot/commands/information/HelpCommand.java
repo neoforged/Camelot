@@ -68,7 +68,7 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
             var lines = new String(is.readAllBytes()).split("\n");
             for (String line : lines) {
                 var split = line.split(" ", 2);
-                embed.appendDescription(STR."- [\{split[1]}](\{Common.REPO}/commit/\{split[0]})\n");
+                embed.appendDescription("- [%s](%s/commit/%s)\n".formatted(split[1], Common.REPO, split[0]));
             }
         } catch (Exception ex) {
             embed.appendDescription("Failed to read git log.\n");

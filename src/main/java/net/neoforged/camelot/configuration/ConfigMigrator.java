@@ -35,8 +35,8 @@ public class ConfigMigrator {
 
         script.appendLine("camelot {").indent();
 
-        script.appendLine(STR."token = '\{escape(properties.getProperty("token", ""))}'");
-        script.appendLine(STR."prefix = '\{escape(properties.getProperty("prefix", "!"))}'");
+        script.appendLine("token = '" + escape(properties.getProperty("token", "")) + "'");
+        script.appendLine("prefix = '" + escape(properties.getProperty("prefix", "!")) + "'");
 
         script.module(Tricks.class, () -> {
             script.appendLine("prefixEnabled = " + Boolean.parseBoolean(properties.getProperty("tricks.prefix", properties.getProperty("prefixTricks", "true"))));
@@ -45,7 +45,7 @@ public class ConfigMigrator {
             script.appendLine("trickMasterRole = " + Long.parseLong(properties.getProperty("trick.master", properties.getProperty("trickMaster", "0"))));
         });
 
-        script.module("net.neoforged.camelot.config.module.FilePreview", () -> script.appendLine(STR."auth = patAuthentication(secret('\{escape(properties.getProperty("filePreview.gistToken", ""))}'))"));
+        script.module("net.neoforged.camelot.config.module.FilePreview", () -> script.appendLine("auth = patAuthentication(secret('" + escape(properties.getProperty("filePreview.gistToken", "")) + "'))"));
         script.module(WebServer.class, () -> script
                 .appendProperty("port", Integer.parseInt(properties.getProperty("server.port", "3000")))
                 .appendProperty("serverUrl", properties.getProperty("server.url", properties.getProperty("server.url"))));
@@ -59,7 +59,7 @@ public class ConfigMigrator {
                 script.indentEnd().appendLine("}");
             } else {
                 if (!properties.getProperty("githubPAT", "").isBlank()) {
-                    script.appendLine(STR."auth = patAuthentication(secret('\{escape(properties.getProperty("githubPAT"))}'))");
+                    script.appendLine("auth = patAuthentication(secret('" + escape(properties.getProperty("githubPAT")) + "'))");
                 }
             }
         });
@@ -72,7 +72,7 @@ public class ConfigMigrator {
 
             var channelId = Long.parseLong(properties.getProperty("banAppeals.channel", "0"));
             if (channelId != 0) {
-                script.appendLine(STR."appealsChannel(guild: 0, channel: \{channelId}) // TODO - replace guild ID");
+                script.appendLine("appealsChannel(guild: 0, channel: " + channelId + ") // TODO - replace guild ID");
             }
 
             script.closure("mail", () -> {
@@ -95,13 +95,13 @@ public class ConfigMigrator {
                             .iterator();
                     while (itr.hasNext()) {
                         var k = itr.next();
-                        script.appendLine(STR."'\{escape(k.replace("mail.", ""))}': '\{escape(props.getProperty(k))}'\{itr.hasNext() ? ',' : ""}");
+                        script.appendLine("'" + escape(k.replace("mail.", "")) + "': '" + escape(props.getProperty(k)) + "'" + (itr.hasNext() ? ',' : ""));
                     }
 
                     script.indentEnd().appendLine("]");
 
                     script.appendProperty("username", props.getProperty("username", ""));
-                    script.appendLine(STR."password = secret('\{props.getProperty("password", "")}')");
+                    script.appendLine("password = secret('" + props.getProperty("password", "") + "')");
                     script.appendProperty("sendAs", props.getProperty("from", ""));
                 } else {
                     script.appendLine("// Mail not configured");
@@ -164,7 +164,7 @@ public class ConfigMigrator {
                 }
 
                 appendProperty("clientId", props.getProperty(type + ".clientId", ""));
-                appendLine(STR."clientSecret = secret('\{escape(props.getProperty(type + ".clientSecret", ""))}')");
+                appendLine("clientSecret = secret('" + escape(props.getProperty(type + ".clientSecret", "")) + "')");
             } else {
                 appendLine("// OAuth not configured");
             }

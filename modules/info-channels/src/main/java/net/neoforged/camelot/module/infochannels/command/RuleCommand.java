@@ -46,7 +46,7 @@ public class RuleCommand extends SlashCommand {
                         .setEmbeds(new EmbedBuilder(rule.embed())
                                 .setAuthor(event.getGuild().getName(), null, event.getGuild().getIconUrl())
                                 .build())
-                        .setContent(STR."Check out the server's rules in <#\{rule.channelId()}>.")
+                        .setContent("Check out the server's rules in <#" + rule.channelId() + ">.")
                         .build())
                     .queue();
         }
@@ -69,7 +69,7 @@ public class RuleCommand extends SlashCommand {
                     .setEmbeds(new EmbedBuilder(rule.embed())
                             .setAuthor(event.getGuild().getName(), null, event.getGuild().getIconUrl())
                             .build())
-                    .setContent(STR."Check out the server's rules in <#\{rule.channelId()}>.")
+                    .setContent("Check out the server's rules in <#" + rule.channelId() + ">.")
                     .build());
         }
     }

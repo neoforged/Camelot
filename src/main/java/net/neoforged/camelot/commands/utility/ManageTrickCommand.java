@@ -179,7 +179,7 @@ public class ManageTrickCommand extends SlashCommand {
 
             for (final String name : names) {
                 if (!isNameValid(name)) {
-                    event.reply(STR."`\{name}` is not a valid trick name!").setEphemeral(true).queue();
+                    event.reply("`" + name + "` is not a valid trick name!").setEphemeral(true).queue();
                     return;
                 }
             }
@@ -871,7 +871,7 @@ public class ManageTrickCommand extends SlashCommand {
             countChars(command, chars);
             final EmbedBuilder embed = new EmbedBuilder();
             embed.setTitle("Usage of /" + command.getName());
-            embed.addField("Used characters", STR."`\{chars.get()}` / `4000`", true);
+            embed.addField("Used characters", "`%s` / `4000`".formatted(chars.get()), true);
 
             var subcommandAmount = "`" + command.getSubcommands().size() + "`";
             if (!command.getSubcommandGroups().isEmpty()) {
@@ -879,11 +879,11 @@ public class ManageTrickCommand extends SlashCommand {
             }
             subcommandAmount += " / `" + CommandData.MAX_OPTIONS + "`";
             embed.addField("Subcommand amount", subcommandAmount, true);
-            embed.addField("Subcommand groups amount", STR."`\{command.getSubcommandGroups().size()}` / `\{CommandData.MAX_OPTIONS}`", true);
+            embed.addField("Subcommand groups amount", "`%s` / `%s`".formatted(command.getSubcommandGroups().size(), CommandData.MAX_OPTIONS), true);
 
             if (!command.getSubcommandGroups().isEmpty()) {
                 embed.addField("Subcommand information", command.getSubcommandGroups().stream()
-                        .map(cmd -> STR."`/\{command.getName()} \{cmd.getName()}`: `\{cmd.getSubcommands().size()}` / `\{CommandData.MAX_OPTIONS}` subcommands")
+                        .map(cmd -> "`/%s %s`: `%s` / `%s` subcommands".formatted(command.getName(), cmd.getName(), cmd.getSubcommands().size(), CommandData.MAX_OPTIONS))
                         .collect(Collectors.joining("\n")), false);
             }
 

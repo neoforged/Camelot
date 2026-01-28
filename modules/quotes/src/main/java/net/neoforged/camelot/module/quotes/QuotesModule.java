@@ -121,7 +121,7 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
                         event.getUser().getIdLong(),
                         event.getTarget().getJumpUrl()
                 ));
-                event.reply(STR."Quote #\{id} added: \{event.getTarget().getJumpUrl()}").queue();
+                event.reply("Quote #%s added: %s".formatted(id, event.getTarget().getJumpUrl())).queue();
             }
         });
     }

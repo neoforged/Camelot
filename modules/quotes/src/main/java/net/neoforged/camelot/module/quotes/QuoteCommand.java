@@ -78,11 +78,11 @@ public class QuoteCommand extends SlashCommand {
             return;
         }
 
-        event.getMessage().reply(STR. """
-            #\{ quote.id() }
-            > \{ quote.quote() }
-            \\- \{ quote.createAuthor() }
-            """ .trim()).mentionRepliedUser(false).setAllowedMentions(List.of()).queue();
+        event.getMessage().reply("""
+            #%s
+            > %s
+            \\- %s
+            """.trim().formatted(quote.id(), quote.quote(), quote.createAuthor())).mentionRepliedUser(false).setAllowedMentions(List.of()).queue();
     }
 
     public static final class GetQuote extends SlashCommand {
@@ -165,7 +165,7 @@ public class QuoteCommand extends SlashCommand {
                     message
             ));
 
-            event.reply(STR. "Added quote #\{ id }." ).queue();
+            event.reply("Added quote #" + id + ".").queue();
         }
     }
 
@@ -251,7 +251,7 @@ public class QuoteCommand extends SlashCommand {
                     .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()) + " • " + data.itemAmount() + " total");
             quotes.forEach(quote -> embed.addField(
                     "Quote #" + quote.id(),
-                    STR."> \{quote.quote()}\n\\- \{quote.createAuthor()}\{quote.message() == null ? "" : ("\n-# ╰› " + quote.message())}",
+                    "> %s\n\\- %s%s".formatted(quote.quote(), quote.createAuthor(), quote.message() == null ? "" : ("\n-# ╰› " + quote.message())),
                     false
             ));
             return CompletableFuture.completedFuture(new MessageEditBuilder()
