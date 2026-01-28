@@ -23,13 +23,8 @@ dependencies {
     implementation(project(':'))
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 java.toolchain.vendor = JvmVendorSpec.GRAAL_VM
-
-compileJava {
-    options.encoding = 'UTF-8'
-    options.compilerArgs.add('--enable-preview')
-}
 
 tasks.jar {
     from(sourceSets.config.output)

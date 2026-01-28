@@ -385,7 +385,7 @@ public class ScriptUtils {
 
     /**
      * Converts the given {@code value} to a string.
-     * <p>If the value has a {@code toString()} method, it will be called, otherwise {@link Value#toString()} will be used.</p>
+     * <p>If the value has a {@code toString()} method, it will be called, otherwise {@link Value#asString()} will be used.</p>
      *
      * @param value the value to convert to a string
      * @return the string representation of the value
@@ -394,7 +394,7 @@ public class ScriptUtils {
         if (value.hasMember("toString")) {
             return value.getMember("toString").execute().asString();
         }
-        return value.toString();
+        return value.asString();
     }
 
     private static Method getMethod(Class<?> clazz, String name, Class<?>... params) {

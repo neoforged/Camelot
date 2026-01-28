@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:25-jdk
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -22,4 +22,4 @@ ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata_best
 COPY build/libs/camelot-all.jar /camelot.jar
 VOLUME ["/home/camelot"]
 WORKDIR /home/camelot
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=90", "--enable-preview", "-jar", "/camelot.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=90", "--enable-native-access=ALL-UNNAMED", "-jar", "/camelot.jar"]

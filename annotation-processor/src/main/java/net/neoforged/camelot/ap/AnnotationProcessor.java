@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_21)
+@SupportedSourceVersion(SourceVersion.RELEASE_25)
 @SupportedAnnotationTypes("net.neoforged.camelot.ap.RegisterCamelotModule")
 public class AnnotationProcessor extends AbstractProcessor {
     @Override

@@ -1,6 +1,6 @@
 [versions]
-graal = "22.2.0"
-groovy = "4.0.21"
+graal = "25.0.2"
+groovy = "4.0.30"
 jdbi = "3.32.0"
 jackson = "2.20.0"
 jjwt = "0.10.5"

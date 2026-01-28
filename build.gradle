@@ -20,7 +20,6 @@ gradleutils {
 tasks.register('run', JavaExec).configure {
     classpath(sourceSets.main.runtimeClasspath)
     mainClass.set('net.neoforged.camelot.BotMain')
-    jvmArgs('--enable-preview')
     workingDir = project.file('run')
     doFirst {
         if (!workingDir.exists()) {
@@ -28,7 +27,7 @@ tasks.register('run', JavaExec).configure {
         }
     }
     javaLauncher.set(project.javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     })
 }
 
@@ -52,7 +51,7 @@ tasks.register('gitLog', Log) {
     it.output.set(new File(project.buildDir, 'gitlog'))
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 java.toolchain.vendor = JvmVendorSpec.GRAAL_VM
 
 java {
@@ -60,15 +59,9 @@ java {
     withSourcesJar()
 }
 
-compileJava {
-    options.encoding = 'UTF-8'
-    options.compilerArgs.add('--enable-preview')
-}
-
 javadoc {
     final opt = options as CoreJavadocOptions
-    opt.addStringOption('-release', '21')
-    opt.addBooleanOption('-enable-preview', true)
+    opt.addStringOption('-release', '25')
 }
 
 evaluationDependsOn(':config')
