@@ -22,26 +22,6 @@ public class ThreadPingsModule extends CamelotModule.WithDatabase<ThreadPings> {
         super(context, ThreadPings.class);
         accept(BuiltInModule.CONFIGURATION_COMMANDS, configCommandBuilder -> configCommandBuilder
                 .accept(new ThreadPingsCommand.ConfigureChannel(this), new ThreadPingsCommand.ConfigureGuild(this), new ThreadPingsCommand.View(this)));
-
-        accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
-                .add(BuiltInModule.DatabaseSource.PINGS, 3, stmt -> {
-                    logger.info("Migrating thread pings from pings.db to thread-pings.db");
-                    var rs = stmt.executeQuery("select channel, role from thread_pings");
-                    db().useExtension(ThreadPingsDAO.class, extension -> {
-                        while (rs.next()) {
-                            extension.add(rs.getLong(1), rs.getLong(2));
-                        }
-                    });
-                })
-                .add(BuiltInModule.DatabaseSource.CONFIG, 2, stmt -> {
-                    logger.info("Migrating thread pings from configuration.db to thread-pings.db");
-                    var rs = stmt.executeQuery("select channel, role from thread_pings");
-                    db().useExtension(ThreadPingsDAO.class, extension -> {
-                        while (rs.next()) {
-                            extension.add(rs.getLong(1), rs.getLong(2));
-                        }
-                    });
-                }));
     }
 
     @Override

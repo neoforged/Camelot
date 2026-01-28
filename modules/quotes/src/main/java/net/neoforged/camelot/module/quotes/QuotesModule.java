@@ -12,7 +12,6 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.config.module.Quotes;
-import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.TricksModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.quotes.db.Quote;
@@ -47,40 +46,9 @@ import static net.neoforged.camelot.util.ImageUtils.drawUserAvatar;
 public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
     public QuotesModule(ModuleProvider.Context context) {
         super(context, Quotes.class);
-        accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
-                .add(BuiltInModule.DatabaseSource.MAIN, 16, stmt -> {
-                    logger.info("Migrating quote authors from main.db to quotes.db");
-                    var authors = stmt.executeQuery("select * from quote_authors");
-                    db().useExtension(QuotesDAO.class, db -> {
-                        while (authors.next()) {
-                            db.insertAuthor(
-                                    authors.getInt(1),
-                                    authors.getLong(2),
-                                    authors.getString(3),
-                                    authors.getLong(4)
-                            );
-                        }
-                    });
-
-                    logger.info("Migrating quotes from main.db to quotes.db");
-                    var quotes = stmt.executeQuery("select * from quotes");
-                    db().useExtension(QuotesDAO.class, db -> {
-                        while (quotes.next()) {
-                            db.insertQuote(
-                                    quotes.getLong(2),
-                                    quotes.getInt(3),
-                                    quotes.getString(4),
-                                    quotes.getString(5),
-                                    quotes.getLong(6),
-                                    null,
-                                    quotes.getInt(1)
-                            );
-                        }
-                    });
-                }));
 
         accept(TricksModule.COMPILING_SCRIPT, compilingScript -> compilingScript.object().putLazyGetter("guild.getQuotes", () -> db().withExtension(QuotesDAO.class, db ->
-                db.getQuotes(compilingScript.context().guild().getIdLong(), 0, Integer.MAX_VALUE)).stream()
+                        db.getQuotes(compilingScript.context().guild().getIdLong(), 0, Integer.MAX_VALUE)).stream()
                 .map(q -> ScriptObject.of("Quote")
                         .put("id", q.id())
                         .put("quote", q.quote())
@@ -106,7 +74,7 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
 
         builder.addContextMenu(new MessageContextMenu() {
             {
-               name = "Add quote";
+                name = "Add quote";
             }
 
             @Override
@@ -127,6 +95,7 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
     }
 
     private Font usedFont;
+
     @Override
     public void setup(JDA jda) {
         final QuotesDAO db = BotMain.getModule(QuotesModule.class).db().onDemand(QuotesDAO.class);
@@ -161,7 +130,8 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
         }));
     }
 
-    public record MemberLike(String name, String avatar, Color color) {}
+    public record MemberLike(String name, String avatar, Color color) {
+    }
 
     public byte[] makeQuoteImage(final Guild guild, final @Nullable MemberLike member, final Quote quote) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();

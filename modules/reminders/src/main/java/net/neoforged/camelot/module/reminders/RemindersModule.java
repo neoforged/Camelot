@@ -37,10 +37,8 @@ import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.config.module.Reminders;
 import net.neoforged.camelot.listener.DismissListener;
-import net.neoforged.camelot.module.BuiltInModule;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.module.reminders.db.Reminder;
-import net.neoforged.camelot.module.reminders.db.RemindersCallbacks;
 import net.neoforged.camelot.module.reminders.db.RemindersDAO;
 import net.neoforged.camelot.util.Emojis;
 import net.neoforged.camelot.util.Utils;
@@ -68,24 +66,6 @@ public class RemindersModule extends CamelotModule.WithDatabase<Reminders> {
 
     public RemindersModule(ModuleProvider.Context context) {
         super(context, Reminders.class);
-
-        accept(BuiltInModule.DB_MIGRATION_CALLBACKS, builder -> builder
-                .add(BuiltInModule.DatabaseSource.MAIN, 17, statement -> {
-                    logger.info("Moving reminders from main.db to reminders.db");
-                    RemindersCallbacks.migrating = true;
-                    var rs = statement.executeQuery("select * from reminders");
-                    db().useExtension(RemindersDAO.class, db -> {
-                        while (rs.next()) {
-                            db.insertReminder(
-                                   rs.getLong(2),
-                                   rs.getLong(3),
-                                   rs.getLong(4),
-                                   rs.getString(5)
-                            );
-                        }
-                    });
-                    RemindersCallbacks.migrating = false;
-                }));
 
         var userRegistrar = context.userConfigs()
                 .groupDisplayName("Reminders");

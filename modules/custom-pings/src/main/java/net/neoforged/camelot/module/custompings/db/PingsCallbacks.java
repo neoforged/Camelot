@@ -4,13 +4,9 @@ import net.neoforged.camelot.db.api.ExecutionCallback;
 import net.neoforged.camelot.module.custompings.CustomPingListener;
 
 public class PingsCallbacks {
-    public static volatile boolean migrating;
-
     @ExecutionCallback(methodName = "insert")
     public static void onInsert(PingsDAO dao, long guild, long user, String regex, String message) {
-        if (!migrating) {
-            CustomPingListener.requestRefresh();
-        }
+        CustomPingListener.requestRefresh();
     }
 
     @ExecutionCallback(methodName = "deletePing")
