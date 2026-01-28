@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.interactions.ICustomIdInteraction;
-import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.Bot;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -25,7 +25,7 @@ import java.util.function.Consumer;
  * The manager uses {@code /} as a data separator in the button ID, with the first entry being the button UUID, allowing
  * you to add additional arguments.
  *
- * @see BotMain#BUTTON_MANAGER
+ * @see Bot#components()
  */
 public class ComponentManager implements EventListener {
     private final Cache<String, Consumer<? extends ICustomIdInteraction>> componentHandlers = Caffeine.newBuilder()
