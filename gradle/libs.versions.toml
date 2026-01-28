@@ -40,7 +40,7 @@ jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }
 j2html = { module = "com.j2html:j2html", version = "1.6.0" }
 
 jackson-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
-javalin = { module = "io.javalin:javalin", version = "6.3.0" }
+javalin = { module = "io.javalin:javalin", version = "6.7.0" }
 
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
