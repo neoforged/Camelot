@@ -67,7 +67,13 @@ javadoc {
 evaluationDependsOn(':config')
 
 configurations {
-    library.extendsFrom(implementation)
+    library {
+        extendsFrom(implementation)
+
+        // We do not need audio stuff
+        exclude module: 'tink'
+        exclude module: 'opus-java'
+    }
     module
     runtimeClasspath.extendsFrom(module, library)
 }
@@ -81,6 +87,7 @@ dependencies {
     api libs.jda
     implementation libs.trove4j
 
+    implementation libs.caffeine
     implementation libs.guava
     implementation libs.logback
 

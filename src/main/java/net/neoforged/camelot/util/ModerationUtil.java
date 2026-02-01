@@ -7,8 +7,8 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.neoforged.camelot.Bot;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.services.ModerationRecorderService;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;

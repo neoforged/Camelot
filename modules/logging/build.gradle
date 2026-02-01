@@ -7,5 +7,6 @@ camelotModule {
 }
 
 dependencies {
+    library(libs.caffeine)
     library(libs.fastutil)
 }

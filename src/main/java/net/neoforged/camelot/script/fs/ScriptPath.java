@@ -1,6 +1,5 @@
 package net.neoforged.camelot.script.fs;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,7 +18,6 @@ import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
 import java.util.stream.IntStream;
 
-@ParametersAreNonnullByDefault
 public record ScriptPath(ScriptFileSystem fileSystem, boolean absolute, String[] pathParts,
                          Function<ScriptPath, ScriptPath> normalized /* lazily-compute the normalized path */) implements Path {
 

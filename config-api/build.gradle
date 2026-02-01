@@ -7,6 +7,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 dependencies {
     api(libs.jda)
     api(libs.bundles.database)
+    implementation(libs.caffeine)
     implementation(libs.json)
     compileOnly(libs.annotations)
 }

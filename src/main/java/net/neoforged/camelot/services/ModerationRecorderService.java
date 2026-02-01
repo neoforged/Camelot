@@ -1,8 +1,8 @@
 package net.neoforged.camelot.services;
 
 import net.dv8tion.jda.api.entities.Guild;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.UUID;
 

@@ -30,7 +30,7 @@ public final class WebhookManager {
      * @param webhookName      the name of the fallback webhooks
      * @param creationListener a consumer to be invoked when a new webhook is created by the manager
      */
-    public WebhookManager(final Predicate<String> predicate, final String webhookName, @javax.annotation.Nullable final Consumer<Webhook> creationListener) {
+    public WebhookManager(final Predicate<String> predicate, final String webhookName, @Nullable final Consumer<Webhook> creationListener) {
         this.predicate = predicate;
         this.webhookName = webhookName;
         this.creationListener = creationListener;

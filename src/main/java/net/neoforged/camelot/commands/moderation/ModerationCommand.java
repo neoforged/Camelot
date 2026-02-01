@@ -25,8 +25,8 @@ import net.neoforged.camelot.db.transactionals.ModLogsDAO;
 import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.ModerationUtil;
 import net.neoforged.camelot.util.Utils;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.ParametersAreNullableByDefault;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -98,8 +98,7 @@ public abstract class ModerationCommand extends SlashCommand {
      * @param moderator the moderator
      * @return if the target can be moderated, or {@code false} if the target and the moderators are the same user.
      */
-    @ParametersAreNullableByDefault
-    protected final boolean canModerate(Member target, Member moderator) {
+    protected final boolean canModerate(@Nullable Member target, @Nullable Member moderator) {
         Preconditions.checkArgument(target != null, "Unknown user!");
         Preconditions.checkArgument(moderator != null, "Can only run command in guild!");
         Preconditions.checkArgument(target.getIdLong() != moderator.getIdLong(), "Cannot moderate yourself!");

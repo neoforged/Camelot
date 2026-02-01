@@ -15,8 +15,8 @@ import net.dv8tion.jda.api.utils.data.DataObject;
 import org.codehaus.plexus.util.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.OffsetDateTime;
@@ -143,7 +143,7 @@ public class AppEmojiManager implements EventListener {
         protected CustomEmoji emoji;
 
         @Override
-        @Nonnull
+        @NonNull
         public Type getType() {
             return emoji.getType();
         }
@@ -154,25 +154,25 @@ public class AppEmojiManager implements EventListener {
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public String getImageUrl() {
             return emoji.getImageUrl();
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public ImageProxy getImage() {
             return emoji.getImage();
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public String getAsMention() {
             return emoji.getAsMention();
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public String getFormatted() {
             return emoji.getFormatted();
         }
@@ -183,25 +183,25 @@ public class AppEmojiManager implements EventListener {
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public String getName() {
             return emoji.getName();
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public String getAsReactionCode() {
             return emoji.getAsReactionCode();
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public DataObject toData() {
             return emoji.toData();
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public String getId() {
             return emoji.getId();
         }
@@ -212,7 +212,7 @@ public class AppEmojiManager implements EventListener {
         }
 
         @Override
-        @Nonnull
+        @NonNull
         public OffsetDateTime getTimeCreated() {
             return emoji.getTimeCreated();
         }

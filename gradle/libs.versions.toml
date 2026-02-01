@@ -2,26 +2,26 @@
 graal = "25.0.2"
 groovy = "4.0.30"
 jdbi = "3.32.0"
-jackson = "2.20.0"
-jjwt = "0.10.5"
+jackson = "2.21.0"
+jjwt = "0.13.0"
 junit = "5.10.0"
 
 [libraries]
 
-angusmail = { module = "org.eclipse.angus:angus-mail", version = "2.0.1" }
+angusmail = { module = "org.eclipse.angus:angus-mail", version = "2.0.5" }
 annotations = { module = "org.jetbrains:annotations", version = "24.0.1" }
-args4j = { module = "args4j:args4j", version = "2.33" }
+args4j = { module = "args4j:args4j", version = "2.37" }
 assertj = { module = "org.assertj:assertj-core", version = "3.25.1" }
-autoservice = { module = "com.google.auto.service:auto-service", version = "1.0.1" }
 authlib = { module = "com.mojang:authlib", version = "7.0.61" }
 
-bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version = "1.58" }
+bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.83" }
 
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.3" }
 # TODO - switch back to the normal maven one once https://github.com/Chew/JDA-Chewtils/pull/93 is merged
 chewtils = { module = "com.github.Chew:JDA-Chewtils", version = "39a83bd8" }
 
-fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.12" }
-flyway = { module = "org.flywaydb:flyway-core", version = "8.5.13" }
+fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.18" }
+flyway = { module = "org.flywaydb:flyway-core", version = "12.0.0" }
 
 githubapi = { module = "org.kohsuke:github-api", version = "1.330" }
 graal-js = { module = "org.graalvm.js:js", version.ref = "graal" }
@@ -30,9 +30,9 @@ graal-js-scriptengine = { module = "org.graalvm.js:js-scriptengine", version.ref
 groovy = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
 groovy-contracts = { module = "org.apache.groovy:groovy-contracts", version.ref = "groovy" }
 
-guava = { module = "com.google.guava:guava", version = "30.1.1-jre" }
+guava = { module = "com.google.guava:guava", version = "33.5.0-jre" }
 
-jda = { module = "net.dv8tion:JDA", version = "6.0.0" }
+jda = { module = "net.dv8tion:JDA", version = "6.3.0" }
 
 jdbi-core = { module = "org.jdbi:jdbi3-core", version.ref = "jdbi" }
 jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }
@@ -40,13 +40,13 @@ jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }
 j2html = { module = "com.j2html:j2html", version = "1.6.0" }
 
 jackson-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
-javalin = { module = "io.javalin:javalin", version = "6.3.0" }
+javalin = { module = "io.javalin:javalin", version = "6.7.0" }
 
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
-json = { module = "org.json:json", version = "20231013" }
+json = { module = "org.json:json", version = "20251224" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
@@ -56,10 +56,10 @@ logback = { module = "ch.qos.logback:logback-classic", version = "1.5.6" }
 
 mavenartifact = { module = "org.apache.maven:maven-artifact", version = "3.9.1" }
 
-re2j = { module = "com.google.re2j:re2j", version = "1.7" }
+re2j = { module = "com.google.re2j:re2j", version = "1.8" }
 
 semver = { module = "com.matyrobbrt:semver-graaljs", version = "1.1.0" }
-sqlitejdbc = { module = "org.xerial:sqlite-jdbc", version = "3.40.0.0" }
+sqlitejdbc = { module = "org.xerial:sqlite-jdbc", version = "3.51.1.0" }
 
 trove4j = { module = "net.sf.trove4j:trove4j", version = "3.0.3" }
 
