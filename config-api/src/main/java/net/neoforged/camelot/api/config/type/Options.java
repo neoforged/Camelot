@@ -53,6 +53,17 @@ public interface Options {
     }
 
     /**
+     * {@return a factory for channel filter options}
+     * <p>
+     * Channel filter options allow users to configure channel predicates (whether all channels are included by default and an explicit blacklist/whitelist).
+     * <br>
+     * Note that the default value for this option is {@link ChannelFilter#ALL_BY_DEFAULT}.
+     */
+    static <G> OptionBuilderFactory<G, ChannelFilter, ? extends OptionBuilder<G, ChannelFilter, ?>> channelFilter() {
+        return OptionsImpl.CHANNEL_FILTER;
+    }
+
+    /**
      * {@return a factory for enum options}
      * This method requires the enum to implement {@link HumanReadableEnum}.
      *

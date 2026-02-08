@@ -71,5 +71,10 @@ public class ConfigTest {
 
             registrar = registrar.popGroup();
         }
+
+        {
+            registrar.option("channel_filter", Options.channelFilter())
+                    .register();
+        }
     }
 }
