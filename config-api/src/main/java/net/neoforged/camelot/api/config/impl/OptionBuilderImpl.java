@@ -19,6 +19,8 @@ public abstract class OptionBuilderImpl<G, T, S extends OptionBuilder<G, T, S>> 
 
     protected ConfigOptionImpl.Dependency<G, ?> dependency;
 
+    private boolean canBeRegistered;
+
     protected OptionBuilderImpl(ConfigManager<G> manager, String path, String id) {
         this.manager = manager;
         this.path = path;
@@ -66,6 +68,11 @@ public abstract class OptionBuilderImpl<G, T, S extends OptionBuilder<G, T, S>> 
         return new ListOption.Builder<>(this);
     }
 
+    public S setCannotBeRegistered() {
+        this.canBeRegistered = true;
+        return self();
+    }
+
     @Override
     public <TO> OptionBuilder<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter) {
         return new MappingOption.Builder<>(this, from, to, formatter);
@@ -79,6 +86,9 @@ public abstract class OptionBuilderImpl<G, T, S extends OptionBuilder<G, T, S>> 
 
     @Override
     public ConfigOption<G, T> register() {
+        if (canBeRegistered) {
+            throw new IllegalStateException("This option builder is an intermediary and therefore cannot be registered");
+        }
         var man = (ConfigManagerImpl<G>) manager;
         var cfg = new ConfigOptionImpl<>(man, name, description, path.isBlank() ? id : path + "." + id, createType(), defaultValue, dependency);
         man.register(path, cfg);

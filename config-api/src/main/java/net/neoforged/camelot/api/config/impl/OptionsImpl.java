@@ -2,17 +2,21 @@ package net.neoforged.camelot.api.config.impl;
 
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
 import net.neoforged.camelot.api.config.type.HumanReadableEnum;
+import net.neoforged.camelot.api.config.type.ObjectOptionBuilders;
 import net.neoforged.camelot.api.config.type.OptionBuilder;
 import net.neoforged.camelot.api.config.type.OptionBuilderFactory;
 import net.neoforged.camelot.api.config.type.entity.EntitySet;
 
+import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class OptionsImpl {
     public static final OptionBuilderFactory BOOL = BooleanOption.Builder::new;
+    public static final OptionBuilderFactory STRING = StringOption::builder;
     public static final OptionBuilderFactory REGEX = (manager, path, id) -> ((StringOption.Builder<?>) StringOption.builder(manager, path, id))
             .validate((String in) -> {
                 try {
@@ -23,7 +27,6 @@ public class OptionsImpl {
                 }
             })
             .map(Pattern::compile, Pattern::pattern, in -> "`" + in.pattern() + "`");
-    public static final OptionBuilderFactory STRING = StringOption::builder;
     public static final OptionBuilderFactory INT = (manager, path, id) -> new NumberOption.Builder<>(manager, path, id, Integer::parseInt, Number::intValue);
 
     public static final OptionBuilderFactory DURATION = DurationOption.Builder::new;
@@ -38,5 +41,14 @@ public class OptionsImpl {
 
     public static <G> OptionBuilderFactory<G, EntitySet, EntitySet.Builder<G, EntitySet>> entities(EntitySelectMenu.SelectTarget entityType) {
         return (manager, path, id) -> new EntityOption.Builder<>(manager, path, id, entityType, EntityOption.BaseEntitySet::new);
+    }
+
+    public static <G, T> OptionBuilder.CompositeStarter<G, T> composite(Class<T> type) {
+        return new OptionBuilder.CompositeStarter<>() {
+            @Override
+            public <F, FR, B extends OptionBuilder<G, FR, B>> ObjectOptionBuilders.Builder1<G, T, F> field(String id, Function<T, F> extractor, OptionBuilderFactory<G, FR, B> fieldFactory, Function<B, OptionBuilder<G, F, ?>> optionConfigurator) {
+                return new ObjectOptionBuilder<>(List.of(new ObjectOption.BuilderOption(id, extractor, fieldFactory, optionConfigurator)));
+            }
+        };
     }
 }

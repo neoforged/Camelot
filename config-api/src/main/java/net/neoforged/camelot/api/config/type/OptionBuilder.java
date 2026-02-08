@@ -281,4 +281,44 @@ public interface OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
             );
         }
     }
+
+    /**
+     * A pseudo-{@link OptionBuilder} for composite objects (multiple fields are turned into one object).
+     * To get a {@link OptionBuilderFactory} out of this you must add at least one field and then finish by calling {@code #constructor} with
+     * the object constructor.
+     *
+     * @param <T> the final object type
+     */
+    interface CompositeStarter<G, T> {
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                 the id of the field
+         * @param extractor          the function that extracts the field value from the object
+         * @param fieldFactory       the option factory to create the field's option
+         * @param optionConfigurator a unary operator used to configure the field option
+         * @param <F>                the type of the field to add
+         * @param <FR>               the type of the option factory. This can be different to facilitate eventual mapping
+         * @param <B>                the type of the field's builder
+         * @return a new builder with the added field
+         */
+        <F, FR, B extends OptionBuilder<G, FR, B>> ObjectOptionBuilders.Builder1<G, T, F> field(String id, Function<T, F> extractor, OptionBuilderFactory<G, FR, B> fieldFactory, Function<B, OptionBuilder<G, F, ?>> optionConfigurator);
+    }
+
+    /**
+     * An {@link OptionBuilder} for composite objects (multiple fields are turned into one object).
+     * To get such a builder you have to use the {@code #construct} method of an object option builder.
+     *
+     * @param <T> the final object type
+     */
+    interface Composite<G, T> extends OptionBuilder<G, T, Composite<G, T>> {
+        /**
+         * Set the formatter function, which is used to turn the object into a human-readable string.
+         * The formatter should, ideally, display all fields of the object.
+         *
+         * @param formatter the formatter function
+         * @return the builder, for chaining purposes
+         */
+        Composite<G, T> formatter(Function<T, String> formatter);
+    }
 }

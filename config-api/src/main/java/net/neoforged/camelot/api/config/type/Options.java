@@ -93,4 +93,16 @@ public interface Options {
     static <G> OptionBuilderFactory<G, ChannelSet, EntitySet.Builder<G, ChannelSet>> channels() {
         return OptionsImpl.CHANNELS;
     }
+
+    /**
+     * {@return a pseudo-{@link OptionBuilderFactory} for composite objects (multiple fields are turned into one object)}
+     * To get a {@link OptionBuilderFactory} out of this you must add at least one field and then finish by calling {@code #constructor} with
+     * the object constructor.
+     *
+     * @param objectType the type of the final object
+     * @param <T>        the final object type
+     */
+    static <G, T> OptionBuilder.CompositeStarter<G, T> composite(Class<T> objectType) {
+        return OptionsImpl.composite(objectType);
+    }
 }

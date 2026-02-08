@@ -15,4 +15,8 @@ public interface ConfigStorage<G> {
     static <G> ConfigStorage<G> sql(Jdbi database, String tableName, Function<G, Object> identifier) {
         return new SQLStorage<>(database, tableName, identifier);
     }
+
+    static <G> ConfigStorage<G> inMemory() {
+        return new InMemoryStorage<>();
+    }
 }
