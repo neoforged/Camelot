@@ -54,7 +54,7 @@ final class DurationOption implements OptionType<Duration> {
                             .setRequired(false)
                             .build()));
             event.replyModal(modal.build()).queue();
-        }).withLabel("Edit");
+        }).withLabel("Modify");
     }
 
     @Override

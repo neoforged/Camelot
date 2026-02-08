@@ -95,7 +95,7 @@ class ChannelFilterOption implements OptionType<ChannelFilter> {
                             .setRequiredRange(0, SelectMenu.OPTIONS_MAX_AMOUNT)
                             .build()));
             event.replyModal(modal.build()).queue();
-        }).withLabel("Edit");
+        }).withLabel("Modify");
     }
 
     @Override

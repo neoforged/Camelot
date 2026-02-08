@@ -2,6 +2,7 @@ package net.neoforged.camelot.api.config.type;
 
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.attribute.ICategorizableChannel;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Set;
 import java.util.function.Predicate;
@@ -16,17 +17,25 @@ import java.util.function.Predicate;
  * @see Options#channelFilter()
  */
 public record ChannelFilter(boolean allByDefault, Set<Long> whitelist,
-                            Set<Long> blacklist) implements Predicate<Channel> {
+                            Set<Long> blacklist, boolean simple) implements Predicate<Channel> {
     public static final ChannelFilter ALL_BY_DEFAULT = new ChannelFilter(true, Set.of(), Set.of());
     public static final ChannelFilter NONE_BY_DEFAULT = new ChannelFilter(false, Set.of(), Set.of());
 
+    public ChannelFilter(boolean allByDefault, Set<Long> whitelist, Set<Long> blacklist) {
+        this(allByDefault, whitelist, blacklist, false);
+    }
+
+    @ApiStatus.Internal
     public ChannelFilter {
         whitelist = Set.copyOf(whitelist);
         blacklist = Set.copyOf(blacklist);
+        simple = whitelist.isEmpty() && blacklist.isEmpty();
     }
 
     @Override
     public boolean test(Channel channel) {
+        if (simple) return allByDefault;
+
         if (blacklist.contains(channel.getIdLong())) return false;
         if (whitelist.contains(channel.getIdLong())) return true;
 
@@ -39,6 +48,10 @@ public record ChannelFilter(boolean allByDefault, Set<Long> whitelist,
     }
 
     public String format() {
+        if (!allByDefault && whitelist.isEmpty() && blacklist.isEmpty()) {
+            return "none of the channels";
+        }
+
         var str = new StringBuilder();
         if (allByDefault) {
             str.append("all channels");

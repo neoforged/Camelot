@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -23,6 +24,8 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.type.ChannelFilter;
 import net.neoforged.camelot.module.custompings.db.Ping;
 import net.neoforged.camelot.module.custompings.db.PingsDAO;
 import net.neoforged.camelot.util.Utils;
@@ -40,7 +43,7 @@ import java.util.stream.Collectors;
  * The listener that listens for new messages in guild and checks if they triggered any custom ping.
  * <p>This listener will check all pings in the guild, that aren't of the message author, and the ones that match will notify the owner via DMs or via a private thread (if the owner disabled DMs).</p>
  */
-public class CustomPingListener implements EventListener {
+public record CustomPingListener(ConfigOption<Guild, ChannelFilter> channelFilter) implements EventListener {
     // We cache the pings because pattern compilation can take a while and messages can be sent at rates of over 5/second in the Forge Discord so let's avoid too many db queries and wasting too much power
     public static final Long2ObjectMap<List<Ping>> CACHE = new Long2ObjectOpenHashMap<>();
 
@@ -56,6 +59,9 @@ public class CustomPingListener implements EventListener {
     public void onEvent(@NotNull GenericEvent gevent) {
         if (!(gevent instanceof MessageReceivedEvent event)) return;
         if (!event.isFromGuild() || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
+
+        if (!channelFilter.get(event.getGuild()).test(event.getChannel())) return;
+
         synchronized (CACHE) {
             CACHE.getOrDefault(event.getGuild().getIdLong(), List.of()).forEach(ping -> {
                 if (ping.user() == event.getAuthor().getIdLong()) return;

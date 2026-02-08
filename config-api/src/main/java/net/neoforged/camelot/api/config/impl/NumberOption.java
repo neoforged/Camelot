@@ -68,7 +68,7 @@ final class NumberOption<T extends Number & Comparable<T>> implements OptionType
                             .setMinLength(1)
                             .build()));
             event.replyModal(modal.build()).queue();
-        }).withLabel("Edit");
+        }).withLabel("Modify");
     }
 
     @Override

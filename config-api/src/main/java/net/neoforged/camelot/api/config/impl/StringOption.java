@@ -69,7 +69,7 @@ final class StringOption implements OptionType<String> {
                             .setRequiredRange(minLength, maxLength)
                             .build()));
             event.replyModal(modal.build()).queue();
-        }).withLabel("Edit");
+        }).withLabel("Modify");
     }
 
     @Override
