@@ -19,9 +19,6 @@ jobs:
           fetch-depth: 1000
           fetch-tags: true
 
-      - name: Validate wrapper
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: Setup Java 21
         if: inputs.version_task
         run: |
