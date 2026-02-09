@@ -45,11 +45,6 @@ public class OptionsImpl {
     }
 
     public static <G, T> OptionBuilder.CompositeStarter<G, T> composite(Class<T> type) {
-        return new OptionBuilder.CompositeStarter<>() {
-            @Override
-            public <F, FR, B extends OptionBuilder<G, FR, B>> ObjectOptionBuilders.Builder1<G, T, F> field(String id, Function<T, F> extractor, OptionBuilderFactory<G, FR, B> fieldFactory, Function<B, OptionBuilder<G, F, ?>> optionConfigurator) {
-                return new ObjectOptionBuilder<>(List.of(new ObjectOption.BuilderOption(id, extractor, fieldFactory, optionConfigurator)));
-            }
-        };
+        return new ObjectOptionBuilder<>(List.of());
     }
 }

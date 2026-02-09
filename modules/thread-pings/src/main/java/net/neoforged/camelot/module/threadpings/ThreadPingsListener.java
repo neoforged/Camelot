@@ -1,38 +1,31 @@
 package net.neoforged.camelot.module.threadpings;
 
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Message.MentionType;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
-import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel;
-import net.dv8tion.jda.api.entities.channel.unions.IThreadContainerUnion;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.ErrorResponse;
-import net.neoforged.camelot.module.threadpings.db.ThreadPingsDAO;
-import net.neoforged.camelot.module.threadpings.db.ThreadPingsExemptionsDAO;
+import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.util.Emojis;
-import org.jdbi.v3.core.Jdbi;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 
-public record ThreadPingsListener(Jdbi database) implements EventListener {
+public record ThreadPingsListener(ConfigOption<Guild, List<ThreadPingConfiguration>> option) implements EventListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPingsListener.class);
 
     @Override
@@ -44,40 +37,20 @@ public record ThreadPingsListener(Jdbi database) implements EventListener {
             return;
 
         final ThreadChannel thread = event.getChannel().asThreadChannel();
-        final Set<Long> pingRoleIds = new LinkedHashSet<>();
-        database.useExtension(ThreadPingsDAO.class,
-                threadPings -> queryRoles(thread, pingRoleIds, threadPings::query));
 
-        final Set<Long> exemptRoleIds = new LinkedHashSet<>();
+        final List<ThreadPingConfiguration> pings = option.get(event.getGuild());
+        if (pings == null || pings.isEmpty()) return;
 
-        database.useExtension(ThreadPingsExemptionsDAO.class,
-                threadPingsExempt -> queryRoles(thread, exemptRoleIds, threadPingsExempt::query));
-
-        final List<Role> pingRoles = new ArrayList<>();
-        for (Long roleId : pingRoleIds) {
-            final Role role = thread.getGuild().getRoleById(roleId);
-            if (role == null) {
-                LOGGER.info("Ping role {} does not exist; deleting role from database", roleId);
-                database.useExtension(ThreadPingsDAO.class, threadPings -> threadPings.clearRole(roleId));
-                continue;
+        final Set<Role> pingRoles = new HashSet<>();
+        for (final ThreadPingConfiguration ping : pings) {
+            if (ping.enabled() && ping.channels().test(thread.getParentChannel())) {
+                ping.roles().get(event.getGuild())
+                        .forEach(pingRoles::add);
             }
-            pingRoles.add(role);
         }
-
-        final List<Role> exemptRoles = new ArrayList<>();
-        for (Long roleId : exemptRoleIds) {
-            final Role role = thread.getGuild().getRoleById(roleId);
-            if (role == null) {
-                LOGGER.info("Exempt role {} does not exist; deleting role from database", roleId);
-                database.useExtension(ThreadPingsExemptionsDAO.class, threadPingsExempt -> threadPingsExempt.clearRole(roleId));
-                continue;
-            }
-            exemptRoles.add(role);
-        }
-
-        pingRoles.removeAll(exemptRoles);
 
         if (pingRoles.isEmpty()) return;
+
         final String mentionMessage = pingRoles.stream()
                 .map(IMentionable::getAsMention)
                 .collect(Collectors.joining(", ", "Hello to ", "!"));
@@ -104,20 +77,4 @@ public record ThreadPingsListener(Jdbi database) implements EventListener {
                 );
     }
 
-    private static void queryRoles(ThreadChannel thread, Collection<Long> roleIds, LongFunction<List<Long>> roleQuery) {
-        // Check the thread's parent channel
-        final IThreadContainerUnion parentChannel = thread.getParentChannel();
-        roleIds.addAll(roleQuery.apply(parentChannel.getIdLong()));
-
-        if (parentChannel instanceof StandardGuildChannel guildChannel) {
-            // Check the category of the thread's parent channel
-            final Category parentCategory = guildChannel.getParentCategory();
-            if (parentCategory != null) {
-                roleIds.addAll(roleQuery.apply(parentCategory.getIdLong()));
-            }
-        }
-
-        // Check guild-wide (using the guild ID)
-        roleIds.addAll(roleQuery.apply(thread.getGuild().getIdLong()));
-    }
 }

@@ -8,7 +8,9 @@ import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.api.config.ConfigManager;
 import net.neoforged.camelot.api.config.type.OptionBuilder;
 import net.neoforged.camelot.api.config.type.OptionType;
+import net.neoforged.camelot.api.config.type.entity.ChannelSet;
 import net.neoforged.camelot.api.config.type.entity.EntitySet;
+import net.neoforged.camelot.api.config.type.entity.RoleSet;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 
@@ -203,16 +205,31 @@ final class EntityOption<S extends EntitySet> implements OptionType<S> {
         public BaseEntitySet(Set<Long> wrapped) {
             this.wrapped = wrapped;
         }
+
+        @Override
+        public String asMentions() {
+            return wrapped.stream().map(String::valueOf).collect(Collectors.joining(", "));
+        }
     }
 
     static final class RoleSet extends BaseEntitySet implements net.neoforged.camelot.api.config.type.entity.RoleSet {
         public RoleSet(Set<Long> wrapped) {
             super(wrapped);
         }
+
+        @Override
+        public String asMentions() {
+            return net.neoforged.camelot.api.config.type.entity.RoleSet.super.asMentions();
+        }
     }
     static final class ChannelSet extends BaseEntitySet implements net.neoforged.camelot.api.config.type.entity.ChannelSet {
         public ChannelSet(Set<Long> wrapped) {
             super(wrapped);
+        }
+
+        @Override
+        public String asMentions() {
+            return net.neoforged.camelot.api.config.type.entity.ChannelSet.super.asMentions();
         }
     }
 }

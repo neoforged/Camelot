@@ -56,33 +56,34 @@ public record ChannelFilter(boolean allByDefault, Set<Long> whitelist,
         if (allByDefault) {
             str.append("all channels");
             if (!blacklist.isEmpty()) {
-                str.append(" excluding ").append(format(blacklist));
+                str.append(" excluding ").append(formatMentions(blacklist, "#"));
                 if (!whitelist.isEmpty()) {
-                    str.append(", but including ").append(format(whitelist));
+                    str.append(", but including ").append(formatMentions(whitelist, "#"));
                 }
             }
         } else {
             if (!whitelist.isEmpty()) {
-                str.append(format(whitelist));
+                str.append(formatMentions(whitelist, "#"));
             }
             if (!blacklist.isEmpty()) {
-                str.append(" excluding ").append(format(blacklist));
+                str.append(" excluding ").append(formatMentions(blacklist, "#"));
             }
         }
         return str.toString();
     }
 
-    private static String format(Set<Long> channelSet) {
-        if (channelSet.isEmpty()) return "";
+    @ApiStatus.Internal
+    public static String formatMentions(Set<Long> set, String mentionCharacter) {
+        if (set.isEmpty()) return "";
         StringBuilder str = new StringBuilder();
         int idx = 0;
-        for (Long id : channelSet) {
-            if (idx > 0 && idx == channelSet.size() - 1) {
+        for (Long id : set) {
+            if (idx > 0 && idx == set.size() - 1) {
                 str.append(" and ");
             } else if (idx > 0) {
                 str.append(", ");
             }
-            str.append("<#").append(id).append('>');
+            str.append("<").append(mentionCharacter).append(id).append('>');
             idx++;
         }
         return str.toString();

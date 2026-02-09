@@ -14,4 +14,9 @@ public interface EntitySet extends Set<Long> {
     interface Builder<G, S extends EntitySet> extends OptionBuilder.Collection<G, Long, S, Builder<G, S>> {
 
     }
+
+    /**
+     * {@return format this entity set as a list of mentions}
+     */
+    String asMentions();
 }

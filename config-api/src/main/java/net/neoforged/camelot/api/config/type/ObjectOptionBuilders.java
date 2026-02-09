@@ -32,6 +32,19 @@ public interface ObjectOptionBuilders {
          * @param fieldFactory         the option factory to create the field's option
          * @param displayName          the display name of the field
          * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder2<TGT, OBJ, A, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
          * @param defaultValue         the default value of the field
          * @param <NEW>                the type of the field to add
          * @return a new builder with the added field
@@ -63,6 +76,19 @@ public interface ObjectOptionBuilders {
          * @return a new builder with the added field
          */
         <NEW, FROM, FB extends OptionBuilder<TGT, FROM, FB>> Builder3<TGT, OBJ, A, B, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, FROM, FB> fieldFactory, Function<FB, ? extends OptionBuilder<TGT, NEW, ?>> optionConfigurator);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder3<TGT, OBJ, A, B, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
 
         /**
          * Add a field to this composite object.
@@ -112,6 +138,19 @@ public interface ObjectOptionBuilders {
          * @param fieldFactory         the option factory to create the field's option
          * @param displayName          the display name of the field
          * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder4<TGT, OBJ, A, B, C, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
          * @param defaultValue         the default value of the field
          * @param <NEW>                the type of the field to add
          * @return a new builder with the added field
@@ -143,6 +182,19 @@ public interface ObjectOptionBuilders {
          * @return a new builder with the added field
          */
         <NEW, FROM, FB extends OptionBuilder<TGT, FROM, FB>> Builder5<TGT, OBJ, A, B, C, D, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, FROM, FB> fieldFactory, Function<FB, ? extends OptionBuilder<TGT, NEW, ?>> optionConfigurator);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder5<TGT, OBJ, A, B, C, D, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
 
         /**
          * Add a field to this composite object.
@@ -192,6 +244,19 @@ public interface ObjectOptionBuilders {
          * @param fieldFactory         the option factory to create the field's option
          * @param displayName          the display name of the field
          * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder6<TGT, OBJ, A, B, C, D, E, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
          * @param defaultValue         the default value of the field
          * @param <NEW>                the type of the field to add
          * @return a new builder with the added field
@@ -223,6 +288,19 @@ public interface ObjectOptionBuilders {
          * @return a new builder with the added field
          */
         <NEW, FROM, FB extends OptionBuilder<TGT, FROM, FB>> Builder7<TGT, OBJ, A, B, C, D, E, F, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, FROM, FB> fieldFactory, Function<FB, ? extends OptionBuilder<TGT, NEW, ?>> optionConfigurator);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder7<TGT, OBJ, A, B, C, D, E, F, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
 
         /**
          * Add a field to this composite object.
@@ -272,6 +350,19 @@ public interface ObjectOptionBuilders {
          * @param fieldFactory         the option factory to create the field's option
          * @param displayName          the display name of the field
          * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder8<TGT, OBJ, A, B, C, D, E, F, G, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
          * @param defaultValue         the default value of the field
          * @param <NEW>                the type of the field to add
          * @return a new builder with the added field
@@ -312,6 +403,19 @@ public interface ObjectOptionBuilders {
          * @param fieldFactory         the option factory to create the field's option
          * @param displayName          the display name of the field
          * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder9<TGT, OBJ, A, B, C, D, E, F, G, H, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
          * @param defaultValue         the default value of the field
          * @param <NEW>                the type of the field to add
          * @return a new builder with the added field
@@ -343,6 +447,19 @@ public interface ObjectOptionBuilders {
          * @return a new builder with the added field
          */
         <NEW, FROM, FB extends OptionBuilder<TGT, FROM, FB>> Builder10<TGT, OBJ, A, B, C, D, E, F, G, H, I, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, FROM, FB> fieldFactory, Function<FB, ? extends OptionBuilder<TGT, NEW, ?>> optionConfigurator);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id                   the id of the field
+         * @param extractor            the function that extracts the field value from the object
+         * @param fieldFactory         the option factory to create the field's option
+         * @param displayName          the display name of the field
+         * @param description          the description of the field
+         * @param <NEW>                the type of the field to add
+         * @return a new builder with the added field
+         */
+        <NEW> Builder10<TGT, OBJ, A, B, C, D, E, F, G, H, I, NEW> field(String id, Function<OBJ, NEW> extractor, OptionBuilderFactory<TGT, NEW, ?> fieldFactory, String displayName, String description);
 
         /**
          * Add a field to this composite object.

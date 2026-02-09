@@ -5,7 +5,3 @@ plugins {
 camelotModule {
     id = 'thread-pings'
 }
-
-dependencies {
-    library(libs.bundles.database)
-}

@@ -89,8 +89,8 @@ final class ObjectOption<O> implements OptionType<O> {
                 ),
                 TextDisplay.ofFormat(
                         "**" + info.displayName() + "**\n"
-                                + info.desc() + "\n\n"
-                                + "Curent value: " + (current == null ? "*none*" : info.type().formatFullPageView(current))
+                                + info.desc() + "\n"
+                                + "__Curent value__: " + (current == null ? "*none*" : info.type().formatFullPageView(current))
                 )
         );
     }
@@ -121,33 +121,32 @@ final class ObjectOption<O> implements OptionType<O> {
         }
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     static class Builder<G, O> extends OptionBuilderImpl<G, O, OptionBuilder.Composite<G, O>> implements OptionBuilder.Composite<G, O> {
-        private final java.util.List<BuilderOption<G, O, ?, ?>> options;
+        private final java.util.List<OptionInfo<O, ?>> options;
         private final Creator<O> creator;
 
         private Function<O, String> formatter;
 
         protected Builder(ConfigManager<G> manager, String path, String id, java.util.List<BuilderOption<G, O, ?, ?>> options, Creator<O> creator) {
             super(manager, path, id);
-            this.options = options;
+            this.options = options.stream()
+                    .<OptionInfo<O, ?>>map(o -> {
+                        var b = (OptionBuilderImpl) o.builder(manager);
+                        return new OptionInfo(
+                                b.id, b.name, b.description, b.createType(), b.defaultValue, o.extractor
+                        );
+                    })
+                    .toList();
             this.creator = creator;
+            this.defaultValue(creator.create(this.options.stream()
+                    .<Object>map(OptionInfo::defaultValue)
+                    .toList()));
         }
 
         @Override
-        @SuppressWarnings({"rawtypes", "unchecked"})
         protected OptionType<O> createType() {
-            return new ObjectOption(
-                    options.stream()
-                            .map(o -> {
-                                var b = (OptionBuilderImpl) o.builder(manager);
-                                return new OptionInfo(
-                                        b.id, b.name, b.description, b.createType(), b.defaultValue, o.extractor
-                                );
-                            })
-                            .toList(),
-                    creator,
-                    formatter
-            );
+            return new ObjectOption(options, creator, formatter);
         }
 
         @Override

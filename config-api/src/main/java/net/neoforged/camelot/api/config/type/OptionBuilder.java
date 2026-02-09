@@ -303,6 +303,33 @@ public interface OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
          * @return a new builder with the added field
          */
         <F, FR, B extends OptionBuilder<G, FR, B>> ObjectOptionBuilders.Builder1<G, T, F> field(String id, Function<T, F> extractor, OptionBuilderFactory<G, FR, B> fieldFactory, Function<B, OptionBuilder<G, F, ?>> optionConfigurator);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id           the id of the field
+         * @param extractor    the function that extracts the field value from the object
+         * @param fieldFactory the option factory to create the field's option
+         * @param displayName  the display name of the field
+         * @param description  the description of the field
+         * @param <F>          the type of the field to add
+         * @return a new builder with the added field
+         */
+        <F> ObjectOptionBuilders.Builder1<G, T, F> field(String id, Function<T, F> extractor, OptionBuilderFactory<T, F, ?> fieldFactory, String displayName, String description);
+
+        /**
+         * Add a field to this composite object.
+         *
+         * @param id           the id of the field
+         * @param extractor    the function that extracts the field value from the object
+         * @param fieldFactory the option factory to create the field's option
+         * @param displayName  the display name of the field
+         * @param description  the description of the field
+         * @param defaultValue the default value of the field
+         * @param <F>          the type of the field to add
+         * @return a new builder with the added field
+         */
+        <F> ObjectOptionBuilders.Builder1<G, T, F> field(String id, Function<T, F> extractor, OptionBuilderFactory<T, F, ?> fieldFactory, String displayName, String description, F defaultValue);
     }
 
     /**
