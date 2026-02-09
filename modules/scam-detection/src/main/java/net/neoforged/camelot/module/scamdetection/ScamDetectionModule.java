@@ -25,6 +25,7 @@ import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.type.ChannelFilter;
 import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.api.config.type.entity.ChannelSet;
 import net.neoforged.camelot.config.module.ScamDetection;
@@ -46,6 +47,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
     private static final LongSet MUTED = LongSets.synchronize(new LongArraySet());
 
     private final ConfigOption<Guild, ChannelSet> loggingChannels;
+    private final ConfigOption<Guild, ChannelFilter> scannedChannels;
     private final List<ScamDetector> detectors;
 
     public ScamDetectionModule(ModuleProvider.Context context) {
@@ -58,6 +60,12 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                 .option("logging_channels", Options.channels())
                 .displayName("Logging Channels")
                 .description("The channel in which to log detected scams")
+                .register();
+
+        this.scannedChannels = registrar
+                .option("scanned_channels", Options.channelFilter())
+                .displayName("Scanned Channels")
+                .description("The channels that should be scanned for possible scams.")
                 .register();
 
         this.detectors = List.of(new ImageScamDetector());
@@ -90,6 +98,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
 
     private void handleMessage(MessageReceivedEvent event) {
         if (!event.isFromGuild() || event.getAuthor().isBot()) return;
+        if (!scannedChannels.get(event.getGuild()).test(event.getChannel())) return;
 
         for (var detector : detectors) {
             if (!detector.enabled.get(event.getGuild())) continue;

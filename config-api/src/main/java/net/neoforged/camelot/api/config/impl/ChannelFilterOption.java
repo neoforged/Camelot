@@ -69,7 +69,8 @@ class ChannelFilterOption implements OptionType<ChannelFilter> {
                     Selecting a category implicitly selects all of the channels contained in it.
                     When both a whitelist and a blacklist are configured, they will be processed as is specified below:
                     - if the channel is explicitly in the blacklist, it will be denied, even if its category is in the whitelist
-                    - if the channel is explicitly included in the whitelist, it will be accepted, even if its category is in the blacklist"""));
+                    - if the channel is explicitly included in the whitelist, it will be accepted, even if its category is in the blacklist
+                    Threads may be explicitly included or excluded. Otherwise, the filter will apply to its parent channel."""));
             modal.addComponents(Label.of("Include all channels by default",
                     StringSelectMenu.create("all_by_default")
                             .setRequiredRange(1, 1)

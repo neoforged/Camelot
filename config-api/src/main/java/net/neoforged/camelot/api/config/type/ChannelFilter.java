@@ -2,6 +2,7 @@ package net.neoforged.camelot.api.config.type;
 
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.attribute.ICategorizableChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Set;
@@ -38,6 +39,10 @@ public record ChannelFilter(boolean allByDefault, Set<Long> whitelist,
 
         if (blacklist.contains(channel.getIdLong())) return false;
         if (whitelist.contains(channel.getIdLong())) return true;
+
+        if (channel instanceof ThreadChannel thread) {
+            return test(thread.getParentChannel());
+        }
 
         if (channel instanceof ICategorizableChannel categorizable) {
             if (blacklist.contains(categorizable.getParentCategoryIdLong())) return false;
