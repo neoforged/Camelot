@@ -15,7 +15,7 @@ import net.neoforged.camelot.api.config.type.entity.RoleSet;
 public record ThreadPingConfiguration(boolean enabled, RoleSet roles, ChannelFilter channels) {
     public static <G> OptionBuilderFactory<G, ThreadPingConfiguration, OptionBuilder.Composite<G, ThreadPingConfiguration>> builder() {
         return Options.<G, ThreadPingConfiguration>composite(ThreadPingConfiguration.class)
-                .field("enabled", ThreadPingConfiguration::enabled, Options.bool(), "Enabled", "Whether this specific ping configuration is enabled", true)
+                .field("enabled", ThreadPingConfiguration::enabled, Options.bool(), "Enabled", "Whether this specific ping configuration is enabled", false)
                 .field("roles", ThreadPingConfiguration::roles, Options.roles(), "Roles", "The roles to mention in threads created in channels matching the filter.")
                 .field("channels", ThreadPingConfiguration::channels, Options.channelFilter(), "Channel filter", "Threads created in channels matching this filter will have members from the configured roles added.")
                 .construct(ThreadPingConfiguration::new)
