@@ -1,6 +1,7 @@
 package net.neoforged.camelot.module.filepreview;
 
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.messages.MessageSnapshot;
@@ -8,6 +9,9 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
+import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.type.ChannelFilter;
+import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.config.module.FilePreview;
 import net.neoforged.camelot.module.api.CamelotModule;
 import net.neoforged.camelot.util.Emojis;
@@ -25,13 +29,31 @@ import java.util.stream.Stream;
 
 @RegisterCamelotModule
 public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
-    public FilePreviewModule(ModuleProvider.Context context) {
-        super(context, FilePreview.class);
-    }
-
     private static final Emoji EMOJI = Emojis.MANAGER.getLazyEmoji("gist");
     private static final Pattern CODEBLOCK_PATTERN = Pattern.compile("`{3}(?<lang>\\w*)\\n(?<content>[\\s\\S]*?)\\n`{3}", Pattern.MULTILINE);
     private static final Random RANDOM = new Random();
+
+    private final ConfigOption<Guild, Boolean> enabled;
+    private final ConfigOption<Guild, ChannelFilter> allowedChannels;
+
+    public FilePreviewModule(ModuleProvider.Context context) {
+        super(context, FilePreview.class);
+
+        var registrar = context.guildConfigs().groupDisplayName("File Preview");
+        enabled = registrar
+                .option("enabled", Options.bool())
+                .displayName("Enabled")
+                .description("Whether file previews are enabled in this server.")
+                .defaultValue(true)
+                .register();
+
+        allowedChannels = registrar
+                .option("allowed_channels", Options.channelFilter())
+                .displayName("Allowed channels")
+                .description("Channels in which gists may be created from attachments.")
+                .dependsOn(enabled, true)
+                .register();
+    }
 
     @Override
     public String id() {
@@ -46,6 +68,8 @@ public class FilePreviewModule extends CamelotModule.Base<FilePreview> {
     @Override
     public void registerListeners(JDABuilder builder) {
         builder.addEventListeners(Utils.listenerFor(MessageReceivedEvent.class, event -> {
+            if (event.isFromGuild() && (!enabled.get(event.getGuild()) || !allowedChannels.get(event.getGuild()).test(event.getChannel()))) return;
+
             if (messageMatches(event.getMessage())) {
                 event.getMessage().addReaction(EMOJI).queue();
             }
