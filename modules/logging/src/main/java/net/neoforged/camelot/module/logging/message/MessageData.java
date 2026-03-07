@@ -13,6 +13,6 @@ public record MessageData(long id, String content, long author, String authorUse
         final long channelId = message.getChannel().getIdLong();
         final String authorName = message.getMember() == null ? message.getAuthor().getName() : message.getMember().getEffectiveName();
         final String authorAvatar = message.getMember() == null ? message.getAuthor().getEffectiveAvatarUrl() : message.getMember().getEffectiveAvatarUrl();
-        return new MessageData(id, content, authorId, authorName, authorAvatar, channelId, message.getInteraction() == null ? null : message.getInteraction().getUser().getIdLong());
+        return new MessageData(id, content, authorId, authorName, authorAvatar, channelId, message.getInteractionMetadata() == null ? null : message.getInteractionMetadata().getUser().getIdLong());
     }
 }

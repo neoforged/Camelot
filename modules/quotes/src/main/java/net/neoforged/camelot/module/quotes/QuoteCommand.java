@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Color;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 
@@ -43,7 +42,6 @@ import java.util.regex.Matcher;
 public class QuoteCommand extends SlashCommand {
     public QuoteCommand(Bot bot) {
         this.name = "quote";
-        this.guildOnly = true;
         this.help = "Quote stuff";
         this.children = new SlashCommand[] {
                 new GetQuote(),
@@ -376,7 +374,7 @@ public class QuoteCommand extends SlashCommand {
             final CompletableFuture<QuotesModule.MemberLike> memberLike = new CompletableFuture<>();
             if (quote.author().userId() != 0) {
                 event.getGuild().retrieveMemberById(quote.author().userId())
-                        .map(mem -> new QuotesModule.MemberLike(mem.getEffectiveName(), mem.getEffectiveAvatarUrl(), mem.getColor()))
+                        .map(mem -> new QuotesModule.MemberLike(mem.getEffectiveName(), mem.getEffectiveAvatarUrl(), mem.getColors().getPrimary()))
                         .onErrorFlatMap(ErrorResponse.UNKNOWN_MEMBER::test, _ -> event.getJDA().retrieveUserById(quote.author().userId())
                                 .map(user -> new QuotesModule.MemberLike(user.getEffectiveName(), user.getEffectiveAvatarUrl(), new Color(0xA55200)))
                                 .onErrorMap(ErrorResponse.UNKNOWN_USER::test, _ -> null))

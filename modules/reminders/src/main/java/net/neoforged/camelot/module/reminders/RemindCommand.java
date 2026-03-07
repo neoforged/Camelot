@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.Interaction;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -35,6 +36,7 @@ public class RemindCommand extends SlashCommand {
         this.children = new SlashCommand[] {
                 new In(), new ListCmd(bot.components()), new Delete()
         };
+        contexts = new InteractionContextType[] { InteractionContextType.GUILD, InteractionContextType.BOT_DM };
     }
 
     /**
@@ -50,7 +52,6 @@ public class RemindCommand extends SlashCommand {
             );
             cooldown = 20;
             cooldownScope = CooldownScope.USER;
-            guildOnly = false;
         }
 
         @Override
@@ -127,8 +128,8 @@ public class RemindCommand extends SlashCommand {
                             .setTitle("Reminders")
                             .setFooter("Page " + (page + 1) + " of " + pageAmount(data.itemAmount()))
                             .setDescription(data.reminders.subList(page * this.itemsPerPage, Math.min(data.reminders.size(), page * this.itemsPerPage + this.itemsPerPage)).stream()
-                                    .map(reminder -> "**%s**\\. *%s* - <#%s> at %s (%s)".formatted(
-                                            reminder.id(), reminder.reminder().isBlank() ? "No content." : reminder.reminder(), reminder.channel(),
+                                    .map(reminder -> "**%s**\\. *%s* - in %s at %s (%s)".formatted(
+                                            reminder.id(), reminder.reminder().isBlank() ? "No content." : reminder.reminder(), reminder.channel() == 0 ? "DMs" : "<#" + reminder.channel() + ">",
                                             TimeFormat.DATE_TIME_LONG.format(reminder.time()), TimeFormat.RELATIVE.format(reminder.time())
                                     ))
                                     .collect(Collectors.joining("\n")))

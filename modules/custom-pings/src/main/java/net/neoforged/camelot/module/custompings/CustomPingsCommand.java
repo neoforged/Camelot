@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class CustomPingsCommand extends SlashCommand {
     public CustomPingsCommand(Bot bot) {
         this.name = "custom-pings";
-        this.guildOnly = true;
         this.children = new SlashCommand[] {
                 new Add(),
                 new ListCmd(bot.components()),

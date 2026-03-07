@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -81,6 +82,11 @@ public class BotMain {
      * Static instance of the bot. Can be accessed by any class with {@link #get()}
      */
     private static Bot instance;
+
+    /**
+     * The time at which the bot was started.
+     */
+    private static Instant startTime;
 
     /**
      * Gets the loaded module of the given {@code type}, or {@code null} if the module is not enabled.
@@ -165,6 +171,7 @@ public class BotMain {
                         .stream().map(ServiceLoader.Provider::get)
                         .toList()
         );
+        startTime = Instant.now();
     }
 
     /**
@@ -175,6 +182,13 @@ public class BotMain {
         if (module != null) {
             module.use(type, dao);
         }
+    }
+
+    /**
+     * {@return the time at which the bot was started}
+     */
+    public static Instant startTime() {
+        return startTime;
     }
 
     @SuppressWarnings("FieldMayBeFinal")

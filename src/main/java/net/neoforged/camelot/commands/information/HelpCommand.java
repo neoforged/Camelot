@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.neoforged.camelot.BotMain;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.commands.PaginatableCommand;
 import net.neoforged.camelot.configuration.Common;
@@ -58,7 +59,11 @@ public class HelpCommand extends PaginatableCommand<PaginatableCommand.SimpleDat
 
         var latest = LATEST_VERSION.getOrBust();
         if (!latest.equals(Common.VERSION)) {
-            embed.appendDescription("You're running an outdated Camelot version. The latest version is **" + latest + "**.\n");
+            embed.appendDescription("⚠ You're running an outdated Camelot version. The latest version is **" + latest + "**.\n");
+        }
+
+        if (BotMain.startTime() != null) {
+            embed.appendDescription("Camelot has been running for **" + DateUtils.formatDuration(Duration.between(BotMain.startTime(), Instant.now())) + "**.\n");
         }
 
         embed.appendDescription("## Last commits of this version:\n");

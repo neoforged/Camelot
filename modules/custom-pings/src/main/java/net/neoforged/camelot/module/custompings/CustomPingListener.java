@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -104,12 +105,11 @@ public record CustomPingListener(ConfigOption<Guild, ChannelFilter> channelFilte
                 return singleton(channel);
             } else {
                 var pingsChannel = jda.getChannelById(IThreadContainer.class, pingsChannelId);
-                //noinspection rawtypes, unchecked this is so dirty
                 return pingsChannel.retrieveArchivedPrivateJoinedThreadChannels()
                         .flatMap(threadChannels -> threadChannels.stream().filter(c -> c.getIdLong() == threadId)
                                 .findFirst()
                                 .map(CustomPingListener::singleton)
-                                .orElseGet(() -> (RestAction<MessageChannel>) (RestAction) createNewThread(jda, guildId, memberId)));
+                                .orElseGet(() -> createNewThread(jda, guildId, memberId)));
             }
         }
     }
@@ -148,11 +148,12 @@ public record CustomPingListener(ConfigOption<Guild, ChannelFilter> channelFilte
         };
     }
 
-    private static RestAction<ThreadChannel> createNewThread(JDA jda, long guildId, long memberId) {
+    private static RestAction<MessageChannel> createNewThread(JDA jda, long guildId, long memberId) {
         return Objects.requireNonNull(jda.getChannelById(IThreadContainer.class, BotMain.getModule(CustomPingsModule.class).pingThreadsChannel.get(jda.getGuildById(guildId))))
                 .createThreadChannel("Custom ping notifications of " + memberId, true)
                 .setInvitable(false)
                 .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)
+                .<MessageChannel>map(Function.identity())
                 .onSuccess(channel -> BotMain.getModule(CustomPingsModule.class).db().useExtension(PingsDAO.class, db -> db.insertThread(memberId, guildId, channel.getIdLong())));
     }
 
