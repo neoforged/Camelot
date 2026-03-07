@@ -86,8 +86,11 @@ public class ImageScamDetector extends ScamDetector {
     @Nullable
     private String extractText(String url) {
         try (var image = URI.create(url).toURL().openStream()) {
+            var initialImage = ImageIO.read(image);
             // A factor of 3 seems to be resizing the common scam images just enough for a consistent extraction of common sentences
-            var outLines = getTesseract().extractText(ImageUtils.resizeBy(ImageIO.read(image), 3)).split("\n");
+            var resizedImage = ImageUtils.resizeBy(initialImage, 3);
+
+            var outLines = getTesseract().extractText(resizedImage).split("\n");
             var ocr = new StringBuilder();
             for (var line : outLines) {
                 if (line.isBlank()) continue;
@@ -95,6 +98,10 @@ public class ImageScamDetector extends ScamDetector {
                 if (!ocr.isEmpty()) ocr.append(' ');
                 ocr.append(trimmed);
             }
+
+            resizedImage.flush();
+            initialImage.flush();
+
             return ocr.toString();
         } catch (Exception e) {
             BotMain.LOGGER.error("Failed to extract text of attachment {}: ", url, e);
