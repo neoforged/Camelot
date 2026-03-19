@@ -199,7 +199,11 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                                         option.type().createUpdateButton(current, t -> {
                                             option.set(target, t);
                                             return createEditValue(path, page, target, option);
-                                        }, this)
+                                        }, this),
+                                        Button.secondary(buttonId(ev -> {
+                                            option.restoreToDefault(target);
+                                            ev.editMessage(createEditValue(path, page, target, option)).queue();
+                                        }), "↻ Restore to default")
                                 )
                         )
                 )

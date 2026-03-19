@@ -57,6 +57,12 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
         return defaultValue;
     }
 
+    void restoreToDefault(G target) {
+        manager.storage.restoreToDefault(path, target);
+        var old = cache.remove(manager.cacheKey.apply(target));
+        valueChanged(target, old, defaultValue);
+    }
+
     @Override
     public void set(G target, @Nullable T value) {
         var identified = manager.cacheKey.apply(target);

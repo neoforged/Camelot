@@ -10,6 +10,11 @@ class InMemoryStorage<G> implements ConfigStorage<G> {
     private final Map<Key, Optional<String>> values = new HashMap<>();
 
     @Override
+    public void restoreToDefault(String key, G target) {
+        values.remove(new Key(target, key));
+    }
+
+    @Override
     public void store(String key, G target, String value) {
         values.put(new Key(target, key), Optional.ofNullable(value));
     }

@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public interface ConfigStorage<G> {
+    void restoreToDefault(String key, G target);
+
     void store(String key, G target, String value);
 
     @Nullable

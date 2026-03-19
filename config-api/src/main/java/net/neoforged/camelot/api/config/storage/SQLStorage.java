@@ -18,6 +18,14 @@ class SQLStorage<G> implements ConfigStorage<G> {
     }
 
     @Override
+    public void restoreToDefault(String key, G target) {
+        jdbi.withHandle(handle -> handle.createUpdate("delete from " + tableName + " where target = ? and key = ?")
+                .bind(0, identifier.apply(target))
+                .bind(1, key)
+                .execute());
+    }
+
+    @Override
     public void store(String key, G target, String value) {
         jdbi.withHandle(handle -> handle.createUpdate("insert or replace into " + tableName + "(target, key, value) values (?, ?, ?)")
                 .bind(0, identifier.apply(target))
