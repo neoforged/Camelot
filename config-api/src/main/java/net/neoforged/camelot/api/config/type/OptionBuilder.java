@@ -143,6 +143,14 @@ public interface OptionBuilder<G, T, S extends OptionBuilder<G, T, S>> {
          * @return the builder, for chaining purposes
          */
         S validate(Validator<T> validator);
+
+        @Override
+        <TO> OptionBuilder.Validatable<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter);
+
+        @Override
+        default <TO> OptionBuilder.Validatable<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to) {
+            return map(from, to, null);
+        }
     }
 
     /**

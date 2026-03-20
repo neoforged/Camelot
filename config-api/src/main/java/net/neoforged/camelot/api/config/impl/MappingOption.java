@@ -2,7 +2,9 @@ package net.neoforged.camelot.api.config.impl;
 
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.neoforged.camelot.api.config.type.OptionBuilder;
 import net.neoforged.camelot.api.config.type.OptionType;
+import net.neoforged.camelot.api.config.type.Validator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
@@ -55,7 +57,7 @@ final class MappingOption<F, T> implements OptionType<T> {
         return elementType.requiresIndividualPage();
     }
 
-    static final class Builder<G, F, T> extends OptionBuilderImpl<G, T, Builder<G, F, T>> {
+    static final class Builder<G, F, T> extends OptionBuilderImpl<G, T, Builder<G, F, T>> implements OptionBuilder.Validatable<G, T, Builder<G, F, T>> {
         private final OptionBuilderImpl<G, F, ?> elementType;
         private final Function<F, T> mapFrom;
         private final Function<T, F> mapTo;
@@ -74,6 +76,17 @@ final class MappingOption<F, T> implements OptionType<T> {
         @Override
         protected OptionType<T> createType() {
             return new MappingOption<>(elementType.createType(), mapFrom, mapTo, formatter);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Builder<G, F, T> validate(Validator<T> validator) {
+            if (elementType instanceof OptionBuilder.Validatable<?, ?, ?>) {
+                ((Validatable<G, F, ?>) elementType).validate(value -> validator.validate(mapFrom.apply(value)));
+            } else {
+                throw new UnsupportedOperationException("Source element type " + elementType + " is not validatable");
+            }
+            return this;
         }
     }
 }

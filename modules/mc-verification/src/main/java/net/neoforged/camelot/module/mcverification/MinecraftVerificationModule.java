@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.config.module.MinecraftVerification;
 import net.neoforged.camelot.configuration.OAuthUtils;
 import net.neoforged.camelot.db.schemas.ModLogEntry;
@@ -28,7 +29,6 @@ import net.neoforged.camelot.module.mcverification.protocol.MinecraftConnection;
 import net.neoforged.camelot.module.mcverification.protocol.MinecraftServerVerificationHandler;
 import net.neoforged.camelot.server.WebServer;
 import net.neoforged.camelot.services.ModerationRecorderService;
-import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.util.Utils;
 import net.neoforged.camelot.util.oauth.OAuthClient;
 import net.neoforged.camelot.util.oauth.OAuthScope;
@@ -102,7 +102,9 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
-        builder.addSlashCommand(new VerifyMCCommand(this));
+        final VerifyMCCommand command = new VerifyMCCommand(this);
+        builder.addSlashCommands(command);
+        builder.addContextMenu(command.createContextMenu());
     }
 
     @Override

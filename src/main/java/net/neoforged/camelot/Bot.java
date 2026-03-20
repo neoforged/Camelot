@@ -197,11 +197,17 @@ public class Bot {
 
         forEachModule(module -> module.registerListeners(botBuilder));
 
-        botBuilder.addEventListeners(Commands.init(this, commandPrefix, guildConfigs, userConfigs));
-        botBuilder.addEventListeners(Commands.get().getSlashCommands().stream()
-                .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren())))
-                .filter(EventListener.class::isInstance)
-                .toArray()); // A command implementing EventListener shall be treated as a listener
+        var commandClient = Commands.init(this, commandPrefix, guildConfigs, userConfigs);
+        botBuilder.addEventListeners(commandClient);
+
+        // A command implementing EventListener shall be treated as a listener
+        botBuilder.addEventListeners(Stream.concat(commandClient.getContextMenus().stream(), Stream.concat(
+                commandClient.getSlashCommands().stream()
+                        .flatMap(slash -> Stream.concat(Stream.of(slash), Arrays.stream(slash.getChildren()))),
+                commandClient.getCommands().stream()
+                        .flatMap(text -> Stream.concat(Stream.of(text), Arrays.stream(text.getChildren())))
+        )).filter(EventListener.class::isInstance).distinct().toArray());
+
         botBuilder.addEventListeners(new ModerationListener(this));
 
         jda = botBuilder.build();

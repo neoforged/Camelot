@@ -74,7 +74,7 @@ public abstract class OptionBuilderImpl<G, T, S extends OptionBuilder<G, T, S>> 
     }
 
     @Override
-    public <TO> OptionBuilder<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter) {
+    public <TO> OptionBuilder.Validatable<G, TO, ?> map(Function<T, TO> from, Function<TO, T> to, @Nullable Function<TO, String> formatter) {
         return new MappingOption.Builder<>(this, from, to, formatter);
     }
 

@@ -1,21 +1,24 @@
 package net.neoforged.camelot.module.mcverification;
 
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.jagrosh.jdautilities.command.UserContextMenu;
+import com.jagrosh.jdautilities.command.UserContextMenuEvent;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.neoforged.camelot.api.config.DateUtils;
 import net.neoforged.camelot.commands.InteractiveCommand;
 import net.neoforged.camelot.module.WebServerModule;
-import net.neoforged.camelot.api.config.DateUtils;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -45,10 +48,31 @@ public class VerifyMCCommand extends InteractiveCommand {
         );
     }
 
+    public UserContextMenu createContextMenu() {
+        return new UserContextMenu() {
+            {
+                name = "Verify Minecraft Ownership";
+                help = VerifyMCCommand.this.help;
+                contexts = VerifyMCCommand.this.contexts;
+                userPermissions = VerifyMCCommand.this.userPermissions;
+            }
+
+            @Override
+            protected void execute(UserContextMenuEvent event) {
+                verifyUser(event, event.getTargetMember());
+            }
+        };
+    }
+
     @Override
     protected void execute(SlashCommandEvent event) {
         final Member target = event.getOption("user", OptionMapping::getAsMember);
+        verifyUser(event, target);
+    }
+
+    private void verifyUser(GenericCommandInteractionEvent event, Member target) {
         assert event.getGuild() != null && event.getMember() != null;
+
         if (target == null) {
             event.reply("Unknown member!").setEphemeral(true).queue();
             return;
