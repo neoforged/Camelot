@@ -1,6 +1,8 @@
 package net.neoforged.camelot.commands.moderation;
 
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.jagrosh.jdautilities.command.UserContextMenu;
+import com.jagrosh.jdautilities.command.UserContextMenuEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -39,7 +41,7 @@ public class ModLogsCommand extends PaginatableCommand<ModLogsCommand.Data> {
         this.itemsPerPage = 10;
         this.name = "modlogs";
         this.dismissible = true;
-        this.help = "Show the mod logs of an user.";
+        this.help = "View the mod logs of an user.";
         this.contexts = new InteractionContextType[] { InteractionContextType.GUILD };
 
         final List<Command.Choice> choices = Stream.of(ModLogEntry.Type.values())
@@ -50,6 +52,28 @@ public class ModLogsCommand extends PaginatableCommand<ModLogsCommand.Data> {
                 new OptionData(OptionType.INTEGER, "include", "A log type to include", false).addChoices(choices),
                 new OptionData(OptionType.INTEGER, "exclude", "A log type to exclude. Mutually exclusive with include", false).addChoices(choices)
         );
+    }
+
+    public UserContextMenu createContextMenu() {
+        return new UserContextMenu() {
+            {
+                name = "View Modlogs";
+                help = "View the mod logs of the user";
+                userPermissions = new Permission[] { Permission.MODERATE_MEMBERS };
+            }
+
+            @Override
+            protected void execute(UserContextMenuEvent event) {
+                final User target = event.getTarget();
+
+                ModLogsCommand.this.reply(event, new Data(
+                        target.getIdLong(), null, null,
+                        Database.main().withExtension(ModLogsDAO.class, db -> db.getLogCount(
+                                target.getIdLong(), event.getGuild().getIdLong(), null, null
+                        ))
+                ), true);
+            }
+        };
     }
 
     @Override

@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent;
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -61,6 +62,16 @@ public abstract class PaginatableCommand<T extends PaginatableCommand.Pagination
     protected final void execute(SlashCommandEvent event) {
         final T data = collectData(event);
         if (data == null) return;
+        reply(event, data, this.ephemeral);
+    }
+
+    /**
+     * Reply to the given {@code event} with a paginated message based on the {@code data}.
+     *
+     * @param event the event to reply to
+     * @param data  the data to paginate on
+     */
+    protected final void reply(GenericCommandInteractionEvent event, T data, boolean ephemeral) {
         if (data.itemAmount() < 1) {
             event.reply(Emojis.NO_RESULTS.getFormatted() + " No data found!").setEphemeral(true).queue();
             return;

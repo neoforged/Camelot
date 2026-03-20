@@ -53,12 +53,14 @@ public class ModerationModule extends CamelotModule.Base<Moderation> {
 
     @Override
     public void registerCommands(CommandClientBuilder builder) {
+        var modlogs = new ModLogsCommand(bot().components(), viewOwnModlogs::get);
         builder.addSlashCommands(
-                new ModLogsCommand(bot().components(), viewOwnModlogs::get),
                 new NoteCommand(bot()), new WarnCommand(bot()),
                 new MuteCommand(bot()), new UnmuteCommand(bot()),
                 new KickCommand(bot()), new PurgeCommand(bot().components()),
-                new BanCommand(bot()), new UnbanCommand(bot())
+                new BanCommand(bot()), new UnbanCommand(bot()),
+                modlogs
         );
+        builder.addContextMenu(modlogs.createContextMenu());
     }
 }
