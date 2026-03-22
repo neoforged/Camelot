@@ -1,6 +1,7 @@
 package net.neoforged.camelot.module;
 
 import io.javalin.Javalin;
+import io.javalin.config.RoutesConfig;
 import io.javalin.http.ContentType;
 import io.javalin.http.staticfiles.Location;
 import net.dv8tion.jda.api.JDA;
@@ -16,7 +17,7 @@ import java.nio.file.Path;
 
 @RegisterCamelotModule
 public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.config.module.WebServer> {
-    public static final ParameterType<Javalin> SERVER = ParameterType.get("server", Javalin.class);
+    public static final ParameterType<RoutesConfig> ROUTES = ParameterType.get("routes", RoutesConfig.class);
 
     private WebServer webServer;
 
@@ -40,7 +41,7 @@ public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.co
             }
         }
 
-        this.webServer = new WebServer(Javalin.create(conf -> {
+        this.webServer = new WebServer(conf -> {
             conf.staticFiles.add(c -> {
                 c.directory = "/web/static";
                 c.location = Location.CLASSPATH;
@@ -52,9 +53,9 @@ public class WebServerModule extends CamelotModule.Base<net.neoforged.camelot.co
                 c.location = Location.EXTERNAL;
                 c.mimeTypes.add(ContentType.IMAGE_SVG);
             });
-        }), config().getPort());
 
-        bot().forEachModule(module -> module.acceptParameter(SERVER, webServer.javalin));
+            bot().forEachModule(module -> module.acceptParameter(ROUTES, conf.routes));
+        }, config().getPort());
 
         this.webServer.run();
     }
