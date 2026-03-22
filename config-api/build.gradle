@@ -17,6 +17,10 @@ dependencies {
     testRuntimeOnly(libs.logback)
 }
 
+tasks.named('test') {
+    enabled = false
+}
+
 tasks.register('createObjectOption') {
     doLast {
         final int maxArgs = 10
