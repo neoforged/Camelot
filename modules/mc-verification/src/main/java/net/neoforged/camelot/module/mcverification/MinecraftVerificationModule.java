@@ -76,7 +76,7 @@ public class MinecraftVerificationModule extends CamelotModule.WithDatabase<Mine
 
     public MinecraftVerificationModule(ModuleProvider.Context context) {
         super(context, MinecraftVerification.class);
-        accept(WebServerModule.SERVER, javalin -> {
+        accept(WebServerModule.ROUTES, javalin -> {
             javalin.get("/minecraft/<serverId>/verify", this::onVerifyRoot);
             javalin.post("/minecraft/<serverId>/verify", this::onVerifyPost);
             javalin.get("/minecraft/verify/discord", ctx -> verifyOauth(ctx, "discord_token", discord));

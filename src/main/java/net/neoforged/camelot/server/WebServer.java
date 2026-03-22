@@ -1,6 +1,7 @@
 package net.neoforged.camelot.server;
 
 import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpStatus;
 import j2html.TagCreator;
@@ -74,25 +75,27 @@ public final class WebServer implements Runnable {
     public final Javalin javalin;
     public final int port;
 
-    public WebServer(Javalin javalin, int port) {
-        this.javalin = javalin;
+    public WebServer(Consumer<JavalinConfig> javalin, int port) {
+        this.javalin = Javalin.create(jl -> {
+            javalin.accept(jl);
+            jl.routes.get("/static/<resource>", ctx -> {
+                final String res = ctx.pathParam("resource");
+                final var resource = WebServer.class.getResourceAsStream("/web/static/" + res);
+                if (resource == null) {
+                    ctx.status(HttpStatus.NOT_FOUND);
+                } else {
+                    final int idx = res.lastIndexOf('.');
+                    final String extension = idx <= 0 ? "" : res.substring(idx);
+                    final ContentType type = extension.isEmpty() ? ContentType.APPLICATION_OCTET_STREAM : ContentType.contentTypeByExtension(extension);
+                    ctx.result(resource).contentType(type == null ? ContentType.APPLICATION_OCTET_STREAM : type);
+                }
+            });
+        });
         this.port = port;
     }
 
     @Override
     public void run() {
-        javalin.get("/static/<resource>", ctx -> {
-            final String res = ctx.pathParam("resource");
-            final var resource = WebServer.class.getResourceAsStream("/web/static/" + res);
-            if (resource == null) {
-                ctx.status(HttpStatus.NOT_FOUND);
-            } else {
-                final int idx = res.lastIndexOf('.');
-                final String extension = idx <= 0 ? "" : res.substring(idx);
-                final ContentType type = extension.isEmpty() ? ContentType.APPLICATION_OCTET_STREAM : ContentType.getContentTypeByExtension(extension);
-                ctx.result(resource).contentType(type == null ? ContentType.APPLICATION_OCTET_STREAM : type);
-            }
-        });
         javalin.start(port);
     }
 

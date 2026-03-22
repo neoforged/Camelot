@@ -104,7 +104,7 @@ public class BanAppealModule extends CamelotModule.Base<BanAppeals> {
 
     public BanAppealModule(ModuleProvider.Context context) {
         super(context, BanAppeals.class);
-        accept(WebServerModule.SERVER, javalin -> {
+        accept(WebServerModule.ROUTES, javalin -> {
             javalin.get("/ban-appeals/discord", this::verifyOauth);
             javalin.get("/ban-appeals/<serverId>", this::onAccess);
             javalin.post("/ban-appeals/followup/<serverId>", this::onSubmitFollowup);
