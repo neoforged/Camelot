@@ -34,13 +34,13 @@ final class StringOption implements OptionType<String> {
     }
 
     @Override
-    public String serialise(String value) {
+    public Object serialise(String value) {
         return value;
     }
 
     @Override
-    public String deserialize(String value) {
-        return value;
+    public String deserialize(Object value) {
+        return value.toString();
     }
 
     @Override

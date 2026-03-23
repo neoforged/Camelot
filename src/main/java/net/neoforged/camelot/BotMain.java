@@ -160,7 +160,7 @@ public class BotMain {
 
         MessageRequest.setDefaultMentionRepliedUser(false);
 
-        final var configDb = Database.createDatabaseConnection(Path.of("data/configuration.db"), "config");
+        final var configDb = Database.initialiseConfigConnection(Path.of("data/configuration.db"));
 
         new Bot(
                 b -> instance = b,

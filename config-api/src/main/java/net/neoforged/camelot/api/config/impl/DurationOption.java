@@ -20,13 +20,13 @@ final class DurationOption implements OptionType<Duration> {
     private static final DurationOption INSTANCE = new DurationOption();
 
     @Override
-    public String serialise(Duration value) {
-        return String.valueOf(value.toNanos());
+    public Object serialise(Duration value) {
+        return value.toNanos();
     }
 
     @Override
-    public Duration deserialize(String value) {
-        return Duration.ofNanos(Long.parseLong(value));
+    public Duration deserialize(Object value) {
+        return Duration.ofNanos(((Number) value).longValue());
     }
 
     @Override

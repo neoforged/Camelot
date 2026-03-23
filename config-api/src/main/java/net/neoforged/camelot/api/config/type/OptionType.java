@@ -10,8 +10,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface OptionType<T> {
-    String serialise(T value);
-    T deserialize(String value);
+    Object serialise(T value);
+    T deserialize(Object value);
 
     Button createUpdateButton(T currentValue, Function<T, MessageEditData> updater, ComponentCreator components);
 

@@ -10,7 +10,6 @@ import net.neoforged.camelot.api.config.type.OptionBuilder;
 import net.neoforged.camelot.api.config.type.OptionType;
 import net.neoforged.camelot.api.config.type.Validator;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONObject;
 
 import java.util.function.Function;
 
@@ -27,13 +26,13 @@ final class NumberOption<T extends Number & Comparable<T>> implements OptionType
     }
 
     @Override
-    public String serialise(T value) {
-        return JSONObject.numberToString(value);
+    public Object serialise(T value) {
+        return value;
     }
 
     @Override
-    public T deserialize(String value) {
-        return numberConverter.apply((Number) JSONObject.stringToValue(value));
+    public T deserialize(Object value) {
+        return numberConverter.apply((Number) value);
     }
 
     @Override

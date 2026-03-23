@@ -12,13 +12,13 @@ final class BooleanOption implements OptionType<Boolean> {
     private static final BooleanOption INSTANCE = new BooleanOption();
 
     @Override
-    public String serialise(Boolean value) {
-        return value ? "true" : "false";
+    public Object serialise(Boolean value) {
+        return value;
     }
 
     @Override
-    public Boolean deserialize(String value) {
-        return Objects.equals(value, "true");
+    public Boolean deserialize(Object value) {
+        return Objects.equals(value, true);
     }
 
     @Override

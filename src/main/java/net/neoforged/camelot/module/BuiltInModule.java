@@ -91,7 +91,6 @@ public class BuiltInModule extends CamelotModule.Base<ModuleConfiguration.BuiltI
 
     public enum DatabaseSource {
         MAIN,
-        CONFIG,
         PINGS
     }
 

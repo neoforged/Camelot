@@ -35,21 +35,21 @@ final class ObjectOption<O> implements OptionType<O> {
     }
 
     @Override
-    public String serialise(O value) {
+    public Object serialise(O value) {
         var o = new JSONObject();
         for (OptionInfo<O, ?> option : options) {
             o.put(option.id(), option.serialise(value));
         }
-        return o.toString();
+        return o;
     }
 
     @Override
-    public O deserialize(String value) {
-        var obj = new JSONObject(value);
+    public O deserialize(Object value) {
+        var obj = (JSONObject) value;
         return creator.create(options.stream()
                 .map(i -> {
                     try {
-                        return i.type().deserialize(obj.getString(i.id()));
+                        return i.type().deserialize(obj.get(i.id()));
                     } catch (JSONException ex) {
                         return i.defaultValue();
                     }
@@ -116,7 +116,7 @@ final class ObjectOption<O> implements OptionType<O> {
             return type().format(extractor().apply(value));
         }
 
-        private String serialise(O value) {
+        private Object serialise(O value) {
             return type.serialise(extractor.apply(value));
         }
     }

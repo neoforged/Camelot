@@ -24,12 +24,12 @@ final class MappingOption<F, T> implements OptionType<T> {
     }
 
     @Override
-    public String serialise(T value) {
+    public Object serialise(T value) {
         return value == null ? elementType.serialise(null) : elementType.serialise(mapTo.apply(value));
     }
 
     @Override
-    public T deserialize(String value) {
+    public T deserialize(Object value) {
         var deserialised = elementType.deserialize(value);
         return deserialised == null ? null : mapFrom.apply(deserialised);
     }

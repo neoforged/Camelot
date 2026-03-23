@@ -2,6 +2,7 @@ package net.neoforged.camelot;
 
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.primitives.Doubles;
 import net.neoforged.camelot.configuration.Common;
 import net.neoforged.camelot.db.api.CallbackConfig;
 import net.neoforged.camelot.db.api.StringSearch;
@@ -19,6 +20,9 @@ import org.jdbi.v3.core.argument.Arguments;
 import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.sqlobject.HandlerDecorators;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteDataSource;
@@ -29,25 +33,16 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.UnaryOperator;
+import java.util.stream.StreamSupport;
 
 /**
  * The class where the bot databases are stored.
  */
 public class Database {
     public static final Logger LOGGER = LoggerFactory.getLogger(Common.NAME + " database");
-
-    /**
-     * Static JDBI config instance. Can be accessed via {@link #config()}.
-     */
-    private static Jdbi config;
-
-    /**
-     * {@return the static config JDBI instance}
-     */
-    public static Jdbi config() {
-        return config;
-    }
 
     /**
      * Static JDBI main instance. Can be accessed via {@link #main()}.
@@ -109,10 +104,6 @@ public class Database {
             }
         });
 
-        config = createDatabaseConnection(dir.resolve("configuration.db"), "Camelot DB config", flyway -> flyway
-                .locations("classpath:db/config")
-                .callbacks(callbacks.get(BuiltInModule.DatabaseSource.CONFIG).toArray(Callback[]::new)));
-
         main = createDatabaseConnection(mainDb, "Camelot DB main", flyway -> flyway
                 .locations("classpath:db/main")
                 .callbacks(callbacks.get(BuiltInModule.DatabaseSource.MAIN).toArray(Callback[]::new)));
@@ -133,6 +124,32 @@ public class Database {
 
         appeals = createDatabaseConnection(dir.resolve("appeals.db"), "appeals");
         stats = createDatabaseConnection(dir.resolve("stats.db"), "stats");
+    }
+
+    public static Jdbi initialiseConfigConnection(Path path) {
+        return createDatabaseConnection(path, "Camelot DB config", flyway -> flyway
+                .locations("classpath:db/config")
+                .callbacks(schemaMigrationCallback(6, connection -> {
+                    for (var table : List.of("user_configuration", "guild_configuration")) {
+                        record Entry(long target, String key, String value) {}
+                        List<Entry> entries = new ArrayList<>();
+                        try (var stmt = connection.createStatement()) {
+                            var query = stmt.executeQuery("select target, key, value from " + table);
+                            while (query.next()) {
+                                entries.add(new Entry(query.getLong(1), query.getString(2), query.getString(3)));
+                            }
+                        }
+                        try (var stmt = connection.prepareStatement("update " + table + " set value = ? where target = ? and key = ?")) {
+                            for (Entry entry : entries) {
+                                stmt.setString(1, JSONWriter.valueToString(toJson(entry.value)));
+                                stmt.setLong(2, entry.target);
+                                stmt.setString(3, entry.key);
+                                stmt.addBatch();
+                            }
+                            stmt.execute();
+                        }
+                    }
+                })));
     }
 
     public static Jdbi createDatabaseConnection(Path dbPath, String flywayLocation) {
@@ -207,6 +224,34 @@ public class Database {
                 return "before_migrate_schema_v" + version;
             }
         };
+    }
+
+    private static Object toJson(Object in) {
+        if (in instanceof String strIn) {
+            if (strIn.equals("true") || strIn.equals("false")) return Boolean.parseBoolean(strIn);
+            if (Doubles.tryParse(strIn) != null) return Double.parseDouble(strIn);
+            if (strIn.startsWith("[")) {
+                return new JSONArray(StreamSupport.stream(new JSONArray(strIn).spliterator(), false)
+                        .map(Database::toJson)
+                        .toList());
+            } else if (strIn.startsWith("{")) {
+                var old = new JSONObject(strIn);
+                var newO = new JSONObject();
+                old.keys().forEachRemaining(key -> newO.put(key, Database.toJson(old.get(key))));
+                return newO;
+            }
+            return strIn;
+        }
+        if (in instanceof JSONArray ar) {
+            return new JSONArray(StreamSupport.stream(ar.spliterator(), false)
+                    .map(Database::toJson)
+                    .toList());
+        } else if (in instanceof JSONObject old) {
+            var newO = new JSONObject();
+            old.keys().forEachRemaining(key -> newO.put(key, Database.toJson(old.get(key))));
+            return newO;
+        }
+        return in;
     }
 
     @FunctionalInterface

@@ -3,6 +3,12 @@ package net.neoforged.camelot.api.config.impl;
 import net.neoforged.camelot.api.config.ConfigOption;
 import net.neoforged.camelot.api.config.type.OptionType;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONObject;
+import org.json.JSONPointer;
+import org.json.JSONTokener;
+import org.json.JSONWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +17,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigOptionImpl.class);
+
     private final ConfigManagerImpl<G> manager;
     private final String name, description;
     final String path;
@@ -46,12 +54,16 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
             var fs = fromStorage.orElse(null);
             if (fs == null) return null;
 
-            var newValue = type.deserialize(fs);
-            cache.put(identified, newValue);
-            if (cache.containsKey(identified) && newValue != null) {
-                valueChanged(target, null, newValue);
+            try {
+                var newValue = type.deserialize(new JSONTokener(fs).nextValue());
+                cache.put(identified, newValue);
+                if (cache.containsKey(identified) && newValue != null) {
+                    valueChanged(target, null, newValue);
+                }
+                return newValue;
+            } catch (Exception ex) {
+                LOGGER.error("Failed to decode config option '{}' for {} given value '{}': ", path, target, fs, ex);
             }
-            return newValue;
         }
 
         return defaultValue;
@@ -69,7 +81,7 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
         if (value == null) {
             manager.storage.store(path, target, null);
         } else {
-            manager.storage.store(path, target, type.serialise(value));
+            manager.storage.store(path, target, JSONWriter.valueToString(type.serialise(value)));
         }
         var old = cache.put(identified, value);
         valueChanged(target, old, value);

@@ -40,18 +40,17 @@ final class ListOption<T> implements OptionType<List<T>> {
     }
 
     @Override
-    public String serialise(List<T> value) {
+    public Object serialise(List<T> value) {
         return new JSONArray(value.stream()
                 .map(elementType::serialise)
-                .collect(Collectors.toList()))
-                .toString();
+                .collect(Collectors.toList()));
     }
 
     @Override
     @SuppressWarnings("FuseStreamOperations")
-    public List<T> deserialize(String value) {
-        return Collections.unmodifiableList(StreamSupport.stream(new JSONArray(value).spliterator(), false)
-                .map(v -> elementType.deserialize(v.toString()))
+    public List<T> deserialize(Object value) {
+        return Collections.unmodifiableList(StreamSupport.stream(((JSONArray) value).spliterator(), false)
+                .map(elementType::deserialize)
                 .collect(Collectors.toList()));
     }
 

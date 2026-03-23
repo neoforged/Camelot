@@ -23,17 +23,17 @@ class ChannelFilterOption implements OptionType<ChannelFilter> {
     private static final ChannelFilterOption INSTANCE = new ChannelFilterOption();
 
     @Override
-    public String serialise(ChannelFilter value) {
+    public Object serialise(ChannelFilter value) {
         var o = new JSONObject();
         o.put("all", value.allByDefault());
         o.put("whitelist", value.whitelist());
         o.put("blacklist", value.blacklist());
-        return o.toString();
+        return o;
     }
 
     @Override
-    public ChannelFilter deserialize(String value) {
-        var o = new JSONObject(value);
+    public ChannelFilter deserialize(Object value) {
+        var o = (JSONObject) value;
         return new ChannelFilter(
                 o.optBoolean("all"),
                 StreamSupport.stream(o.optJSONArray("whitelist").spliterator(), false)

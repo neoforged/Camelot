@@ -36,13 +36,13 @@ final class EntityOption<S extends EntitySet> implements OptionType<S> {
     }
 
     @Override
-    public String serialise(S value) {
-        return new JSONArray(value).toString();
+    public Object serialise(S value) {
+        return new JSONArray(value);
     }
 
     @Override
-    public S deserialize(String value) {
-        return collectionCreator.apply(StreamSupport.stream(new JSONArray(value).spliterator(), false)
+    public S deserialize(Object value) {
+        return collectionCreator.apply(StreamSupport.stream(((JSONArray) value).spliterator(), false)
                 .map(Long.class::cast)
                 .collect(Collectors.toUnmodifiableSet()));
     }

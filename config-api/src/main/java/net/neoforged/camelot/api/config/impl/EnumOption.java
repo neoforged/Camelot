@@ -32,13 +32,13 @@ final class EnumOption<E extends Enum<E>> implements OptionType<Set<E>> {
     }
 
     @Override
-    public String serialise(Set<E> value) {
-        return new JSONArray(value.stream().map(E::name)).toString();
+    public Object serialise(Set<E> value) {
+        return new JSONArray(value.stream().map(E::name));
     }
 
     @Override
-    public Set<E> deserialize(String value) {
-        return StreamSupport.stream(new JSONArray(value).spliterator(), false).map(v -> Enum.valueOf(enumType, v.toString())).collect(Collectors.toUnmodifiableSet());
+    public Set<E> deserialize(Object value) {
+        return StreamSupport.stream(((JSONArray) value).spliterator(), false).map(v -> Enum.valueOf(enumType, v.toString())).collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
