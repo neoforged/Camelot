@@ -135,12 +135,12 @@ public class Utils {
     }
 
     /**
-     * Attempts to DM the {@code user}, ignoring a {@link ErrorResponse#CANNOT_SEND_TO_USER} exception.
+     * Attempts to DM the {@code user}, ignoring exceptions encountered.
      */
     public static RestAction<Void> attemptDM(final User user, final Function<PrivateChannel, RestAction<?>> action) {
         return user.openPrivateChannel()
                 .flatMap(ch -> action.apply(ch).map(_ -> (Void) null))
-                .onErrorMap(ErrorResponse.CANNOT_SEND_TO_USER::test, _ -> null);
+                .onErrorMap(_ -> null);
     }
 
     /**
