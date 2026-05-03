@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
+import org.kohsuke.args4j.spi.DoubleOptionHandler;
 import org.kohsuke.args4j.spi.FieldSetter;
 import org.kohsuke.args4j.spi.Getter;
 import org.kohsuke.args4j.spi.IntOptionHandler;
@@ -149,6 +150,7 @@ public class ScriptOptions implements Iterable<Object> {
         return switch (type) {
             case "string" -> new TypeInfo(String.class, StringOptionHandler.class, multi, "<string>");
             case "int" -> new TypeInfo(Integer.class, IntOptionHandler.class, multi, "<int>");
+            case "double" -> new TypeInfo(Double.class, DoubleOptionHandler.class, multi, "<double>");
             case "boolean" -> new TypeInfo(Boolean.class, BooleanOptionHandler.class, multi, "");
             case "enum" -> new TypeInfo(String.class, EnumOptionHandler.class, multi, "");
 

@@ -88,7 +88,7 @@ export interface JDA {
 
 export declare namespace Options {
     export enum Type {
-        string, member, user, int, boolean
+        string, member, user, int, double, boolean
     }
 
     export type OptionConfig = {
