@@ -176,7 +176,7 @@ public class SlashTrickManager implements EventListener {
                                 trick.subgroup() == null ? subcommands::add : cmd -> subgroups.put(trick.subgroup(), cmd),
                                 trickInfos::put
                         );
-                    } catch (CannotRetrieveInformationException e) {
+                    } catch (Exception e) {
                         LOGGER.error("Could not retrieve information for trick {}, registered as slash trick with name `/{}` in guild {}: ", trick.id(), trick.getFullName(), guildId, e);
                     }
                 });
