@@ -1,5 +1,6 @@
 package net.neoforged.camelot.module.scamdetection;
 
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.neoforged.camelot.api.config.ConfigOption;
@@ -15,6 +16,8 @@ public abstract class ScamDetector {
     }
 
     protected void registerOptions(OptionRegistrar<Guild> registrar) {}
+
+    protected void setup(JDA jda) {}
 
     @Nullable
     public abstract ScamDetectionResult detectScam(Message message);

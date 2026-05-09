@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
@@ -68,7 +69,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                 .description("The channels that should be scanned for possible scams.")
                 .register();
 
-        this.detectors = List.of(new ImageScamDetector());
+        this.detectors = List.of(new MessageSpamScamDetector(), new ImageScamDetector());
 
         for (ScamDetector detector : detectors) {
             var group = registrar.pushGroup(detector.id);
@@ -96,6 +97,11 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
         });
     }
 
+    @Override
+    public void setup(JDA jda) {
+        detectors.forEach(detector -> detector.setup(jda));
+    }
+
     private void handleMessage(MessageReceivedEvent event) {
         if (!event.isFromGuild() || event.getAuthor().isBot()) return;
         if (!scannedChannels.get(event.getGuild()).test(event.getChannel())) return;
@@ -112,8 +118,8 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                                 .setAuthor(event.getAuthor().getName(), null, event.getAuthor().getEffectiveAvatarUrl())
                                 .setTitle("Possible scam has been detected", channelLink)
                                 .setDescription("A possible scam has been sent by " + event.getMember().getAsMention()
-                                        + " in " + event.getChannel().getAsMention() + ". The message has been deleted, and the user has been timed out. Message content and attachments are available below: \n\n"
-                                        + event.getMessage().getContentRaw())
+                                        + " in " + event.getChannel().getAsMention() + ". The message has been deleted, and the user has been timed out. Message content and attachments are available below:\n```"
+                                        + event.getMessage().getContentRaw() + "```")
                                 .addField("Scam type", result.message(), false)
                                 .setColor(Color.RED)
                                 .setTimestamp(event.getMessage().getTimeCreated())
