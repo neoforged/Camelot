@@ -22,6 +22,10 @@ class ModuleConfiguration {
         return moduleId
     }
 
+    boolean getEnabled() {
+        return this.@enabled
+    }
+
     @CompileDynamic
     void validate() {
         properties.forEach { key, it ->
@@ -46,6 +50,9 @@ class ModuleConfiguration {
      * A module that cannot be configured or disabled.
      */
     static class BuiltIn extends ModuleConfiguration {
-
+        @Override
+        boolean getEnabled() {
+            return true
+        }
     }
 }

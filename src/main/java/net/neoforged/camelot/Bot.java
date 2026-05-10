@@ -112,7 +112,7 @@ public class Bot {
                         if (moduleRegistrar == null) {
                             moduleRegistrar = moduleGuildRegistrar.pushGroup(module.id())
                                     .groupDescription("Configuration of the " + module.id() + " module")
-                                    .groupAvailableIf(_ -> this.module.config().isEnabled());
+                                    .groupAvailableIf(_ -> this.module.config().getEnabled());
                         }
                         return moduleRegistrar;
                     }
@@ -124,7 +124,7 @@ public class Bot {
                         if (userRegistrar == null) {
                             userRegistrar = moduleUserRegistrar.pushGroup(module.id())
                                     .groupDescription("Configuration of the " + module.id() + " module")
-                                    .groupAvailableIf(_ -> this.module.config().isEnabled());
+                                    .groupAvailableIf(_ -> this.module.config().getEnabled());
                         }
                         return userRegistrar;
                     }
@@ -150,7 +150,7 @@ public class Bot {
         loadConfig(configPath);
 
         this.modules = Collections.unmodifiableMap(
-                moduleCandidates.stream().filter(module -> module.config().isEnabled() && module.shouldLoad())
+                moduleCandidates.stream().filter(module -> module.config().getEnabled() && module.shouldLoad())
                         .collect(Collectors.toMap(
                                 CamelotModule::getClass,
                                 camelotModule -> (CamelotModule<?>) camelotModule,
