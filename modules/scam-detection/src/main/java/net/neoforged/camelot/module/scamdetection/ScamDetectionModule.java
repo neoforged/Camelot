@@ -1,14 +1,10 @@
 package net.neoforged.camelot.module.scamdetection;
 
-import it.unimi.dsi.fastutil.longs.LongArraySet;
-import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.longs.LongSets;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
-import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -16,13 +12,10 @@ import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.FileUpload;
-import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
-import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
 import net.neoforged.camelot.ap.RegisterCamelotModule;
 import net.neoforged.camelot.api.config.ConfigOption;
@@ -40,16 +33,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 @RegisterCamelotModule
 public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
-    private static final String BUTTON_PREFIX = "scam-detection/";
-    private static final LongSet MUTED = LongSets.synchronize(new LongArraySet());
+    static final String BUTTON_PREFIX = "scam-detection/";
 
     private final ConfigOption<Guild, ChannelSet> loggingChannels;
-    private final ConfigOption<Guild, ChannelFilter> scannedChannels;
     private final List<ScamDetector> detectors;
+
+    private final ScamMessageHandler handler;
 
     public ScamDetectionModule(ModuleProvider.Context context) {
         super(context, ScamDetection.class);
@@ -63,7 +55,7 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                 .description("The channel in which to log detected scams")
                 .register();
 
-        this.scannedChannels = registrar
+        final ConfigOption<Guild, ChannelFilter> scannedChannels = registrar
                 .option("scanned_channels", Options.channelFilter())
                 .displayName("Scanned Channels")
                 .description("The channels that should be scanned for possible scams.")
@@ -79,13 +71,16 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                     .register();
             detector.registerOptions(group);
         }
+
+        this.handler = new ScamMessageHandler(
+                bot(), loggingChannels, scannedChannels, detectors
+        );
     }
 
     @Override
     public void registerListeners(JDABuilder jda) {
         jda.addEventListeners((EventListener) gevent -> {
             switch (gevent) {
-                case MessageReceivedEvent event -> handleMessage(event);
                 case ButtonInteractionEvent event -> handleButton(event);
 
                 // Mark any scam alerts of the banned user as handled
@@ -94,76 +89,14 @@ public class ScamDetectionModule extends CamelotModule.Base<ScamDetection> {
                 default -> {
                 }
             }
-        });
+        }, this.handler);
     }
 
     @Override
     public void setup(JDA jda) {
         detectors.forEach(detector -> detector.setup(jda));
-    }
 
-    private void handleMessage(MessageReceivedEvent event) {
-        if (!event.isFromGuild() || event.getAuthor().isBot()) return;
-        if (!scannedChannels.get(event.getGuild()).test(event.getChannel())) return;
-
-        for (var detector : detectors) {
-            if (!detector.enabled.get(event.getGuild())) continue;
-
-            var result = detector.detectScam(event.getMessage());
-            if (result != null) {
-                var channelLink = "https://discord.com/channels/" + event.getGuild().getId() + "/" + event.getChannel().getId();
-
-                var builder = new MessageCreateBuilder()
-                        .addEmbeds(new EmbedBuilder()
-                                .setAuthor(event.getAuthor().getName(), null, event.getAuthor().getEffectiveAvatarUrl())
-                                .setTitle("Possible scam has been detected", channelLink)
-                                .setDescription("A possible scam has been sent by " + event.getMember().getAsMention()
-                                        + " in " + event.getChannel().getAsMention() + ". The message has been deleted, and the user has been timed out. Message content and attachments are available below:\n```"
-                                        + event.getMessage().getContentRaw() + "```")
-                                .addField("Scam type", result.message(), false)
-                                .setColor(Color.RED)
-                                .setTimestamp(event.getMessage().getTimeCreated())
-                                .setFooter("User ID: " + event.getAuthor().getId())
-                                .build());
-
-                for (int i = 0; i < event.getMessage().getAttachments().size(); i++) {
-                    var attachment = event.getMessage().getAttachments().get(i);
-                    if (attachment.isImage()) {
-                        builder.addFiles(attachment.getProxy().downloadAsFileUpload("img" + i + "." + attachment.getFileExtension()));
-                        builder.addEmbeds(new EmbedBuilder()
-                                .setTitle(".", channelLink)
-                                .setImage("attachment://img" + i + "." + attachment.getFileExtension())
-                                .build());
-                    }
-                }
-
-                builder.addComponents(ActionRow.of(
-                        Button.danger(BUTTON_PREFIX + "ban/" + event.getAuthor().getId(), "Temporarily ban"),
-                        Button.secondary(BUTTON_PREFIX + "false-positive/" + event.getAuthor().getId(), "Mark as false positive")
-                ));
-
-                var message = builder.build();
-
-                for (var channelId : loggingChannels.get(event.getGuild())) {
-                    var channel = event.getGuild().getTextChannelById(channelId);
-                    if (channel != null) {
-                        channel.sendMessage(message).complete();
-                    }
-                }
-
-                event.getMessage().delete()
-                        .queue(_ -> {
-                            var memberId = event.getMember().getIdLong();
-                            if (MUTED.add(memberId)) {
-                                var muteDuration = Duration.of(1, ChronoUnit.DAYS);
-                                bot().moderation().timeout(event.getMember(), event.getJDA().getSelfUser(), muteDuration, "Suspected scam: " + detector.id)
-                                        .queue(_ -> BotMain.EXECUTOR.schedule(
-                                                () -> MUTED.remove(memberId), muteDuration.toSeconds(), TimeUnit.SECONDS
-                                        ));
-                            }
-                        });
-            }
-        }
+        Thread.ofPlatform().name("scam-detection").daemon().start(this.handler);
     }
 
     private void handleButton(ButtonInteractionEvent event) {
