@@ -1,5 +1,7 @@
 package net.neoforged.camelot.module.scamdetection;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.neoforged.camelot.BotMain;
@@ -12,7 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.net.URI;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class ImageScamDetector extends ScamDetector {
@@ -20,6 +26,10 @@ public class ImageScamDetector extends ScamDetector {
 
     private TesseractInstance tesseract;
     private ConfigOption<Guild, List<Pattern>> patterns;
+
+    private final Cache<String, String> imageContentCache = Caffeine.newBuilder()
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build();
 
     protected ImageScamDetector() {
         super("image_scams");
@@ -85,8 +95,13 @@ public class ImageScamDetector extends ScamDetector {
 
     @Nullable
     private String extractText(String url) {
-        try (var image = URI.create(url).toURL().openStream()) {
+        try (var image = new DigestInputStream(URI.create(url).toURL().openStream(), MessageDigest.getInstance("SHA-256"))) {
             var initialImage = ImageIO.read(image);
+            var digest = HexFormat.of().formatHex(image.getMessageDigest().digest());
+
+            var cachedContent = imageContentCache.getIfPresent(digest);
+            if (cachedContent != null) return cachedContent;
+
             // A factor of 3 seems to be resizing the common scam images just enough for a consistent extraction of common sentences
             var resizedImage = ImageUtils.resizeBy(initialImage, 3);
 
@@ -102,7 +117,9 @@ public class ImageScamDetector extends ScamDetector {
             resizedImage.flush();
             initialImage.flush();
 
-            return ocr.toString();
+            final String result = ocr.toString();
+            imageContentCache.put(digest, result);
+            return result;
         } catch (Exception e) {
             BotMain.LOGGER.error("Failed to extract text of attachment {}: ", url, e);
             return null;
