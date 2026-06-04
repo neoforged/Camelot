@@ -120,7 +120,7 @@ public class ImageScamDetector extends ScamDetector {
             final String result = ocr.toString();
             imageContentCache.put(digest, result);
             return result;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             BotMain.LOGGER.error("Failed to extract text of attachment {}: ", url, e);
             return null;
         }
