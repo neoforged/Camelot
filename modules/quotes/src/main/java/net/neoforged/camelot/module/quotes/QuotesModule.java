@@ -1,12 +1,13 @@
 package net.neoforged.camelot.module.quotes;
 
+import com.google.common.collect.Iterables;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import com.jagrosh.jdautilities.command.MessageContextMenu;
 import com.jagrosh.jdautilities.command.MessageContextMenuEvent;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.neoforged.camelot.BotMain;
 import net.neoforged.camelot.ModuleProvider;
@@ -34,7 +35,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static net.neoforged.camelot.util.ImageUtils.cutoutImageMiddle;
 import static net.neoforged.camelot.util.ImageUtils.drawUserAvatar;
@@ -113,21 +117,39 @@ public class QuotesModule extends CamelotModule.WithDatabase<Quotes> {
     }
 
     private void updateAuthors(final JDA jda, final QuotesDAO db) {
-        jda.getGuilds().forEach(guild -> db.getAuthorsToUpdate(guild.getIdLong()).forEach(author -> {
-            guild.retrieveMemberById(author.userId())
-                    .map(mem -> mem.getNickname() == null ? mem.getEffectiveName() : mem.getNickname() + " (" + mem.getUser().getEffectiveName() + ")")
-                    .onErrorFlatMap(_ -> jda.retrieveUserById(author.userId())
-                            .map(User::getEffectiveName)
-                            .onErrorMap(ErrorResponse.UNKNOWN_USER::test, _ -> {
-                                db.dontRecheck(author.id());
-                                return null;
-                            }))
-                    .queue(authorName -> {
-                        if (authorName != null && !authorName.equals(author.name())) {
+        for (final Guild guild : jda.getGuilds()) {
+            var toUpdate = db.getAuthorsToUpdate(guild.getIdLong()).stream()
+                    .collect(Collectors.toMap(Quote.Author::userId, Function.identity()));
+
+            var nonMembers = ConcurrentHashMap.<Long>newKeySet();
+            nonMembers.addAll(toUpdate.keySet());
+
+            // Update those that are still guild members first
+            Iterables.partition(toUpdate.keySet(), 100)
+                    .forEach(partition -> guild.retrieveMembersByIds(false, partition)
+                    .onSuccess(members -> members.forEach(member -> {
+                        var author = toUpdate.get(member.getIdLong());
+                        var authorName =  member.getNickname() == null ? member.getEffectiveName() : member.getNickname() + " (" + member.getUser().getEffectiveName() + ")";
+                        if (author != null && !authorName.equals(author.name())) {
                             db.updateAuthor(author.id(), authorName);
                         }
-                    });
-        }));
+
+                        nonMembers.remove(member.getIdLong());
+                    })));
+
+            // And then update those who have left the guild, if the user still exists
+            toUpdate.forEach((uid, author) -> {
+                if (nonMembers.contains(uid)) {
+                    jda.retrieveUserById(uid)
+                            .queue(user -> {
+                                var authorName =  user.getEffectiveName();
+                                if (!authorName.equals(author.name())) {
+                                    db.updateAuthor(author.id(), authorName);
+                                }
+                            }, new ErrorHandler().handle(ErrorResponse.UNKNOWN_USER, _ -> db.dontRecheck(author.id())));
+                }
+            });
+        }
     }
 
     public record MemberLike(String name, String avatar, Color color) {
