@@ -18,11 +18,14 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class ImageScamDetector extends ScamDetector {
     private static final Pattern IMAGE_LINK_URL = Pattern.compile("https?://\\S+?\\.(?:png|jpg|jpeg)(?:\\?\\S*)?");
+    private static final ExecutorService EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     private TesseractInstance tesseract;
     private ConfigOption<Guild, List<Pattern>> patterns;
@@ -56,7 +59,7 @@ public class ImageScamDetector extends ScamDetector {
         for (Message.Attachment attachment : message.getAttachments()) {
             if (!attachment.isImage()) continue;
 
-            var text = extractText(attachment.getProxyUrl() + "&format=png");
+            var text = submitTextExtraction(attachment.getProxyUrl() + "&format=png");
             if (text == null) continue;
 
             for (var pattern : patterns) {
@@ -69,7 +72,7 @@ public class ImageScamDetector extends ScamDetector {
 
         var linkMatcher = IMAGE_LINK_URL.matcher(message.getContentRaw());
         while (linkMatcher.find()) {
-            var text = extractText(linkMatcher.group());
+            var text = submitTextExtraction(linkMatcher.group());
             if (text == null) continue;
 
             for (var pattern : patterns) {
@@ -94,7 +97,17 @@ public class ImageScamDetector extends ScamDetector {
     }
 
     @Nullable
-    private String extractText(String url) {
+    private String submitTextExtraction(String url) {
+        var future = EXECUTOR.submit(() -> extractText(url));
+        try {
+            return future.get(20, TimeUnit.SECONDS);
+        } catch (Exception exception) {
+            BotMain.LOGGER.error("Failed to extract text from image url {}: ", url, exception);
+            return null;
+        }
+    }
+
+    private String extractText(String url) throws Exception {
         try (var image = new DigestInputStream(URI.create(url).toURL().openStream(), MessageDigest.getInstance("SHA-256"))) {
             var initialImage = ImageIO.read(image);
             var digest = HexFormat.of().formatHex(image.getMessageDigest().digest());
@@ -120,9 +133,6 @@ public class ImageScamDetector extends ScamDetector {
             final String result = ocr.toString();
             imageContentCache.put(digest, result);
             return result;
-        } catch (Throwable e) {
-            BotMain.LOGGER.error("Failed to extract text of attachment {}: ", url, e);
-            return null;
         }
     }
 }
