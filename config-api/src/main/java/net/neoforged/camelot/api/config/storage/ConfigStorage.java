@@ -3,18 +3,26 @@ package net.neoforged.camelot.api.config.storage;
 import org.jdbi.v3.core.Jdbi;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface ConfigStorage<G> {
-    void restoreToDefault(String key, G target);
+    /**
+     * Read the configuration value with the given {@code key} for the given {@code target}.
+     *
+     * @param key    the key of the configuration value to retrieve
+     * @param target the target to retrieve the configuration value for
+     * @return the configuration value:
+     * <ul>
+     * <li>{@link Optionull#empty()} if the value with the given key is not configured (the default value will be used)</li>
+     * <li>{@link Optionull#of(Object) Optionull.of(null)} if the value with the given key is explicitly set to {@code null}</li>
+     * <li>{@link Optionull#of(Object)} with a non-null value if the value with the given key is configured</li>
+     * </ul>
+     */
+    Optionull<String> read(String key, G target);
 
-    void store(String key, G target, String value);
-
-    @Nullable
-    Optional<String> read(String key, G target);
+    void store(String key, G target, Optionull<String> value);
 
     default boolean isReadOnly(G target) {
         return false;
@@ -33,19 +41,14 @@ public interface ConfigStorage<G> {
     }
 
     static <G> ConfigStorage<G> delegate(Supplier<ConfigStorage<G>> supplier) {
-        return new ConfigStorage<G>() {
+        return new ConfigStorage<>() {
             @Override
-            public void restoreToDefault(String key, G target) {
-                supplier.get().restoreToDefault(key, target);
-            }
-
-            @Override
-            public void store(String key, G target, String value) {
+            public void store(String key, G target, Optionull<String> value) {
                 supplier.get().store(key, target, value);
             }
 
             @Override
-            public @Nullable Optional<String> read(String key, G target) {
+            public Optionull<String> read(String key, G target) {
                 return supplier.get().read(key, target);
             }
 

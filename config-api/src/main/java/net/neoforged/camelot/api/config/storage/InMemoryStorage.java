@@ -1,27 +1,19 @@
 package net.neoforged.camelot.api.config.storage;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 class InMemoryStorage<G> implements ConfigStorage<G> {
-    private final Map<Key, Optional<String>> values = new HashMap<>();
+    private final Map<Key, Optionull<String>> values = new HashMap<>();
 
     @Override
-    public void restoreToDefault(String key, G target) {
-        values.remove(new Key(target, key));
+    public void store(String key, G target, Optionull<String> value) {
+        values.put(new Key(target, key), value);
     }
 
     @Override
-    public void store(String key, G target, String value) {
-        values.put(new Key(target, key), Optional.ofNullable(value));
-    }
-
-    @Override
-    public @Nullable Optional<String> read(String key, G target) {
-        return values.get(new Key(target, key));
+    public Optionull<String> read(String key, G target) {
+        return values.getOrDefault(new Key(target, key), Optionull.empty());
     }
 
     private record Key(Object target, String key) {}

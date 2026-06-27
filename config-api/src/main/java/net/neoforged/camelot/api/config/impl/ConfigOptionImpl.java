@@ -1,10 +1,9 @@
 package net.neoforged.camelot.api.config.impl;
 
 import net.neoforged.camelot.api.config.ConfigOption;
+import net.neoforged.camelot.api.config.storage.Optionull;
 import net.neoforged.camelot.api.config.type.OptionType;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONObject;
-import org.json.JSONPointer;
 import org.json.JSONTokener;
 import org.json.JSONWriter;
 import org.slf4j.Logger;
@@ -49,28 +48,26 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
         if (fromCache != null) return fromCache;
 
         var fromStorage = manager.storage.read(path, target);
-        //noinspection OptionalAssignedToNull
-        if (fromStorage != null) {
-            var fs = fromStorage.orElse(null);
-            if (fs == null) return null;
+        if (fromStorage.isEmpty()) return defaultValue;
 
-            try {
-                var newValue = type.deserialize(new JSONTokener(fs).nextValue());
-                cache.put(identified, newValue);
-                if (cache.containsKey(identified) && newValue != null) {
-                    valueChanged(target, null, newValue);
-                }
-                return newValue;
-            } catch (Exception ex) {
-                LOGGER.error("Failed to decode config option '{}' for {} given value '{}': ", path, target, fs, ex);
+        var fs = fromStorage.getValue();
+        if (fs == null) return null;
+
+        try {
+            var newValue = type.deserialize(new JSONTokener(fs).nextValue());
+            cache.put(identified, newValue);
+            if (cache.containsKey(identified) && newValue != null) {
+                valueChanged(target, null, newValue);
             }
+            return newValue;
+        } catch (Exception ex) {
+            LOGGER.error("Failed to decode config option '{}' for {} given value '{}': ", path, target, fs, ex);
+            return defaultValue;
         }
-
-        return defaultValue;
     }
 
     void restoreToDefault(G target) {
-        manager.storage.restoreToDefault(path, target);
+        manager.storage.store(path, target, Optionull.empty());
         var old = cache.remove(manager.cacheKey.apply(target));
         valueChanged(target, old, defaultValue);
     }
@@ -79,9 +76,9 @@ public class ConfigOptionImpl<G, T> implements ConfigOption<G, T> {
     public void set(G target, @Nullable T value) {
         var identified = manager.cacheKey.apply(target);
         if (value == null) {
-            manager.storage.store(path, target, null);
+            manager.storage.store(path, target, Optionull.of(null));
         } else {
-            manager.storage.store(path, target, JSONWriter.valueToString(type.serialise(value)));
+            manager.storage.store(path, target, Optionull.of(JSONWriter.valueToString(type.serialise(value))));
         }
         var old = cache.put(identified, value);
         valueChanged(target, old, value);

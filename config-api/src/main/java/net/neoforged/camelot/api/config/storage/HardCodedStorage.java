@@ -3,7 +3,6 @@ package net.neoforged.camelot.api.config.storage;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONWriter;
 
-import java.util.Optional;
 import java.util.function.BiFunction;
 
 class HardCodedStorage<G> implements ConfigStorage<G> {
@@ -14,12 +13,12 @@ class HardCodedStorage<G> implements ConfigStorage<G> {
     }
 
     @Override
-    public @Nullable Optional<String> read(String key, G target) {
+    public Optionull<String> read(String key, G target) {
         var value = provider.apply(target, key);
         if (value != null){
-            return Optional.of(JSONWriter.valueToString(value));
+            return Optionull.of(JSONWriter.valueToString(value));
         }
-        return null;
+        return Optionull.empty();
     }
 
     @Override
@@ -28,12 +27,7 @@ class HardCodedStorage<G> implements ConfigStorage<G> {
     }
 
     @Override
-    public void restoreToDefault(String key, G target) {
-        throw new IllegalStateException("Config storage is read only");
-    }
-
-    @Override
-    public void store(String key, G target, String value) {
+    public void store(String key, G target, Optionull<String> value) {
         throw new IllegalStateException("Config storage is read only");
     }
 }
