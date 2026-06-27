@@ -12,6 +12,7 @@ By default, the following modules are enabled:
 - [Moderation](./moderation)
 - Quotes
 - Reminders
+- [Scam Detection](./scam-detection.md)
 - Statistics
 - [Sticky Roles](./sticky-roles)
 - [Thread Pings](./thread-pings)

@@ -46,6 +46,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,10 +67,17 @@ public class Bot {
     private final ModerationUtil moderation;
     private final ComponentManager components;
 
-    public Bot(Consumer<Bot> immediate, Path configPath, ConfigStorage<Guild> configStorage, ConfigStorage<User> userConfigStorage, List<ModuleProvider> moduleProviders) {
+    private final ConfigStorage<Guild> guildConfigStorage;
+
+    public Bot(Consumer<Bot> immediate, Path configPath, ConfigStorage<Guild> guildConfigStorage, ConfigStorage<User> userConfigStorage, List<ModuleProvider> moduleProviders) {
         immediate.accept(this);
 
-        var guildConfigs = ConfigManager.create(configStorage, Guild::getIdLong);
+        var guildConfigs = ConfigManager.create(ConfigStorage.delegate(new Supplier<>() {
+            @Override
+            public ConfigStorage<Guild> get() {
+                return Bot.this.guildConfigStorage;
+            }
+        }), Guild::getIdLong);
         var userConfigs = ConfigManager.create(userConfigStorage, User::getIdLong);
 
         this.commandPrefix = guildConfigs
@@ -148,6 +156,8 @@ public class Bot {
         );
         CamelotConfig.setInstance(config);
         loadConfig(configPath);
+
+        this.guildConfigStorage = config.getGuildConfiguration() == null ? guildConfigStorage : ConfigStorage.hardCoded(config.getGuildConfiguration().buildProvider(Guild::getIdLong));
 
         this.modules = Collections.unmodifiableMap(
                 moduleCandidates.stream().filter(module -> module.config().getEnabled() && module.shouldLoad())
@@ -323,7 +333,6 @@ public class Bot {
                             // For more information, visit the documentation
                             camelot {
                                 token = secret('<insert bot api token here>')
-                                prefix = '!'
                             }""");
                     LOGGER.warn("Created default config. Please configure it according to the documentation.");
                 } catch (IOException e) {

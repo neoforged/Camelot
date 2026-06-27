@@ -40,6 +40,10 @@ export default {
                         link: '/modules/moderation'
                     },
                     {
+                        text: 'Scam Detection',
+                        link: '/modules/scam-detection'
+                    },
+                    {
                         text: 'Sticky Roles',
                         link: '/modules/sticky-roles'
                     },

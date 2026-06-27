@@ -33,6 +33,11 @@ class CamelotConfig {
     long owner
 
     /**
+     * Hard-coded configuration that replaces Discord-configurable Guild configuration.
+     */
+    HardCodedGuildConfiguration guildConfiguration
+
+    /**
      * Configure a module.
      * @param type the type of the module
      * @param configurator the closure that configures the module
@@ -60,7 +65,7 @@ class CamelotConfig {
         if (conf === null) {
             throw new IllegalArgumentException("Unknown module of type $type")
         }
-        return (T)conf
+        return (T) conf
     }
 
     /**
@@ -85,6 +90,19 @@ class CamelotConfig {
         modules.values().each {
             ConfigUtils.configure(it, configurator)
         }
+    }
+
+    /**
+     * Hard-code guild configuration that is usually configured through the {@code /configure} Discord command.
+     * When this is configured, the command can only be used to view the options but cannot be used to change them.
+     * This option is useful when your Camelot configuration script is designed for plug&play deployment.
+     * @param configurator the closure to use to configure
+     */
+    void guildConfiguration(@DelegatesTo(value = HardCodedGuildConfiguration, strategy = Closure.DELEGATE_FIRST) @ClosureParams(value = SimpleType, options = 'net.neoforged.camelot.config.HardCodedGuildConfiguration') Closure configurator) {
+        if (!guildConfiguration) {
+            guildConfiguration = new HardCodedGuildConfiguration()
+        }
+        ConfigUtils.configure(guildConfiguration, configurator)
     }
 
     void validate() {

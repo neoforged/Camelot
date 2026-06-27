@@ -132,7 +132,7 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                         editButton = rawOption.type().createUpdateButton(currentValue, t -> {
                             rawOption.set(target, t);
                             return createEditMessage(target, path, page);
-                        }, this);
+                        }, this).withDisabled(storage.isReadOnly(target));
                     } else {
                         editButton = Button.primary(buttonId(ev ->
                                 ev.editMessage(createEditValue(path, page, target, option)).queue()), "View");
@@ -155,6 +155,10 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
 
                     list.add(Section.of(editButton, TextDisplay.of(sectionDesc.toString())));
                 }
+            }
+
+            if (storage.isReadOnly(target)) {
+                list.add(TextDisplay.of("-# **Configuration is read-only and cannot be modified through this interface.**"));
             }
         })));
 
@@ -199,11 +203,11 @@ public class ConfigManagerImpl<G> implements ConfigManager<G>, EventListener, Op
                                         option.type().createUpdateButton(current, t -> {
                                             option.set(target, t);
                                             return createEditValue(path, page, target, option);
-                                        }, this),
+                                        }, this).withDisabled(storage.isReadOnly(target)),
                                         Button.secondary(buttonId(ev -> {
                                             option.restoreToDefault(target);
                                             ev.editMessage(createEditValue(path, page, target, option)).queue();
-                                        }), "↻ Restore to default")
+                                        }), "↻ Restore to default").withDisabled(storage.isReadOnly(target))
                                 )
                         )
                 )
