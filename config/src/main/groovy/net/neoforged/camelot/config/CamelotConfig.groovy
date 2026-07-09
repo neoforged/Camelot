@@ -38,6 +38,11 @@ class CamelotConfig {
     HardCodedGuildConfiguration guildConfiguration
 
     /**
+     * Default guild configuration value overrides.
+     */
+    final DefaultGuildConfiguration defaultGuildConfiguration = new DefaultGuildConfiguration();
+
+    /**
      * Configure a module.
      * @param type the type of the module
      * @param configurator the closure that configures the module
@@ -103,6 +108,14 @@ class CamelotConfig {
             guildConfiguration = new HardCodedGuildConfiguration()
         }
         ConfigUtils.configure(guildConfiguration, configurator)
+    }
+
+    /**
+     * Override default guild configuration values.
+     * @param configurator the closure to use to configure
+     */
+    void defaultGuildConfiguration(@DelegatesTo(value = DefaultGuildConfiguration, strategy = Closure.DELEGATE_FIRST) @ClosureParams(value = SimpleType, options = 'net.neoforged.camelot.config.HardCodedGuildConfiguration') Closure configurator) {
+        ConfigUtils.configure(defaultGuildConfiguration, configurator)
     }
 
     void validate() {

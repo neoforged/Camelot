@@ -43,6 +43,7 @@ tasks.register('groovydocJar', Jar) {
 dependencies {
     api libs.bundles.groovy
     api libs.githubapi
+    api libs.jda
 
     sampleCompileOnly(sourceSets.main.output)
 

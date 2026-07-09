@@ -28,6 +28,39 @@ public interface ConfigStorage<G> {
         return false;
     }
 
+    interface DefaultValueProvider<G> {
+        @Nullable
+        String provide(String key, G target);
+    }
+    default ConfigStorage<G> withDefaultValues(DefaultValueProvider<G> provider) {
+        var thiz = this;
+        return new ConfigStorage<>() {
+            @Override
+            public Optionull<String> read(String key, G target) {
+                var value = thiz.read(key, target);
+                if (value.isEmpty()) {
+                    var provided = provider.provide(key, target);
+                    if (provided != null) {
+                        // Make sure to preserve the value
+                        store(key, target, Optionull.of(provided));
+                        return Optionull.of(provided);
+                    }
+                }
+                return value;
+            }
+
+            @Override
+            public void store(String key, G target, Optionull<String> value) {
+                thiz.store(key, target, value);
+            }
+
+            @Override
+            public boolean isReadOnly(G target) {
+                return thiz.isReadOnly(target);
+            }
+        };
+    }
+
     static <G> ConfigStorage<G> sql(Jdbi database, String tableName, Function<G, Object> identifier) {
         return new SQLStorage<>(database, tableName, identifier);
     }

@@ -17,6 +17,7 @@ import net.neoforged.camelot.api.config.type.Options;
 import net.neoforged.camelot.commands.Commands;
 import net.neoforged.camelot.config.CamelotConfig;
 import net.neoforged.camelot.config.module.ModuleConfiguration;
+import net.neoforged.camelot.config.util.ConfigurationProvider;
 import net.neoforged.camelot.configuration.ConfigMigrator;
 import net.neoforged.camelot.db.transactionals.PendingUnbansDAO;
 import net.neoforged.camelot.listener.ModerationListener;
@@ -29,6 +30,7 @@ import net.neoforged.camelot.util.ModerationUtil;
 import net.neoforged.camelot.util.jda.ComponentManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.json.JSONWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,7 +159,25 @@ public class Bot {
         CamelotConfig.setInstance(config);
         loadConfig(configPath);
 
-        this.guildConfigStorage = config.getGuildConfiguration() == null ? guildConfigStorage : ConfigStorage.hardCoded(config.getGuildConfiguration().buildProvider(Guild::getIdLong));
+        this.guildConfigStorage = (config.getGuildConfiguration() == null ? guildConfigStorage : ConfigStorage.hardCoded(config.getGuildConfiguration().buildProvider(Guild::getIdLong)))
+                .withDefaultValues((key, target) -> {
+                    for (ConfigurationProvider provider : config.getDefaultGuildConfiguration().getProviders()) {
+                        if (provider.test().test(target.getIdLong())) {
+                            var value = provider.get(key);
+                            //noinspection rawtypes
+                            if (value instanceof Function closure) {
+                                //noinspection unchecked
+                                value = closure.apply(target);
+                            }
+
+                            if (value != null) {
+                                return JSONWriter.valueToString(value);
+                            }
+                        }
+                    }
+
+                    return null;
+                });
 
         this.modules = Collections.unmodifiableMap(
                 moduleCandidates.stream().filter(module -> module.config().getEnabled() && module.shouldLoad())
