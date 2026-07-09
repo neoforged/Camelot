@@ -17,8 +17,7 @@ authlib = { module = "com.mojang:authlib", version = "7.0.61" }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.83" }
 
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.3" }
-# TODO - switch back to the normal maven one once https://github.com/Chew/JDA-Chewtils/pull/93 is merged
-chewtils = { module = "com.github.Chew:JDA-Chewtils", version = "39a83bd8" }
+chewtils = { module = "pw.chew:jda-chewtils", version = "2.2.1" }
 
 fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.18" }
 flyway = { module = "org.flywaydb:flyway-core", version = "12.0.0" }
