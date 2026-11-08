@@ -24,6 +24,6 @@ VOLUME ["/home/camelot"]
 WORKDIR /home/camelot
 
 # Unhealthy if file exists
-HEALTHCHECK --interval=15s --retries=3 CMD [ -e "/home/camelot/healthcheck_unhealthy.txt" ] && exit 1 || exit 0
+HEALTHCHECK --interval=15s --retries=3 CMD [ -e "/home/camelot/healthy" ] && exit 0 || exit 1
 
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=90", "--enable-native-access=ALL-UNNAMED", "-jar", "/camelot.jar"]

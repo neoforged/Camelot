@@ -248,7 +248,7 @@ public class Bot {
 
         forEachModule(module -> module.setup(jda));
 
-        var healthcheck = Path.of("healthcheck_unhealthy.txt");
+        var healthcheck = Path.of("healthy");
         BotMain.EXECUTOR.scheduleAtFixedRate(() -> healthcheck(healthcheck), 10, 10, TimeUnit.SECONDS);
     }
 
@@ -325,10 +325,12 @@ public class Bot {
 
     private void healthcheck(Path path) {
         try {
-            if (jda.getStatus().isInit()) { // is ok
-                Files.deleteIfExists(path);
+            if (jda.getStatus().isInit()) { // is healthy
+                if (Files.notExists(path)) {
+                    Files.writeString(path, "healthy");
+                }
             } else {
-                Files.writeString(path, "unhealthy");
+                Files.deleteIfExists(path);
             }
         } catch (Exception exception) {
             LOGGER.error("Healthcheck failed: ", exception);
