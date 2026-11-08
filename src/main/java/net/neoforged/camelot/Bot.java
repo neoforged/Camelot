@@ -247,6 +247,9 @@ public class Bot {
         BotMain.EXECUTOR.scheduleAtFixedRate(pendingUnbans, 1, 1, TimeUnit.MINUTES);
 
         forEachModule(module -> module.setup(jda));
+
+        var healthcheck = Path.of("healthcheck_unhealthy.txt");
+        BotMain.EXECUTOR.scheduleAtFixedRate(() -> healthcheck(healthcheck), 10, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -318,6 +321,18 @@ public class Bot {
      */
     public <S extends CamelotService> void forEachService(Class<S> serviceType, Consumer<? super S> consumer) {
         getServices(serviceType).forEach(consumer);
+    }
+
+    private void healthcheck(Path path) {
+        try {
+            if (jda.getStatus().isInit()) { // is ok
+                Files.deleteIfExists(path);
+            } else {
+                Files.writeString(path, "unhealthy");
+            }
+        } catch (Exception exception) {
+            LOGGER.error("Healthcheck failed: ", exception);
+        }
     }
 
     private void loadConfig(Path config) {
