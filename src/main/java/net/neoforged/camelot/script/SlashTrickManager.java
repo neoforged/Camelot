@@ -168,7 +168,7 @@ public class SlashTrickManager implements EventListener {
 
                 final List<SubcommandData> subcommands = Collections.synchronizedList(new ArrayList<>());
                 final ListMultimap<String, SubcommandData> subgroups = Multimaps.synchronizedListMultimap(Multimaps.newListMultimap(new HashMap<>(), ArrayList::new));
-                tricks.stream().parallel().forEach(trick -> {
+                tricks.forEach(trick -> {
                     try {
                         consumeTrick(
                                 trick,
